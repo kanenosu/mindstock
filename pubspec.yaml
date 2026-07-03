@@ -1,0 +1,28 @@
+name: mindstock
+description: "人生チャート日記アプリ — 日記を書くだけで人生がローソク足チャートになる"
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
+  sqflite: ^2.4.1
+  path: ^1.9.0
+  http: ^1.2.2
+  shared_preferences: ^2.3.3
+  intl: ^0.20.2
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
