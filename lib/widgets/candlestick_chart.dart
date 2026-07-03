@@ -1,0 +1,298 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+
+import '../models/models.dart';
+
+/// ローソク足チャート（仕様書 §5）。
+///
+/// - 緑 = 陽線（トータルでプラス）、赤 = 陰線
+/// - ピンチズーム・横スクロール対応（仕様書 §6 (2)）
+/// - 移動平均線の重ね描き
+/// - ローソクをタップすると [onSelect] でその期間を通知（振り返り導線）
+class CandlestickChart extends StatefulWidget {
+  final List<Candle> candles;
+  final List<double?> movingAverage;
+  final void Function(Candle candle)? onSelect;
+
+  const CandlestickChart({
+    super.key,
+    required this.candles,
+    this.movingAverage = const [],
+    this.onSelect,
+  });
+
+  @override
+  State<CandlestickChart> createState() => _CandlestickChartState();
+}
+
+class _CandlestickChartState extends State<CandlestickChart> {
+  /// 1本あたりの横幅(px)。ピンチズームで変化する。
+  double _candleWidth = 14;
+
+  /// 右端から何本分スクロールして戻っているか。0 = 最新を表示。
+  double _scrollOffset = 0;
+
+  double _scaleStartWidth = 14;
+  int? _selectedIndex;
+
+  static const _minWidth = 4.0;
+  static const _maxWidth = 40.0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.candles.isEmpty) {
+      return const Center(child: Text('まだ記録がありません'));
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final visible = _visibleRange(size.width);
+        return GestureDetector(
+          onScaleStart: (details) {
+            _scaleStartWidth = _candleWidth;
+          },
+          onScaleUpdate: (details) {
+            setState(() {
+              if (details.scale != 1.0) {
+                _candleWidth = (_scaleStartWidth * details.scale).clamp(
+                  _minWidth,
+                  _maxWidth,
+                );
+              }
+              // focalPointDelta は1フレーム分の差分なので累積する。
+              // 右へドラッグ = 過去へ戻る（オフセット増加）。
+              _scrollOffset = (_scrollOffset +
+                      details.focalPointDelta.dx / _candleWidth)
+                  .clamp(0, max(0, widget.candles.length - 5).toDouble());
+            });
+          },
+          onTapUp: (details) => _handleTap(details.localPosition, size),
+          child: CustomPaint(
+            size: size,
+            painter: _CandlePainter(
+              candles: widget.candles,
+              movingAverage: widget.movingAverage,
+              candleWidth: _candleWidth,
+              firstVisible: visible.$1,
+              lastVisible: visible.$2,
+              selectedIndex: _selectedIndex,
+              theme: Theme.of(context),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 表示中の (先頭index, 末尾index)。
+  (int, int) _visibleRange(double width) {
+    final count = (width / _candleWidth).floor();
+    final last = (widget.candles.length - 1 - _scrollOffset.round()).clamp(
+      0,
+      widget.candles.length - 1,
+    );
+    final first = max(0, last - count + 1);
+    return (first, last);
+  }
+
+  void _handleTap(Offset position, Size size) {
+    final (first, last) = _visibleRange(size.width);
+    final visibleCount = last - first + 1;
+    final startX = size.width - visibleCount * _candleWidth;
+    final index = first + ((position.dx - startX) / _candleWidth).floor();
+    if (index < first || index > last) return;
+    setState(() => _selectedIndex = index);
+    widget.onSelect?.call(widget.candles[index]);
+  }
+}
+
+class _CandlePainter extends CustomPainter {
+  final List<Candle> candles;
+  final List<double?> movingAverage;
+  final double candleWidth;
+  final int firstVisible;
+  final int lastVisible;
+  final int? selectedIndex;
+  final ThemeData theme;
+
+  // 感情の文脈では 緑=良い / 赤=悪い が直感的（仕様書 §5 色のルール）
+  static const bullColor = Color(0xFF26A69A);
+  static const bearColor = Color(0xFFEF5350);
+
+  _CandlePainter({
+    required this.candles,
+    required this.movingAverage,
+    required this.candleWidth,
+    required this.firstVisible,
+    required this.lastVisible,
+    required this.selectedIndex,
+    required this.theme,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final visible = candles.sublist(firstVisible, lastVisible + 1);
+    if (visible.isEmpty) return;
+
+    var minV = visible.map((c) => c.low).reduce(min);
+    var maxV = visible.map((c) => c.high).reduce(max);
+    for (var i = firstVisible; i <= lastVisible; i++) {
+      final ma = i < movingAverage.length ? movingAverage[i] : null;
+      if (ma != null) {
+        minV = min(minV, ma);
+        maxV = max(maxV, ma);
+      }
+    }
+    final pad = max((maxV - minV) * 0.1, 1.0);
+    minV -= pad;
+    maxV += pad;
+
+    const topMargin = 8.0;
+    const bottomMargin = 24.0;
+    final chartHeight = size.height - topMargin - bottomMargin;
+    double yFor(double v) =>
+        topMargin + (maxV - v) / (maxV - minV) * chartHeight;
+
+    _drawGrid(canvas, size, minV, maxV, yFor);
+
+    final startX = size.width - visible.length * candleWidth;
+    final bodyWidth = candleWidth * 0.66;
+    final wickPaint = Paint()..strokeWidth = max(1, candleWidth / 12);
+    final bodyPaint = Paint();
+
+    for (var i = 0; i < visible.length; i++) {
+      final c = visible[i];
+      final cx = startX + i * candleWidth + candleWidth / 2;
+      final color = c.isBullish ? bullColor : bearColor;
+      final alpha = c.hasEntry ? 1.0 : 0.45; // 空白日は淡く描く（平穏な日）
+      wickPaint.color = color.withValues(alpha: alpha);
+      bodyPaint.color = color.withValues(alpha: alpha);
+
+      // ヒゲ
+      canvas.drawLine(
+        Offset(cx, yFor(c.high)),
+        Offset(cx, yFor(c.low)),
+        wickPaint,
+      );
+
+      // 実体（同事線に近い時も最低1.5pxは描く）
+      final top = yFor(max(c.open, c.close));
+      final bottom = yFor(min(c.open, c.close));
+      final rect = Rect.fromLTRB(
+        cx - bodyWidth / 2,
+        top,
+        cx + bodyWidth / 2,
+        max(bottom, top + 1.5),
+      );
+      canvas.drawRect(rect, bodyPaint);
+
+      if (firstVisible + i == selectedIndex) {
+        canvas.drawRect(
+          Rect.fromLTRB(
+            cx - candleWidth / 2,
+            topMargin,
+            cx + candleWidth / 2,
+            topMargin + chartHeight,
+          ),
+          Paint()
+            ..color = theme.colorScheme.primary.withValues(alpha: 0.15)
+            ..style = PaintingStyle.fill,
+        );
+      }
+    }
+
+    _drawMovingAverage(canvas, startX, yFor);
+    _drawDateLabels(canvas, size, visible, startX);
+  }
+
+  void _drawGrid(
+    Canvas canvas,
+    Size size,
+    double minV,
+    double maxV,
+    double Function(double) yFor,
+  ) {
+    final gridPaint = Paint()
+      ..color = theme.dividerColor.withValues(alpha: 0.3)
+      ..strokeWidth = 0.5;
+    final labelStyle = TextStyle(
+      fontSize: 10,
+      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+    );
+    const divisions = 4;
+    for (var i = 0; i <= divisions; i++) {
+      final v = minV + (maxV - minV) * i / divisions;
+      final y = yFor(v);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      final tp = TextPainter(
+        text: TextSpan(text: v.toStringAsFixed(0), style: labelStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(4, y - tp.height - 2));
+    }
+  }
+
+  void _drawMovingAverage(
+    Canvas canvas,
+    double startX,
+    double Function(double) yFor,
+  ) {
+    if (movingAverage.isEmpty) return;
+    final path = Path();
+    var started = false;
+    for (var i = firstVisible; i <= lastVisible; i++) {
+      final ma = i < movingAverage.length ? movingAverage[i] : null;
+      if (ma == null) continue;
+      final cx = startX + (i - firstVisible) * candleWidth + candleWidth / 2;
+      if (!started) {
+        path.moveTo(cx, yFor(ma));
+        started = true;
+      } else {
+        path.lineTo(cx, yFor(ma));
+      }
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFFFFB74D)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  void _drawDateLabels(
+    Canvas canvas,
+    Size size,
+    List<Candle> visible,
+    double startX,
+  ) {
+    final labelStyle = TextStyle(
+      fontSize: 10,
+      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+    );
+    final step = max(1, (80 / candleWidth).ceil());
+    final fmt = DateFormat('M/d');
+    for (var i = 0; i < visible.length; i += step) {
+      final cx = startX + i * candleWidth + candleWidth / 2;
+      final tp = TextPainter(
+        text: TextSpan(text: fmt.format(visible[i].date), style: labelStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        Offset(cx - tp.width / 2, size.height - tp.height - 4),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CandlePainter old) =>
+      old.candles != candles ||
+      old.candleWidth != candleWidth ||
+      old.firstVisible != firstVisible ||
+      old.lastVisible != lastVisible ||
+      old.selectedIndex != selectedIndex ||
+      old.movingAverage != movingAverage;
+}
