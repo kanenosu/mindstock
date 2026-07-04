@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../models/models.dart';
+import '../theme.dart';
 
 /// チャートの描画スタイル。
 enum ChartStyle {
@@ -132,8 +133,8 @@ class _CandlePainter extends CustomPainter {
   final ThemeData theme;
 
   // 感情の文脈では 緑=良い / 赤=悪い が直感的（仕様書 §5 色のルール）
-  static const bullColor = Color(0xFF26A69A);
-  static const bearColor = Color(0xFFEF5350);
+  static const bullColor = AppColors.bull;
+  static const bearColor = AppColors.bear;
 
   _CandlePainter({
     required this.candles,
@@ -215,16 +216,22 @@ class _CandlePainter extends CustomPainter {
         wickPaint,
       );
 
-      // 実体（同事線に近い時も最低1.5pxは描く）
+      // 実体（丸みをつけて柔らかく。同事線に近い時も最低2pxは描く）
       final top = yFor(max(c.open, c.close));
       final bottom = yFor(min(c.open, c.close));
       final rect = Rect.fromLTRB(
         cx - bodyWidth / 2,
         top,
         cx + bodyWidth / 2,
-        max(bottom, top + 1.5),
+        max(bottom, top + 2),
       );
-      canvas.drawRect(rect, bodyPaint);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          rect,
+          Radius.circular((bodyWidth * 0.3).clamp(1.0, 5.0)),
+        ),
+        bodyPaint,
+      );
     }
   }
 
@@ -235,7 +242,8 @@ class _CandlePainter extends CustomPainter {
     double startX,
     double Function(double) yFor,
   ) {
-    final lineColor = theme.colorScheme.primary;
+    // ダーク基調のprimaryではなく、温かいグリーンで描く
+    const lineColor = AppColors.bull;
     final path = Path();
     for (var i = 0; i < visible.length; i++) {
       final cx = startX + i * candleWidth + candleWidth / 2;
@@ -338,7 +346,7 @@ class _CandlePainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = const Color(0xFFFFB74D)
+        ..color = AppColors.accent
         ..strokeWidth = 1.5
         ..style = PaintingStyle.stroke,
     );

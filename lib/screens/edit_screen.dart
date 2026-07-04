@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../models/models.dart';
 import '../providers.dart';
+import '../theme.dart';
 
 /// 編集画面（仕様書 §7 副次画面 / §3 微調整オプション）。
 ///
@@ -96,8 +97,8 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: total >= 0
-                        ? const Color(0xFF26A69A)
-                        : const Color(0xFFEF5350),
+                        ? AppColors.bull
+                        : AppColors.bear,
                   ),
                 ),
               ],
@@ -142,8 +143,8 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = event.isPositive
-        ? const Color(0xFF26A69A)
-        : const Color(0xFFEF5350);
+        ? AppColors.bull
+        : AppColors.bear;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
