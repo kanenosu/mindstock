@@ -6,6 +6,7 @@ import '../models/models.dart';
 import '../providers.dart';
 import 'entry_screen.dart';
 import 'review_screen.dart';
+import '../theme.dart';
 
 /// カレンダー／一覧画面（仕様書 §7-4）。
 ///
@@ -22,7 +23,7 @@ class CalendarScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('記録一覧'),
+        title: const Text('記録'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_calendar_outlined),
@@ -67,7 +68,7 @@ class _EntryTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final total = entry.events.fold<double>(0, (sum, e) => sum + e.delta);
-    final color = total >= 0 ? const Color(0xFF26A69A) : const Color(0xFFEF5350);
+    final color = total >= 0 ? AppColors.bull : AppColors.bear;
     final preview = entry.text.replaceAll('\n', ' ');
 
     return ListTile(

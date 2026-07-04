@@ -7,6 +7,7 @@ import '../models/models.dart';
 import '../providers.dart';
 import '../widgets/candlestick_chart.dart';
 import 'review_screen.dart';
+import '../theme.dart';
 
 /// メインチャート画面（仕様書 §7-2）。
 ///
@@ -30,7 +31,7 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('人生チャート'),
+        title: const Text('推移'),
         actions: [
           SegmentedButton<bool>(
             segments: const [
@@ -145,8 +146,8 @@ class _ComparisonCards extends StatelessWidget {
                 label: label,
                 value: '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}',
                 color: diff >= 0
-                    ? const Color(0xFF26A69A)
-                    : const Color(0xFFEF5350),
+                    ? AppColors.bull
+                    : AppColors.bear,
               ),
         ],
       ),

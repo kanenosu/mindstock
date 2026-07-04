@@ -6,6 +6,7 @@ import '../logic/chart_calculator.dart';
 import '../models/models.dart';
 import '../providers.dart';
 import 'edit_screen.dart';
+import '../theme.dart';
 
 /// 振り返り画面（仕様書 §7-3）。
 ///
@@ -79,8 +80,8 @@ class ReviewScreen extends ConsumerWidget {
                 '今との差',
                 '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}',
                 color: diff >= 0
-                    ? const Color(0xFF26A69A)
-                    : const Color(0xFFEF5350),
+                    ? AppColors.bull
+                    : AppColors.bear,
               ),
           ],
         ),
@@ -147,8 +148,8 @@ class ReviewScreen extends ConsumerWidget {
                         e.isPositive ? Icons.trending_up : Icons.trending_down,
                         size: 16,
                         color: e.isPositive
-                            ? const Color(0xFF26A69A)
-                            : const Color(0xFFEF5350),
+                            ? AppColors.bull
+                            : AppColors.bear,
                       ),
                       label: Text('${e.name} ${e.isPositive ? '+' : '-'}'
                           '${e.weight.toStringAsFixed(1)}'),

@@ -6,7 +6,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/chart_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/entry_screen.dart';
 import 'screens/settings_screen.dart';
+import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,15 +21,9 @@ class MindStockApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ローソク足が主役なので、チャートの視認性を最優先にした
-    // ダーク基調の配色（仕様書 §8）。
-    final scheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF26A69A),
-      brightness: Brightness.dark,
-    );
     return MaterialApp(
       title: 'MindStock',
-      theme: ThemeData(colorScheme: scheme, useMaterial3: true),
+      theme: buildAppTheme(),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
@@ -40,8 +36,7 @@ class MindStockApp extends StatelessWidget {
   }
 }
 
-/// ボトムナビゲーション。ダッシュボードを玄関にし、
-/// 入力はダッシュボードのクイック入力から（最速・最低ハードル）。
+/// ボトムナビゲーション: ホーム / 日記 / 推移 / 記録 / 設定。
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -55,8 +50,11 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      // ミニチャートのタップでチャートタブへ
-      DashboardScreen(onOpenChart: () => setState(() => _index = 1)),
+      DashboardScreen(
+        onOpenChart: () => setState(() => _index = 2),
+        onOpenDiary: () => setState(() => _index = 1),
+      ),
+      const EntryScreen(),
       const ChartScreen(),
       const CalendarScreen(),
       const SettingsScreen(),
@@ -73,14 +71,19 @@ class _HomeShellState extends State<HomeShell> {
             label: 'ホーム',
           ),
           NavigationDestination(
-            icon: Icon(Icons.candlestick_chart_outlined),
-            selectedIcon: Icon(Icons.candlestick_chart),
-            label: 'チャート',
+            icon: Icon(Icons.edit_outlined),
+            selectedIcon: Icon(Icons.edit),
+            label: '日記',
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: '一覧',
+            icon: Icon(Icons.candlestick_chart_outlined),
+            selectedIcon: Icon(Icons.candlestick_chart),
+            label: '推移',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.article_outlined),
+            selectedIcon: Icon(Icons.article),
+            label: '記録',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
