@@ -4,11 +4,51 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'logic/chart_calculator.dart';
 import 'models/models.dart';
 import 'services/database_service.dart';
+import 'services/demo_data.dart';
 import 'services/diary_analyzer.dart';
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
-/// Claude APIキー（設定画面から保存）。空ならヒューリスティック解析。
+/// AI解析のモード。当面はデモ解析を既定にする（API は一旦デモで）。
+enum AnalyzerMode {
+  /// API不要のデモ解析（文抽出＋擬似採点）
+  demo,
+
+  /// Claude API による本解析
+  api;
+
+  String get label => switch (this) {
+    AnalyzerMode.demo => 'デモ解析',
+    AnalyzerMode.api => 'Claude API',
+  };
+}
+
+final analyzerModeProvider =
+    AsyncNotifierProvider<AnalyzerModeNotifier, AnalyzerMode>(
+      AnalyzerModeNotifier.new,
+    );
+
+class AnalyzerModeNotifier extends AsyncNotifier<AnalyzerMode> {
+  static const _prefKey = 'analyzer_mode';
+
+  @override
+  Future<AnalyzerMode> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_prefKey);
+    return AnalyzerMode.values.firstWhere(
+      (m) => m.name == name,
+      orElse: () => AnalyzerMode.demo,
+    );
+  }
+
+  Future<void> setMode(AnalyzerMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, mode.name);
+    state = AsyncData(mode);
+  }
+}
+
+/// Claude APIキー（設定画面から保存）。
 final apiKeyProvider = AsyncNotifierProvider<ApiKeyNotifier, String>(
   ApiKeyNotifier.new,
 );
@@ -30,15 +70,19 @@ class ApiKeyNotifier extends AsyncNotifier<String> {
 }
 
 final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
+  final mode = ref.watch(analyzerModeProvider).valueOrNull ?? AnalyzerMode.demo;
   final apiKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
-  if (apiKey.isEmpty) return HeuristicDiaryAnalyzer();
-  return ClaudeDiaryAnalyzer(apiKey: apiKey);
+  if (mode == AnalyzerMode.api && apiKey.isNotEmpty) {
+    return ClaudeDiaryAnalyzer(apiKey: apiKey);
+  }
+  return DemoDiaryAnalyzer();
 });
 
 /// 全エントリー。date('yyyy-MM-dd') → DiaryEntry。
-final entriesProvider = AsyncNotifierProvider<EntriesNotifier, Map<String, DiaryEntry>>(
-  EntriesNotifier.new,
-);
+final entriesProvider =
+    AsyncNotifierProvider<EntriesNotifier, Map<String, DiaryEntry>>(
+      EntriesNotifier.new,
+    );
 
 class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
   @override
@@ -48,7 +92,8 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
   /// コア体験: 書く → AIが即採点 → 即反映（確認画面なし、仕様書 §3）。
   ///
   /// 保存は解析を待たずに行い、解析が終わったら出来事だけ差し替える。
-  /// 解析に失敗してもフォールバック解析で必ずチャートに反映する。
+  /// 解析に失敗してもデモ解析で必ずチャートに反映する。
+  /// [date] を過去日にすれば「日付を選んでエントリー」になる。
   Future<void> submitDiary({
     required DateTime date,
     required String text,
@@ -67,14 +112,14 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
     );
     await _save(entry);
 
-    // 2. AI解析（失敗時はヒューリスティックにフォールバック）
+    // 2. AI解析（失敗時はデモ解析にフォールバック）
     if (text.trim().isNotEmpty) {
       final recent = _recentEntries(before: key);
       List<LifeEvent> events;
       try {
         events = await ref.read(analyzerProvider).analyze(text, recent);
       } catch (_) {
-        events = await HeuristicDiaryAnalyzer().analyze(text, recent);
+        events = await DemoDiaryAnalyzer().analyze(text, recent);
       }
       entry = entry.copyWith(events: events);
       await _save(entry);
@@ -93,6 +138,23 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
     final map = Map<String, DiaryEntry>.from(state.valueOrNull ?? {})
       ..remove(dateKey);
     state = AsyncData(map);
+  }
+
+  /// デモデータ投入（谷→回復の軌跡入り・約4ヶ月分）。同日の既存データは上書き。
+  Future<void> seedDemoData() async {
+    final db = ref.read(databaseProvider);
+    final map = Map<String, DiaryEntry>.from(state.valueOrNull ?? {});
+    for (final entry in DemoDataGenerator.generate()) {
+      await db.upsert(entry);
+      map[entry.date] = entry;
+    }
+    state = AsyncData(map);
+  }
+
+  /// 全データ削除（デモのやり直し用）。
+  Future<void> clearAll() async {
+    await ref.read(databaseProvider).deleteAll();
+    state = const AsyncData({});
   }
 
   Future<void> _save(DiaryEntry entry) async {

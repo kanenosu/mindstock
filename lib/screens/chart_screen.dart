@@ -10,7 +10,8 @@ import 'review_screen.dart';
 
 /// メインチャート画面（仕様書 §7-2）。
 ///
-/// ローソク足 + 週足/日足切り替え + 移動平均 + 指標カード（多重比較）。
+/// 日足はただの点（ライン表示）、週足に切り替えるとローソク足になる。
+/// 移動平均 + 指標カード（多重比較）+ ピンチズーム/スクロール。
 class ChartScreen extends ConsumerStatefulWidget {
   const ChartScreen({super.key});
 
@@ -54,6 +55,8 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                     child: CandlestickChart(
                       candles: candles,
                       movingAverage: ma,
+                      // 日足はただの点、週足でローソク足になる
+                      style: _weekly ? ChartStyle.candle : ChartStyle.line,
                       onSelect: (candle) => _openReview(candle),
                     ),
                   ),
@@ -61,7 +64,9 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: Text(
-                    'ピンチで拡大縮小・ドラッグでスクロール・タップでその日を振り返る',
+                    _weekly
+                        ? '週足ローソク: ヒゲはその週の最高/最低到達点。タップで振り返り'
+                        : 'ピンチで拡大縮小・ドラッグでスクロール・タップでその日を振り返る',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),

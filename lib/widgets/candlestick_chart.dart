@@ -5,21 +5,33 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../models/models.dart';
 
-/// ローソク足チャート（仕様書 §5）。
+/// チャートの描画スタイル。
+enum ChartStyle {
+  /// ローソク足（週足用）。OHLCをフルに表現する。
+  candle,
+
+  /// 点＋ライン（日足用）。その日の終値をただの点として描く。
+  line,
+}
+
+/// メインチャート（仕様書 §5）。
 ///
-/// - 緑 = 陽線（トータルでプラス）、赤 = 陰線
+/// - [ChartStyle.candle]: 緑 = 陽線（トータルでプラス）、赤 = 陰線
+/// - [ChartStyle.line]: 終値の点を線で結ぶシンプルな表示
 /// - ピンチズーム・横スクロール対応（仕様書 §6 (2)）
 /// - 移動平均線の重ね描き
-/// - ローソクをタップすると [onSelect] でその期間を通知（振り返り導線）
+/// - タップすると [onSelect] でその期間を通知（振り返り導線）
 class CandlestickChart extends StatefulWidget {
   final List<Candle> candles;
   final List<double?> movingAverage;
+  final ChartStyle style;
   final void Function(Candle candle)? onSelect;
 
   const CandlestickChart({
     super.key,
     required this.candles,
     this.movingAverage = const [],
+    this.style = ChartStyle.candle,
     this.onSelect,
   });
 
@@ -78,6 +90,7 @@ class _CandlestickChartState extends State<CandlestickChart> {
               firstVisible: visible.$1,
               lastVisible: visible.$2,
               selectedIndex: _selectedIndex,
+              style: widget.style,
               theme: Theme.of(context),
             ),
           ),
@@ -115,6 +128,7 @@ class _CandlePainter extends CustomPainter {
   final int firstVisible;
   final int lastVisible;
   final int? selectedIndex;
+  final ChartStyle style;
   final ThemeData theme;
 
   // 感情の文脈では 緑=良い / 赤=悪い が直感的（仕様書 §5 色のルール）
@@ -128,6 +142,7 @@ class _CandlePainter extends CustomPainter {
     required this.firstVisible,
     required this.lastVisible,
     required this.selectedIndex,
+    required this.style,
     required this.theme,
   });
 
@@ -136,8 +151,13 @@ class _CandlePainter extends CustomPainter {
     final visible = candles.sublist(firstVisible, lastVisible + 1);
     if (visible.isEmpty) return;
 
-    var minV = visible.map((c) => c.low).reduce(min);
-    var maxV = visible.map((c) => c.high).reduce(max);
+    // ラインモードは終値しか描かないので、終値だけでスケーリングする
+    var minV = style == ChartStyle.line
+        ? visible.map((c) => c.close).reduce(min)
+        : visible.map((c) => c.low).reduce(min);
+    var maxV = style == ChartStyle.line
+        ? visible.map((c) => c.close).reduce(max)
+        : visible.map((c) => c.high).reduce(max);
     for (var i = firstVisible; i <= lastVisible; i++) {
       final ma = i < movingAverage.length ? movingAverage[i] : null;
       if (ma != null) {
@@ -158,6 +178,24 @@ class _CandlePainter extends CustomPainter {
     _drawGrid(canvas, size, minV, maxV, yFor);
 
     final startX = size.width - visible.length * candleWidth;
+
+    if (style == ChartStyle.line) {
+      _drawLine(canvas, visible, startX, yFor);
+    } else {
+      _drawCandles(canvas, visible, startX, yFor);
+    }
+
+    _drawSelection(canvas, startX, topMargin, chartHeight);
+    _drawMovingAverage(canvas, startX, yFor);
+    _drawDateLabels(canvas, size, visible, startX);
+  }
+
+  void _drawCandles(
+    Canvas canvas,
+    List<Candle> visible,
+    double startX,
+    double Function(double) yFor,
+  ) {
     final bodyWidth = candleWidth * 0.66;
     final wickPaint = Paint()..strokeWidth = max(1, candleWidth / 12);
     final bodyPaint = Paint();
@@ -187,24 +225,68 @@ class _CandlePainter extends CustomPainter {
         max(bottom, top + 1.5),
       );
       canvas.drawRect(rect, bodyPaint);
+    }
+  }
 
-      if (firstVisible + i == selectedIndex) {
-        canvas.drawRect(
-          Rect.fromLTRB(
-            cx - candleWidth / 2,
-            topMargin,
-            cx + candleWidth / 2,
-            topMargin + chartHeight,
-          ),
-          Paint()
-            ..color = theme.colorScheme.primary.withValues(alpha: 0.15)
-            ..style = PaintingStyle.fill,
-        );
+  /// 日足用: 終値をただの点として描き、線で結ぶ。
+  void _drawLine(
+    Canvas canvas,
+    List<Candle> visible,
+    double startX,
+    double Function(double) yFor,
+  ) {
+    final lineColor = theme.colorScheme.primary;
+    final path = Path();
+    for (var i = 0; i < visible.length; i++) {
+      final cx = startX + i * candleWidth + candleWidth / 2;
+      final cy = yFor(visible[i].close);
+      if (i == 0) {
+        path.moveTo(cx, cy);
+      } else {
+        path.lineTo(cx, cy);
       }
     }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = lineColor.withValues(alpha: 0.8)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
 
-    _drawMovingAverage(canvas, startX, yFor);
-    _drawDateLabels(canvas, size, visible, startX);
+    // 記録がある日だけ点を強調する（空白日は線のみ = 平穏な日）
+    final dotRadius = (candleWidth / 4).clamp(1.5, 4.0);
+    final dotPaint = Paint()..color = lineColor;
+    for (var i = 0; i < visible.length; i++) {
+      if (!visible[i].hasEntry) continue;
+      final cx = startX + i * candleWidth + candleWidth / 2;
+      canvas.drawCircle(Offset(cx, yFor(visible[i].close)), dotRadius, dotPaint);
+    }
+  }
+
+  void _drawSelection(
+    Canvas canvas,
+    double startX,
+    double topMargin,
+    double chartHeight,
+  ) {
+    final selected = selectedIndex;
+    if (selected == null || selected < firstVisible || selected > lastVisible) {
+      return;
+    }
+    final cx =
+        startX + (selected - firstVisible) * candleWidth + candleWidth / 2;
+    canvas.drawRect(
+      Rect.fromLTRB(
+        cx - candleWidth / 2,
+        topMargin,
+        cx + candleWidth / 2,
+        topMargin + chartHeight,
+      ),
+      Paint()
+        ..color = theme.colorScheme.primary.withValues(alpha: 0.15)
+        ..style = PaintingStyle.fill,
+    );
   }
 
   void _drawGrid(
@@ -294,5 +376,6 @@ class _CandlePainter extends CustomPainter {
       old.firstVisible != firstVisible ||
       old.lastVisible != lastVisible ||
       old.selectedIndex != selectedIndex ||
+      old.style != style ||
       old.movingAverage != movingAverage;
 }

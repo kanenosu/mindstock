@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 
 import '../models/models.dart';
 import '../providers.dart';
+import 'entry_screen.dart';
 import 'review_screen.dart';
 
 /// カレンダー／一覧画面（仕様書 §7-4）。
 ///
 /// 記録した日の一覧。各日を開くと振り返り → そこから編集画面に入れる。
+/// 右上から日付を選んで未記録の日のエントリーも書ける。
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
 
@@ -19,7 +21,30 @@ class CalendarScreen extends ConsumerWidget {
       ..sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('記録一覧')),
+      appBar: AppBar(
+        title: const Text('記録一覧'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_calendar_outlined),
+            tooltip: '日付を選んで書く',
+            onPressed: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: now,
+                firstDate: DateTime(now.year - 10),
+                lastDate: now,
+              );
+              if (picked == null || !context.mounted) return;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EntryScreen(initialDate: picked),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: sorted.isEmpty
           ? const Center(child: Text('まだ記録がありません'))
           : ListView.separated(

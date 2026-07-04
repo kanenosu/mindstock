@@ -144,6 +144,109 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
   }
 }
 
+/// デモ解析器（API不要）。
+///
+/// Claude APIを使わずに「AIが解析した風」の結果を返す。
+/// 文単位で出来事を抽出し、名前は文そのものから切り出すので
+/// キーワードの羅列より本物の解析に近い見た目になる。
+/// 快楽順応（似た出来事の減衰）と損失回避（ネガティブ1.4倍）も
+/// 本実装と同じ思想でシミュレートする。
+class DemoDiaryAnalyzer implements DiaryAnalyzer {
+  /// 損失回避: ネガティブを1.4倍重く見る（仕様書 §4）。
+  static const _lossAversion = 1.4;
+
+  /// 快楽順応: 直近に似た出来事が1回あるごとに0.7倍に減衰。
+  static const _adaptationDecay = 0.7;
+
+  static const _milestoneWords = [
+    '合格', '不合格', '内定', '退職', '転職', '失恋', '結婚', '離婚',
+    '出産', '入学', '卒業', '引っ越し', '昇進', '起業',
+  ];
+
+  @override
+  Future<List<LifeEvent>> analyze(
+    String text,
+    List<DiaryEntry> recentEntries,
+  ) async {
+    final sentences = text
+        .split(RegExp(r'[。！!？?\n]+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    final scored = <LifeEvent>[];
+    for (final sentence in sentences) {
+      final event = _scoreSentence(sentence);
+      if (event != null) scored.add(_applyAdaptation(event, recentEntries));
+    }
+
+    scored.sort((a, b) => b.weight.compareTo(a.weight));
+    if (scored.isEmpty && text.trim().isNotEmpty) {
+      scored.add(
+        const LifeEvent(
+          name: '日記を書いた',
+          kind: EventKind.daily,
+          isPositive: true,
+          weight: 0.5,
+        ),
+      );
+    }
+    return scored.take(4).toList();
+  }
+
+  LifeEvent? _scoreSentence(String sentence) {
+    double positive = 0;
+    double negative = 0;
+    for (final e in HeuristicDiaryAnalyzer._positiveWords.entries) {
+      if (sentence.contains(e.key)) positive += e.value;
+    }
+    for (final e in HeuristicDiaryAnalyzer._negativeWords.entries) {
+      if (sentence.contains(e.key)) negative += e.value;
+    }
+    if (positive == 0 && negative == 0) return null;
+
+    final isPositive = positive >= negative;
+    var weight = (isPositive ? positive : negative * _lossAversion).clamp(
+      0.5,
+      10.0,
+    );
+
+    final isMilestone = _milestoneWords.any(sentence.contains);
+    final kind = isMilestone
+        ? EventKind.milestone
+        : (weight <= 2 ? EventKind.mood : EventKind.daily);
+    if (isMilestone) weight = weight.clamp(4.0, 10.0);
+
+    // 名前は文の先頭から切り出す（AIが要約した風の見た目）
+    final name = sentence.length <= 15 ? sentence : sentence.substring(0, 15);
+    return LifeEvent(
+      name: name,
+      kind: kind,
+      isPositive: isPositive,
+      weight: double.parse(weight.toStringAsFixed(1)),
+    );
+  }
+
+  /// 快楽順応: 直近の日記に似た名前の出来事があれば減衰させる。
+  LifeEvent _applyAdaptation(LifeEvent event, List<DiaryEntry> recent) {
+    final prefix = event.name.length <= 4
+        ? event.name
+        : event.name.substring(0, 4);
+    var count = 0;
+    for (final entry in recent) {
+      for (final past in entry.events) {
+        if (past.name.startsWith(prefix)) count++;
+      }
+    }
+    if (count == 0) return event;
+    final decayed = event.weight *
+        List.filled(count, _adaptationDecay).fold<double>(1, (a, b) => a * b);
+    return event.copyWith(
+      weight: double.parse(decayed.clamp(0.3, 10.0).toStringAsFixed(1)),
+    );
+  }
+}
+
 /// APIキー未設定・オフライン時のフォールバック。
 /// 簡易的なキーワード採点で「書けば必ずチャートに反映される」体験を守る。
 class HeuristicDiaryAnalyzer implements DiaryAnalyzer {
