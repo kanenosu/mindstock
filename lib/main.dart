@@ -24,6 +24,7 @@ class MindStockApp extends StatelessWidget {
     return MaterialApp(
       title: 'MindStock',
       theme: buildAppTheme(),
+      scrollBehavior: const _BouncyScrollBehavior(),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
@@ -63,7 +64,12 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(index: _index, children: screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) {
+          // 日記のテキスト欄のフォーカス・選択ハンドルが
+          // 他のタブに残らないよう、切替時に必ず解除する
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() => _index = i);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -94,4 +100,13 @@ class _HomeShellState extends State<HomeShell> {
       ),
     );
   }
+}
+
+/// iPhone風のバウンススクロールを全画面に適用する。
+class _BouncyScrollBehavior extends MaterialScrollBehavior {
+  const _BouncyScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }

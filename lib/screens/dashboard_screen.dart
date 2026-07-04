@@ -120,7 +120,9 @@ class _LifeIndexCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = daily.isNotEmpty ? daily.last.close : null;
     final diffYesterday = ChartCalculator.changeSince(daily, 1);
-    final pct = (current != null && diffYesterday != null &&
+    final pct =
+        (current != null &&
+            diffYesterday != null &&
             (current - diffYesterday).abs() > 1e-9)
         ? diffYesterday / (current - diffYesterday) * 100
         : null;
@@ -160,16 +162,11 @@ class _LifeIndexCard extends StatelessWidget {
                   children: [
                     Text(
                       NumberFormat('#,##0.0').format(current),
-                      style: Theme.of(context)
-                          .textTheme
-                          .displaySmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            height: 1.0,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ],
-                          ),
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
                     const SizedBox(width: 8),
                     if (pct != null)
@@ -253,7 +250,8 @@ class _LifeIndexCard extends StatelessWidget {
       return '最初の日記を書くと、ここに人生のチャートが生まれる。';
     }
     final y = ChartCalculator.changeSince(daily, 1) ?? 0;
-    final long = ChartCalculator.changeSince(daily, 182) ??
+    final long =
+        ChartCalculator.changeSince(daily, 182) ??
         ChartCalculator.changeSince(daily, 30);
 
     if (y < 0 && long != null && long > 0) {
@@ -291,9 +289,9 @@ class _StatRow extends StatelessWidget {
             label: '平穏日',
             child: Text(
               '$calmDays日',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
         ),
@@ -355,76 +353,76 @@ class _TodayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final written = entry != null &&
-        (entry!.text.isNotEmpty || entry!.moodScore != null);
-    final total =
-        entry?.events.fold<double>(0, (sum, e) => sum + e.delta) ?? 0;
+    final written =
+        entry != null && (entry!.text.isNotEmpty || entry!.moodScore != null);
+    final total = entry?.events.fold<double>(0, (sum, e) => sum + e.delta) ?? 0;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  '今日の記録',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onWrite,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    '今日の記録',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  written
-                      ? '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}'
-                      : '30秒でOK',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: written
-                        ? (total >= 0 ? AppColors.bull : AppColors.bear)
-                        : AppColors.inkSoft,
-                    fontWeight: FontWeight.w800,
+                  const Spacer(),
+                  Text(
+                    written
+                        ? '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}'
+                        : '30秒でOK',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: written
+                          ? (total >= 0 ? AppColors.bull : AppColors.bear)
+                          : AppColors.inkSoft,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        written
-                            ? (entry!.text.isEmpty
-                                  ? '気分だけ記録した日'
-                                  : entry!.text.replaceAll('\n', ' '))
-                            : 'まだ書いてない',
-                        maxLines: written ? 2 : 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          written
+                              ? (entry!.text.isEmpty
+                                    ? '気分だけ記録した日'
+                                    : entry!.text.replaceAll('\n', ' '))
+                              : 'まだ書いてない',
+                          maxLines: written ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        written
-                            ? 'タップで続きを書ける。微調整もここから。'
-                            : '文章でも、気分スライダーだけでもいい。空白でも罰しない。',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.inkSoft,
-                          height: 1.5,
+                        const SizedBox(height: 4),
+                        Text(
+                          written
+                              ? 'タップで続きを書ける。微調整もここから。'
+                              : '文章でも、気分の絵文字ひとつでもいい。空白でも罰しない。',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.inkSoft, height: 1.5),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                _writeButton(),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12),
+                  _writeButton(),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -464,9 +462,9 @@ class _RecentSection extends StatelessWidget {
       children: [
         Text(
           '最近の記録',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Card(
