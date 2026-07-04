@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../logic/chart_calculator.dart';
 import '../providers.dart';
+import '../theme.dart';
 
 /// 日記入力画面（仕様書 §7-1）。
 ///
 /// コア体験: 書く → 送信 → AIが即採点 → その日のローソク足に自動反映。
-/// 確認画面は挟まない。気分スライダーは「軽めの日」用（任意）。
-/// [initialDate] を渡すと過去の日付のエントリーを書ける。
-/// AppBarの日付をタップして日付を変更することもできる。
+/// 確認画面は挟まない。
+///
+/// 気分は絵文字を1つ選ぶだけ（軽めの日用の入力階層、仕様書 §2）。
+/// 文章を書いた日は気分は使わず、採点はAIに任せる —
+/// なので本文を書き始めると絵文字ピッカーは畳まれる。
 class EntryScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
 
@@ -25,6 +29,9 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
   late DateTime _date;
   double? _mood;
   bool _submitting = false;
+
+  bool get _hasText => _controller.text.trim().isNotEmpty;
+  bool get _canSubmit => _hasText || _mood != null;
 
   @override
   void initState() {
@@ -64,13 +71,18 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
   Future<void> _submit() async {
     final text = _controller.text.trim();
-    if (text.isEmpty && _mood == null) return;
+    if (!_canSubmit) return;
     setState(() => _submitting = true);
     try {
-      await ref
-          .read(entriesProvider.notifier)
-          .submitDiary(date: _date, text: text, moodScore: _mood);
+      await ref.read(entriesProvider.notifier).submitDiary(
+        date: _date,
+        text: text,
+        // 文章を書いた日は気分は使わない — 採点はAIに任せる
+        moodScore: text.isNotEmpty ? null : _mood,
+      );
       if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      FocusManager.instance.primaryFocus?.unfocus();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('記録しました。チャートに反映済みです')),
       );
@@ -113,21 +125,42 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
+                  onChanged: (_) => setState(() {}),
+                  onTapOutside: (_) =>
+                      FocusManager.instance.primaryFocus?.unfocus(),
                   decoration: const InputDecoration(
                     hintText: '今日のことを、ただ書くだけ。',
                     border: InputBorder.none,
+                    filled: false,
                   ),
                   style: const TextStyle(fontSize: 16, height: 1.7),
                 ),
               ),
               const SizedBox(height: 8),
-              _MoodSlider(
-                value: _mood,
-                onChanged: (v) => setState(() => _mood = v),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _hasText
+                    ? Padding(
+                        key: const ValueKey('note'),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          '文章を書いた日は、採点はAIにおまかせ。',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: AppColors.inkSoft),
+                        ),
+                      )
+                    : MoodEmojiPicker(
+                        key: const ValueKey('picker'),
+                        value: _mood,
+                        onChanged: (v) => setState(() => _mood = v),
+                      ),
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
-                onPressed: _submitting ? null : _submit,
+                onPressed: (_submitting || !_canSubmit) ? null : _submit,
                 icon: _submitting
                     ? const SizedBox(
                         width: 18,
@@ -148,46 +181,106 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
   }
 }
 
-/// 気分スライダー（軽めの日用の入力階層、仕様書 §2）。
-class _MoodSlider extends StatelessWidget {
+/// 気分の絵文字ピッカー。タップひとつで完了する最軽量の入力（仕様書 §2 軽め）。
+/// もう一度タップで解除。値は従来の気分スコア(0〜10)にマッピングして保存する。
+class MoodEmojiPicker extends StatelessWidget {
   final double? value;
   final ValueChanged<double?> onChanged;
 
-  const _MoodSlider({required this.value, required this.onChanged});
+  const MoodEmojiPicker({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  static const moods = [
+    ('😢', 1.0),
+    ('😕', 3.0),
+    ('😐', 5.0),
+    ('🙂', 7.0),
+    ('😄', 9.0),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text('この日の気分', style: Theme.of(context).textTheme.labelLarge),
-            const Spacer(),
-            if (value != null)
-              TextButton(
-                onPressed: () => onChanged(null),
-                child: const Text('クリア'),
-              ),
-          ],
+        Text(
+          '書かない日は、気分をひとつだけ。',
+          style: Theme.of(context)
+              .textTheme
+              .labelMedium
+              ?.copyWith(color: AppColors.inkSoft),
         ),
+        const SizedBox(height: 8),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('😞'),
-            Expanded(
-              child: Slider(
-                value: value ?? 5,
-                min: 0,
-                max: 10,
-                divisions: 20,
-                label: value?.toStringAsFixed(1),
-                onChanged: onChanged,
+            for (final (emoji, score) in moods)
+              _MoodButton(
+                emoji: emoji,
+                selected: value == score,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onChanged(value == score ? null : score);
+                },
               ),
-            ),
-            const Text('😊'),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _MoodButton extends StatelessWidget {
+  final String emoji;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MoodButton({
+    required this.emoji,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.card : Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? AppColors.accent : Colors.transparent,
+          width: 2,
+        ),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: AppColors.ink.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: AnimatedScale(
+              scale: selected ? 1.25 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              child: Text(emoji, style: const TextStyle(fontSize: 26)),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

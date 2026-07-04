@@ -9,45 +9,6 @@ import 'services/diary_analyzer.dart';
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
-/// AI解析のモード。当面はデモ解析を既定にする（API は一旦デモで）。
-enum AnalyzerMode {
-  /// API不要のデモ解析（文抽出＋擬似採点）
-  demo,
-
-  /// Claude API による本解析
-  api;
-
-  String get label => switch (this) {
-    AnalyzerMode.demo => 'デモ解析',
-    AnalyzerMode.api => 'Claude API',
-  };
-}
-
-final analyzerModeProvider =
-    AsyncNotifierProvider<AnalyzerModeNotifier, AnalyzerMode>(
-      AnalyzerModeNotifier.new,
-    );
-
-class AnalyzerModeNotifier extends AsyncNotifier<AnalyzerMode> {
-  static const _prefKey = 'analyzer_mode';
-
-  @override
-  Future<AnalyzerMode> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString(_prefKey);
-    return AnalyzerMode.values.firstWhere(
-      (m) => m.name == name,
-      orElse: () => AnalyzerMode.demo,
-    );
-  }
-
-  Future<void> setMode(AnalyzerMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey, mode.name);
-    state = AsyncData(mode);
-  }
-}
-
 /// Claude APIキー（設定画面から保存）。
 final apiKeyProvider = AsyncNotifierProvider<ApiKeyNotifier, String>(
   ApiKeyNotifier.new,
@@ -69,12 +30,11 @@ class ApiKeyNotifier extends AsyncNotifier<String> {
   }
 }
 
+/// APIキーが設定されていれば Claude API、なければ端末内の簡易解析。
+/// モード切替のUIは持たない — キーの有無で自動的に決まる。
 final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
-  final mode = ref.watch(analyzerModeProvider).valueOrNull ?? AnalyzerMode.demo;
   final apiKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
-  if (mode == AnalyzerMode.api && apiKey.isNotEmpty) {
-    return ClaudeDiaryAnalyzer(apiKey: apiKey);
-  }
+  if (apiKey.isNotEmpty) return ClaudeDiaryAnalyzer(apiKey: apiKey);
   return DemoDiaryAnalyzer();
 });
 

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../models/models.dart';
@@ -82,6 +83,15 @@ class _CandlestickChartState extends State<CandlestickChart> {
             });
           },
           onTapUp: (details) => _handleTap(details.localPosition, size),
+          // ダブルタップでズーム・位置を最新にリセット
+          onDoubleTap: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              _candleWidth = 14;
+              _scrollOffset = 0;
+              _selectedIndex = null;
+            });
+          },
           child: CustomPaint(
             size: size,
             painter: _CandlePainter(
@@ -117,6 +127,7 @@ class _CandlestickChartState extends State<CandlestickChart> {
     final startX = size.width - visibleCount * _candleWidth;
     final index = first + ((position.dx - startX) / _candleWidth).floor();
     if (index < first || index > last) return;
+    HapticFeedback.selectionClick();
     setState(() => _selectedIndex = index);
     widget.onSelect?.call(widget.candles[index]);
   }
@@ -236,14 +247,14 @@ class _CandlePainter extends CustomPainter {
   }
 
   /// 日足用: 終値をただの点として描き、線で結ぶ。
+  /// 点はその日の方向で緑（プラス）/ 赤（マイナス）に色分けする。
   void _drawLine(
     Canvas canvas,
     List<Candle> visible,
     double startX,
     double Function(double) yFor,
   ) {
-    // ダーク基調のprimaryではなく、温かいグリーンで描く
-    const lineColor = AppColors.bull;
+    // 線は主張しないニュートラルな色。日の良し悪しは点の色で語る
     final path = Path();
     for (var i = 0; i < visible.length; i++) {
       final cx = startX + i * candleWidth + candleWidth / 2;
@@ -257,18 +268,28 @@ class _CandlePainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = lineColor.withValues(alpha: 0.8)
+        ..color = AppColors.ink.withValues(alpha: 0.25)
         ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke,
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
     );
 
-    // 記録がある日だけ点を強調する（空白日は線のみ = 平穏な日）
-    final dotRadius = (candleWidth / 4).clamp(1.5, 4.0);
-    final dotPaint = Paint()..color = lineColor;
+    // 記録がある日だけ点を打つ（空白日は線のみ = 平穏な日）。
+    // 緑 = その日トータルでプラス、赤 = マイナス。
+    final dotRadius = (candleWidth / 4).clamp(2.0, 5.0);
     for (var i = 0; i < visible.length; i++) {
-      if (!visible[i].hasEntry) continue;
+      final c = visible[i];
+      if (!c.hasEntry) continue;
       final cx = startX + i * candleWidth + candleWidth / 2;
-      canvas.drawCircle(Offset(cx, yFor(visible[i].close)), dotRadius, dotPaint);
+      final center = Offset(cx, yFor(c.close));
+      final color = c.isBullish ? bullColor : bearColor;
+      // 白フチをつけて点を際立たせる
+      canvas.drawCircle(
+        center,
+        dotRadius + 1.5,
+        Paint()..color = theme.scaffoldBackgroundColor,
+      );
+      canvas.drawCircle(center, dotRadius, Paint()..color = color);
     }
   }
 

@@ -56,6 +56,13 @@ ThemeData buildAppTheme() {
 
   return base.copyWith(
     scaffoldBackgroundColor: AppColors.cream,
+    // iPhone風の横スライド遷移（戻るスワイプ対応）
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
     textTheme: base.textTheme.apply(
       bodyColor: AppColors.ink,
       displayColor: AppColors.ink,
