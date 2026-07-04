@@ -54,4 +54,9 @@ class DatabaseService {
     final db = await database;
     await db.delete(_table, where: 'date = ?', whereArgs: [date]);
   }
+
+  Future<void> deleteAll() async {
+    final db = await database;
+    await db.delete(_table);
+  }
 }

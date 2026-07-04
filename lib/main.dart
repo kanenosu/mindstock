@@ -5,7 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'screens/calendar_screen.dart';
 import 'screens/chart_screen.dart';
-import 'screens/entry_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/settings_screen.dart';
 
 Future<void> main() async {
@@ -40,7 +40,8 @@ class MindStockApp extends StatelessWidget {
   }
 }
 
-/// ボトムナビゲーション。「書く」をチャートの隣に置き、最速で入力に入れるようにする。
+/// ボトムナビゲーション。ダッシュボードを玄関にし、
+/// 入力はダッシュボードのクイック入力から（最速・最低ハードル）。
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -51,30 +52,30 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  static const _screens = [
-    ChartScreen(),
-    EntryScreen(),
-    CalendarScreen(),
-    SettingsScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      // ミニチャートのタップでチャートタブへ
+      DashboardScreen(onOpenChart: () => setState(() => _index = 1)),
+      const ChartScreen(),
+      const CalendarScreen(),
+      const SettingsScreen(),
+    ];
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: IndexedStack(index: _index, children: screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'ホーム',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.candlestick_chart_outlined),
             selectedIcon: Icon(Icons.candlestick_chart),
             label: 'チャート',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.edit_outlined),
-            selectedIcon: Icon(Icons.edit),
-            label: '書く',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
