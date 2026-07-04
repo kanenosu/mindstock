@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -68,6 +69,7 @@ class _HomeShellState extends State<HomeShell> {
           // 日記のテキスト欄のフォーカス・選択ハンドルが
           // 他のタブに残らないよう、切替時に必ず解除する
           FocusManager.instance.primaryFocus?.unfocus();
+          if (i != _index) HapticFeedback.selectionClick();
           setState(() => _index = i);
         },
         destinations: const [

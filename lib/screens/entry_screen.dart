@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../logic/chart_calculator.dart';
 import '../providers.dart';
 import '../theme.dart';
+import '../widgets/diary_calendar.dart';
 
 /// 日記入力画面（仕様書 §7-1）。
 ///
@@ -56,15 +57,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
     setState(() => _mood = entry?.moodScore);
   }
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime(now.year - 10),
-      lastDate: now,
-    );
-    if (picked == null) return;
+  void _selectDate(DateTime picked) {
     setState(() => _date = DateTime(picked.year, picked.month, picked.day));
     _loadEntryFor(_date);
   }
@@ -94,31 +87,27 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final label = DateFormat('M月d日 (E)', 'ja').format(_date);
+    final today = DateTime.now();
+    final isToday = DateUtils.isSameDay(_date, today);
+    final label = isToday
+        ? '今日の日記'
+        : DateFormat('M月d日 (E) の日記', 'ja').format(_date);
     return Scaffold(
       appBar: AppBar(
-        title: InkWell(
-          onTap: _pickDate,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label),
-                const SizedBox(width: 4),
-                const Icon(Icons.arrow_drop_down),
-              ],
-            ),
-          ),
+        title: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(label, key: ValueKey(label)),
         ),
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // カレンダーから日付を選んですぐ移動できる（緑● / 赤● = その日の記録）
+              DiaryCalendar(selected: _date, onSelect: _selectDate),
+              const SizedBox(height: 4),
               Expanded(
                 child: TextField(
                   controller: _controller,

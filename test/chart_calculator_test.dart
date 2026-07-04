@@ -137,6 +137,56 @@ void main() {
     });
   });
 
+  group('monthlyCandles', () {
+    test('月足は 始値=月初、終値=月末、高値/安値=月間の極値', () {
+      final entries = {
+        '2026-01-05': entry('2026-01-05', [ev(5)]),
+        '2026-01-20': entry('2026-01-20', [ev(8, positive: false)]),
+        '2026-02-03': entry('2026-02-03', [ev(2)]),
+      };
+      final daily = ChartCalculator.dailyCandles(
+        entries,
+        until: DateTime(2026, 2, 10),
+      );
+      final monthly = ChartCalculator.monthlyCandles(daily);
+
+      expect(monthly, hasLength(2));
+      expect(monthly.first.date, DateTime(2026, 1));
+      expect(monthly.last.date, DateTime(2026, 2));
+
+      final jan = daily.where((c) => c.date.month == 1).toList();
+      expect(monthly.first.open, jan.first.open);
+      expect(monthly.first.close, jan.last.close);
+      expect(
+        monthly.first.high,
+        jan.map((c) => c.high).reduce((a, b) => a > b ? a : b),
+      );
+      expect(
+        monthly.first.low,
+        jan.map((c) => c.low).reduce((a, b) => a < b ? a : b),
+      );
+      // 月をまたいで終値が引き継がれる
+      expect(monthly.last.open, monthly.first.close);
+    });
+
+    test('forTimeframe は時間軸に応じた足を返す', () {
+      final entries = {'2026-01-05': entry('2026-01-05', [ev(1)])};
+      final daily = ChartCalculator.dailyCandles(
+        entries,
+        until: DateTime(2026, 1, 12),
+      );
+      expect(ChartCalculator.forTimeframe(daily, Timeframe.daily), daily);
+      expect(
+        ChartCalculator.forTimeframe(daily, Timeframe.weekly).length,
+        ChartCalculator.weeklyCandles(daily).length,
+      );
+      expect(
+        ChartCalculator.forTimeframe(daily, Timeframe.monthly),
+        hasLength(1),
+      );
+    });
+  });
+
   group('movingAverage', () {
     test('期間未満は null、以降は直近N本の終値平均', () {
       final entries = {

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -14,11 +15,11 @@ import 'review_screen.dart';
 /// ダッシュボード（ホーム画面）。株アプリ風 × 温かいトーン。
 ///
 /// - Life Index: 現在値を株価指数風に大きく表示 + 前日比% + トレンドバッジ
-/// - ミニローソク足チャート（タップで推移タブへ）
+/// - チャート: 日/週/月の切り替えと横スクロールに対応（タップで推移タブへ）
 /// - 統計カード: 1ヶ月前 / 半年前 / 平穏日
 /// - 今日の記録カード（まだ書いてなければ書くボタン、30秒でOK）
 class DashboardScreen extends ConsumerWidget {
-  /// ミニチャートタップ時に推移タブへ切り替えるコールバック。
+  /// チャートタップ時に推移タブへ切り替えるコールバック。
   final VoidCallback onOpenChart;
 
   /// 「書く」ボタンで日記タブへ切り替えるコールバック。
@@ -33,7 +34,6 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final daily = ref.watch(dailyCandlesProvider);
-    final weekly = ref.watch(weeklyCandlesProvider);
     final entries = ref.watch(entriesProvider).valueOrNull ?? {};
     final todayKey = ChartCalculator.dateKey(DateTime.now());
     final todayEntry = entries[todayKey];
@@ -43,9 +43,9 @@ class DashboardScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
-            _header(context),
+            _Header(),
             const SizedBox(height: 16),
-            _LifeIndexCard(daily: daily, weekly: weekly, onTap: onOpenChart),
+            _LifeIndexCard(daily: daily, onOpenChart: onOpenChart),
             const SizedBox(height: 14),
             _StatRow(daily: daily),
             const SizedBox(height: 14),
@@ -57,8 +57,17 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _header(BuildContext context) {
+class _Header extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final hour = DateTime.now().hour;
+    final (greeting, emoji) = switch (hour) {
+      >= 5 && < 11 => ('おはよう。今日もゆっくり積み上げる', '🌅'),
+      >= 11 && < 17 => ('こんにちは。今日もゆっくり積み上げる', '☀️'),
+      _ => ('こんばんは。今日もおつかれさま', '🌙'),
+    };
     return Row(
       children: [
         Expanded(
@@ -66,7 +75,7 @@ class DashboardScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '今日もゆっくり積み上げる',
+                greeting,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.inkSoft,
                   fontWeight: FontWeight.w600,
@@ -97,27 +106,40 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
           alignment: Alignment.center,
-          child: const Text('⛅', style: TextStyle(fontSize: 20)),
+          child: Text(emoji, style: const TextStyle(fontSize: 20)),
         ),
       ],
     );
   }
 }
 
-/// Life Index ヒーローカード。株価指数風の大きな現在値 + トレンド。
-class _LifeIndexCard extends StatelessWidget {
+/// Life Index ヒーローカード。
+/// 日/週/月の切り替えと横スクロールができるチャート付き。
+class _LifeIndexCard extends StatefulWidget {
   final List<Candle> daily;
-  final List<Candle> weekly;
-  final VoidCallback onTap;
+  final VoidCallback onOpenChart;
 
-  const _LifeIndexCard({
-    required this.daily,
-    required this.weekly,
-    required this.onTap,
-  });
+  const _LifeIndexCard({required this.daily, required this.onOpenChart});
+
+  @override
+  State<_LifeIndexCard> createState() => _LifeIndexCardState();
+}
+
+class _LifeIndexCardState extends State<_LifeIndexCard> {
+  Timeframe _tf = Timeframe.weekly;
+
+  /// 右端から何本分過去へスクロールしているか。0 = 最新。
+  double _offset = 0;
+
+  int get _visibleCount => switch (_tf) {
+    Timeframe.daily => 30,
+    Timeframe.weekly => 12,
+    Timeframe.monthly => 12,
+  };
 
   @override
   Widget build(BuildContext context) {
+    final daily = widget.daily;
     final current = daily.isNotEmpty ? daily.last.close : null;
     final diffYesterday = ChartCalculator.changeSince(daily, 1);
     final pct =
@@ -127,16 +149,24 @@ class _LifeIndexCard extends StatelessWidget {
         ? diffYesterday / (current - diffYesterday) * 100
         : null;
 
+    final candles = ChartCalculator.forTimeframe(daily, _tf);
+    final maxOffset = max(0, candles.length - _visibleCount).toDouble();
+    final clampedOffset = _offset.clamp(0.0, maxOffset);
+    final last = candles.length - clampedOffset.round();
+    final window = candles.isEmpty
+        ? const <Candle>[]
+        : candles.sublist(max(0, last - _visibleCount), last);
+
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: widget.onOpenChart,
+              child: Row(
                 children: [
                   Text(
                     'Life Index',
@@ -146,73 +176,226 @@ class _LifeIndexCard extends StatelessWidget {
                       letterSpacing: 0.4,
                     ),
                   ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: AppColors.inkSoft,
+                  ),
                   const Spacer(),
-                  _trendBadge(context),
+                  _TrendBadge(daily: daily),
                 ],
               ),
-              const SizedBox(height: 6),
-              if (current == null)
-                Text(
-                  'まだ記録がありません',
-                  style: Theme.of(context).textTheme.titleMedium,
-                )
-              else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      NumberFormat('#,##0.0').format(current),
+            ),
+            const SizedBox(height: 6),
+            if (current == null)
+              Text(
+                'まだ記録がありません',
+                style: Theme.of(context).textTheme.titleMedium,
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // カウントアップで気持ちよく着地する現在値
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: current),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) => Text(
+                      NumberFormat('#,##0.0').format(value),
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w900,
                         height: 1.0,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    if (pct != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            color: pct >= 0 ? AppColors.bull : AppColors.bear,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (pct != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          color: pct >= 0 ? AppColors.bull : AppColors.bear,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
                         ),
                       ),
-                  ],
-                ),
-              const SizedBox(height: 10),
-              Text(
-                _message(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.inkSoft,
-                  height: 1.6,
-                ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 130,
-                width: double.infinity,
-                child: daily.isEmpty
-                    ? const SizedBox.shrink()
-                    : CustomPaint(
+            const SizedBox(height: 10),
+            Text(
+              _message(daily),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.inkSoft,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (daily.isNotEmpty) ...[
+              // 横ドラッグで過去へスクロールできるチャート
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final slot = constraints.maxWidth / _visibleCount;
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onOpenChart,
+                    onHorizontalDragUpdate: (details) {
+                      setState(() {
+                        _offset = (_offset + details.delta.dx / slot).clamp(
+                          0.0,
+                          maxOffset,
+                        );
+                      });
+                    },
+                    onDoubleTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _offset = 0);
+                    },
+                    child: SizedBox(
+                      height: 130,
+                      width: double.infinity,
+                      child: CustomPaint(
                         painter: _MiniCandlePainter(
-                          candles: weekly.length > 12
-                              ? weekly.sublist(weekly.length - 12)
-                              : weekly,
+                          candles: window,
+                          asLine: _tf == Timeframe.daily,
                         ),
                       ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 150,
+                    child: _TimeframePills(
+                      selected: _tf,
+                      onChanged: (tf) => setState(() {
+                        _tf = tf;
+                        _offset = 0;
+                      }),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _rangeLabel(window),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.inkSoft,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _trendBadge(BuildContext context) {
+  String _rangeLabel(List<Candle> window) {
+    if (window.isEmpty) return '';
+    final fmt = DateFormat('M/d');
+    final fmtMonth = DateFormat('yyyy/M');
+    return _tf == Timeframe.monthly
+        ? '${fmtMonth.format(window.first.date)}〜${fmtMonth.format(window.last.date)}'
+        : '${fmt.format(window.first.date)}〜${fmt.format(window.last.date)}';
+  }
+
+  /// 状態に応じた一言。成長を押し付けず、事実に寄り添う（仕様書 §6）。
+  String _message(List<Candle> daily) {
+    if (daily.isEmpty) {
+      return '最初の日記を書くと、ここに人生のチャートが生まれる。';
+    }
+    final y = ChartCalculator.changeSince(daily, 1) ?? 0;
+    final long =
+        ChartCalculator.changeSince(daily, 182) ??
+        ChartCalculator.changeSince(daily, 30);
+
+    if (y < 0 && long != null && long > 0) {
+      return '昨日より少し揺れても、以前の谷からはちゃんと離れてる。今日は悪くない。';
+    }
+    if (y >= 0 && (long == null || long >= 0)) {
+      return '静かに積み上がってる。今日も、ただ書くだけでいい。';
+    }
+    return 'いまは谷の途中かもしれない。谷も人生の一部。記録はちゃんと残ってる。';
+  }
+}
+
+/// 日/週/月のミニピル（カード内用の小型版）。
+class _TimeframePills extends StatelessWidget {
+  final Timeframe selected;
+  final ValueChanged<Timeframe> onChanged;
+
+  const _TimeframePills({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      decoration: BoxDecoration(
+        color: AppColors.ink.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          for (final tf in Timeframe.values)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (tf == selected) return;
+                  HapticFeedback.selectionClick();
+                  onChanged(tf);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  margin: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: tf == selected ? AppColors.card : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: tf == selected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.ink.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    tf.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: tf == selected
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                      color: tf == selected ? AppColors.ink : AppColors.inkSoft,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendBadge extends StatelessWidget {
+  final List<Candle> daily;
+
+  const _TrendBadge({required this.daily});
+
+  @override
+  Widget build(BuildContext context) {
     final diffWeek = ChartCalculator.changeSince(daily, 7);
     final (label, icon, color) = switch (diffWeek) {
       null => ('はじまり', Icons.spa_outlined, AppColors.inkSoft),
@@ -242,25 +425,6 @@ class _LifeIndexCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// 状態に応じた一言。成長を押し付けず、事実に寄り添う（仕様書 §6）。
-  String _message() {
-    if (daily.isEmpty) {
-      return '最初の日記を書くと、ここに人生のチャートが生まれる。';
-    }
-    final y = ChartCalculator.changeSince(daily, 1) ?? 0;
-    final long =
-        ChartCalculator.changeSince(daily, 182) ??
-        ChartCalculator.changeSince(daily, 30);
-
-    if (y < 0 && long != null && long > 0) {
-      return '昨日より少し揺れても、以前の谷からはちゃんと離れてる。今日は悪くない。';
-    }
-    if (y >= 0 && (long == null || long >= 0)) {
-      return '静かに積み上がってる。今日も、ただ書くだけでいい。';
-    }
-    return 'いまは谷の途中かもしれない。谷も人生の一部。記録はちゃんと残ってる。';
   }
 }
 
@@ -517,18 +681,25 @@ class _RecentSection extends StatelessWidget {
   }
 }
 
-/// ヒーローカード内のミニローソク足。丸みのある実体 + 終値の滑らかなライン。
+/// カード内チャート。丸みのあるローソク or ライン + 終値の滑らかな青ライン。
 class _MiniCandlePainter extends CustomPainter {
   final List<Candle> candles;
 
-  _MiniCandlePainter({required this.candles});
+  /// true なら終値のライン＋点だけで描く（日足用）。
+  final bool asLine;
+
+  _MiniCandlePainter({required this.candles, this.asLine = false});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (candles.isEmpty) return;
 
-    final minV = candles.map((c) => c.low).reduce(min);
-    final maxV = candles.map((c) => c.high).reduce(max);
+    final minV = asLine
+        ? candles.map((c) => c.close).reduce(min)
+        : candles.map((c) => c.low).reduce(min);
+    final maxV = asLine
+        ? candles.map((c) => c.close).reduce(max)
+        : candles.map((c) => c.high).reduce(max);
     final range = max(maxV - minV, 1e-6);
 
     final slot = size.width / candles.length;
@@ -546,7 +717,7 @@ class _MiniCandlePainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
 
-    // 終値を結ぶ滑らかなライン（中間点quadratic）
+    // 終値を結ぶ滑らかなライン
     final linePath = Path()..moveTo(xFor(0), yFor(candles.first.close));
     for (var i = 1; i < candles.length; i++) {
       final x0 = xFor(i - 1);
@@ -559,18 +730,32 @@ class _MiniCandlePainter extends CustomPainter {
     canvas.drawPath(
       linePath,
       Paint()
-        ..color = const Color(0xFF6E8FC9).withValues(alpha: 0.7)
+        ..color = const Color(0xFF6E8FC9).withValues(alpha: asLine ? 0.9 : 0.7)
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
+
+    if (asLine) {
+      // 日足: 記録がある日に緑/赤の点を打つ
+      final dotRadius = (slot / 4).clamp(1.5, 4.0);
+      for (var i = 0; i < candles.length; i++) {
+        final c = candles[i];
+        if (!c.hasEntry) continue;
+        canvas.drawCircle(
+          Offset(xFor(i), yFor(c.close)),
+          dotRadius,
+          Paint()..color = c.isBullish ? AppColors.bull : AppColors.bear,
+        );
+      }
+      return;
+    }
 
     // ローソク（丸みのある実体）
     for (var i = 0; i < candles.length; i++) {
       final c = candles[i];
       final cx = xFor(i);
       final color = c.isBullish ? AppColors.bull : AppColors.bear;
-      final paint = Paint()..color = color;
 
       canvas.drawLine(
         Offset(cx, yFor(c.high)),
@@ -588,12 +773,12 @@ class _MiniCandlePainter extends CustomPainter {
           Rect.fromLTRB(cx - bodyWidth / 2, top, cx + bodyWidth / 2, bottom),
           const Radius.circular(4),
         ),
-        paint,
+        Paint()..color = color,
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant _MiniCandlePainter old) =>
-      old.candles != candles;
+      old.candles != candles || old.asLine != asLine;
 }

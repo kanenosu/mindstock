@@ -2,6 +2,32 @@ import 'dart:math';
 
 import '../models/models.dart';
 
+/// チャートの時間軸（株アプリと同じ切り替え、仕様書 §5）。
+enum Timeframe {
+  daily,
+  weekly,
+  monthly;
+
+  String get label => switch (this) {
+    Timeframe.daily => '日',
+    Timeframe.weekly => '週',
+    Timeframe.monthly => '月',
+  };
+
+  String get longLabel => switch (this) {
+    Timeframe.daily => '日足',
+    Timeframe.weekly => '週足',
+    Timeframe.monthly => '月足',
+  };
+
+  /// 移動平均の期間（本数）。
+  int get maPeriod => switch (this) {
+    Timeframe.daily => 7,
+    Timeframe.weekly => 4,
+    Timeframe.monthly => 3,
+  };
+}
+
 /// チャートロジック（仕様書 §4 AI委任型・足し算モデル）。
 ///
 /// 今日の値 = 前日の値 + 今日の出来事の点数の合計。
@@ -130,6 +156,35 @@ class ChartCalculator {
     if (bucket.isNotEmpty) weekly.add(_aggregate(weekStart!, bucket));
     return weekly;
   }
+
+  /// 日足を月足に集約する（1本 = 1ヶ月）。
+  static List<Candle> monthlyCandles(List<Candle> daily) {
+    if (daily.isEmpty) return [];
+
+    final monthly = <Candle>[];
+    List<Candle> bucket = [];
+    DateTime? monthStart;
+
+    for (final c in daily) {
+      final start = DateTime(c.date.year, c.date.month);
+      if (monthStart == null || start != monthStart) {
+        if (bucket.isNotEmpty) monthly.add(_aggregate(monthStart!, bucket));
+        monthStart = start;
+        bucket = [];
+      }
+      bucket.add(c);
+    }
+    if (bucket.isNotEmpty) monthly.add(_aggregate(monthStart!, bucket));
+    return monthly;
+  }
+
+  /// 時間軸に応じた足を返すヘルパー。
+  static List<Candle> forTimeframe(List<Candle> daily, Timeframe tf) =>
+      switch (tf) {
+        Timeframe.daily => daily,
+        Timeframe.weekly => weeklyCandles(daily),
+        Timeframe.monthly => monthlyCandles(daily),
+      };
 
   static Candle _aggregate(DateTime start, List<Candle> bucket) => Candle(
     date: start,

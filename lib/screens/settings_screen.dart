@@ -87,6 +87,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             label: const Text('全データを削除'),
             onPressed: () => _confirmClear(context),
           ),
+          const SizedBox(height: 48),
+          Center(
+            child: Text(
+              'MindStock v0.1.0\nあなたの毎日は、記録するだけで資産になる。',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+                height: 1.8,
+              ),
+            ),
+          ),
         ],
       ),
     );
