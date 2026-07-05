@@ -47,14 +47,25 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
+  static const _tabCount = 5;
+
   int _index = 0;
+
+  void _goTo(int i) {
+    if (i < 0 || i >= _tabCount) return;
+    // 日記のテキスト欄のフォーカス・選択ハンドルが
+    // 他のタブに残らないよう、切替時に必ず解除する
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (i != _index) HapticFeedback.selectionClick();
+    setState(() => _index = i);
+  }
 
   @override
   Widget build(BuildContext context) {
     final screens = [
       DashboardScreen(
-        onOpenChart: () => setState(() => _index = 2),
-        onOpenDiary: () => setState(() => _index = 1),
+        onOpenChart: () => _goTo(2),
+        onOpenDiary: () => _goTo(1),
       ),
       const EntryScreen(),
       const ChartScreen(),
@@ -62,16 +73,25 @@ class _HomeShellState extends State<HomeShell> {
       const SettingsScreen(),
     ];
     return Scaffold(
-      body: IndexedStack(index: _index, children: screens),
+      // 横スワイプでもタブを切り替えられるようにする。
+      // 内側のチャート（ピンチズーム・横ドラッグ）は子ウィジェットの
+      // ジェスチャーが先に処理されるため、ここでは奪わない。
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: (details) {
+          final velocity = details.primaryVelocity ?? 0;
+          const threshold = 250.0;
+          if (velocity < -threshold) {
+            _goTo(_index + 1); // 左スワイプ → 次のタブ
+          } else if (velocity > threshold) {
+            _goTo(_index - 1); // 右スワイプ → 前のタブ
+          }
+        },
+        child: IndexedStack(index: _index, children: screens),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) {
-          // 日記のテキスト欄のフォーカス・選択ハンドルが
-          // 他のタブに残らないよう、切替時に必ず解除する
-          FocusManager.instance.primaryFocus?.unfocus();
-          if (i != _index) HapticFeedback.selectionClick();
-          setState(() => _index = i);
-        },
+        onDestinationSelected: _goTo,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),

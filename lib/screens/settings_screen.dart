@@ -16,16 +16,19 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _controller = TextEditingController();
+  final _voiceController = TextEditingController();
 
   @override
   void dispose() {
     _controller.dispose();
+    _voiceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final apiKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
+    final voiceApiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
@@ -56,6 +59,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () async {
               await ref.read(apiKeyProvider.notifier).save(_controller.text);
               _controller.clear();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('保存しました')),
+                );
+              }
+            },
+            child: const Text('APIキーを保存'),
+          ),
+          const Divider(height: 48),
+          Text('音声入力（Whisper）', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(
+            voiceApiKey.isEmpty
+                ? '日記入力画面のマイクを長押しすると話して書ける機能です。'
+                      'OpenAI APIキーを設定すると使えるようになります。'
+                : '音声入力が使えます。マイクを長押しして話すと、文字起こしされて本文に追記されます。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _voiceController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'OpenAI API キー',
+              hintText: voiceApiKey.isEmpty
+                  ? 'sk-...'
+                  : '設定済み（変更する場合のみ入力）',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () async {
+              await ref
+                  .read(openAiApiKeyProvider.notifier)
+                  .save(_voiceController.text);
+              _voiceController.clear();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('保存しました')),
