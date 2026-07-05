@@ -7,6 +7,7 @@ import '../logic/chart_calculator.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/diary_calendar.dart';
+import '../widgets/voice_input_button.dart';
 
 /// 日記入力画面（仕様書 §7-1）。
 ///
@@ -62,6 +63,22 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
     _loadEntryFor(_date);
   }
 
+  /// Whisperの文字起こし結果を本文に追記する。
+  /// 既に何か書いてあれば改行してから続ける。
+  void _appendTranscribed(String text) {
+    final current = _controller.text;
+    final needsBreak = current.isNotEmpty && !current.endsWith('\n');
+    final updated = current.isEmpty
+        ? text
+        : '$current${needsBreak ? '\n' : ''}$text';
+    setState(() {
+      _controller.value = TextEditingValue(
+        text: updated,
+        selection: TextSelection.collapsed(offset: updated.length),
+      );
+    });
+  }
+
   Future<void> _submit() async {
     final text = _controller.text.trim();
     if (!_canSubmit) return;
@@ -109,20 +126,37 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
               DiaryCalendar(selected: _date, onSelect: _selectDate),
               const SizedBox(height: 4),
               Expanded(
-                child: TextField(
-                  controller: _controller,
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  onChanged: (_) => setState(() {}),
-                  onTapOutside: (_) =>
-                      FocusManager.instance.primaryFocus?.unfocus(),
-                  decoration: const InputDecoration(
-                    hintText: '今日のことを、ただ書くだけ。',
-                    border: InputBorder.none,
-                    filled: false,
-                  ),
-                  style: const TextStyle(fontSize: 16, height: 1.7),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: TextField(
+                        controller: _controller,
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        onChanged: (_) => setState(() {}),
+                        onTapOutside: (_) =>
+                            FocusManager.instance.primaryFocus?.unfocus(),
+                        decoration: const InputDecoration(
+                          hintText: '今日のことを、ただ書くだけ。\n（マイクを長押しで話して書くこともできる）',
+                          border: InputBorder.none,
+                          filled: false,
+                          contentPadding: EdgeInsets.only(
+                            bottom: 64,
+                            right: 8,
+                          ),
+                        ),
+                        style: const TextStyle(fontSize: 16, height: 1.7),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 4,
+                      child: VoiceInputButton(
+                        onTranscribed: _appendTranscribed,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),

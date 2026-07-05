@@ -6,6 +6,7 @@ import 'models/models.dart';
 import 'services/database_service.dart';
 import 'services/demo_data.dart';
 import 'services/diary_analyzer.dart';
+import 'services/transcription_service.dart';
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
@@ -36,6 +37,33 @@ final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
   final apiKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
   if (apiKey.isNotEmpty) return ClaudeDiaryAnalyzer(apiKey: apiKey);
   return DemoDiaryAnalyzer();
+});
+
+/// OpenAI APIキー（Whisper音声入力用。設定画面から保存）。
+final openAiApiKeyProvider = AsyncNotifierProvider<OpenAiApiKeyNotifier, String>(
+  OpenAiApiKeyNotifier.new,
+);
+
+class OpenAiApiKeyNotifier extends AsyncNotifier<String> {
+  static const _prefKey = 'openai_api_key';
+
+  @override
+  Future<String> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefKey) ?? '';
+  }
+
+  Future<void> save(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, key.trim());
+    state = AsyncData(key.trim());
+  }
+}
+
+/// 音声入力（Whisper）の文字起こしサービス。
+final transcriptionServiceProvider = Provider<TranscriptionService>((ref) {
+  final apiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
+  return WhisperTranscriptionService(apiKey: apiKey);
 });
 
 /// 全エントリー。date('yyyy-MM-dd') → DiaryEntry。
