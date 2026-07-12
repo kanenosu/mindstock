@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -41,7 +42,8 @@ class CandlestickChart extends StatefulWidget {
   State<CandlestickChart> createState() => _CandlestickChartState();
 }
 
-class _CandlestickChartState extends State<CandlestickChart> {
+class _CandlestickChartState extends State<CandlestickChart>
+    with SingleTickerProviderStateMixin {
   /// 1本あたりの横幅(px)。ピンチズームで変化する。
   double _candleWidth = 14;
 
@@ -51,8 +53,39 @@ class _CandlestickChartState extends State<CandlestickChart> {
   double _scaleStartWidth = 14;
   int? _selectedIndex;
 
+  /// 慣性スクロール（指を離した後もスッと滑る）用。
+  late final AnimationController _fling = AnimationController.unbounded(
+    vsync: this,
+  )..addListener(_onFlingTick);
+
   static const _minWidth = 4.0;
   static const _maxWidth = 40.0;
+
+  double get _maxOffset => max(0, widget.candles.length - 5).toDouble();
+
+  void _onFlingTick() {
+    final clamped = _fling.value.clamp(0.0, _maxOffset);
+    setState(() => _scrollOffset = clamped);
+    // 端に到達したらそこで止める
+    if (clamped != _fling.value) _fling.stop();
+  }
+
+  @override
+  void didUpdateWidget(covariant CandlestickChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 時間軸切替などで足が入れ替わったら、古い選択ハイライトを消す
+    if (oldWidget.candles.length != widget.candles.length ||
+        oldWidget.style != widget.style) {
+      _selectedIndex = null;
+      _scrollOffset = _scrollOffset.clamp(0, _maxOffset);
+    }
+  }
+
+  @override
+  void dispose() {
+    _fling.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +98,7 @@ class _CandlestickChartState extends State<CandlestickChart> {
         final visible = _visibleRange(size.width);
         return GestureDetector(
           onScaleStart: (details) {
+            _fling.stop();
             _scaleStartWidth = _candleWidth;
           },
           onScaleUpdate: (details) {
@@ -79,8 +113,17 @@ class _CandlestickChartState extends State<CandlestickChart> {
               // 右へドラッグ = 過去へ戻る（オフセット増加）。
               _scrollOffset = (_scrollOffset +
                       details.focalPointDelta.dx / _candleWidth)
-                  .clamp(0, max(0, widget.candles.length - 5).toDouble());
+                  .clamp(0, _maxOffset);
             });
+          },
+          onScaleEnd: (details) {
+            // 指を離した速度で慣性スクロール
+            final velocity =
+                details.velocity.pixelsPerSecond.dx / _candleWidth;
+            if (velocity.abs() < 1) return;
+            _fling.animateWith(
+              FrictionSimulation(0.135, _scrollOffset, velocity),
+            );
           },
           onTapUp: (details) => _handleTap(details.localPosition, size),
           // ダブルタップでズーム・位置を最新にリセット

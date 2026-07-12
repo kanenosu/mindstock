@@ -138,7 +138,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         onTapOutside: (_) =>
                             FocusManager.instance.primaryFocus?.unfocus(),
                         decoration: const InputDecoration(
-                          hintText: '今日のことを、ただ書くだけ。\n（マイクを長押しで話して書くこともできる）',
+                          hintText: '今日のことを、ただ書くだけ。\n（マイクをタップして話しても書ける）',
                           border: InputBorder.none,
                           filled: false,
                           contentPadding: EdgeInsets.only(

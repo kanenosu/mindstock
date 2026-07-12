@@ -291,10 +291,18 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
                         child: SizedBox(
                           height: 130,
                           width: double.infinity,
-                          child: CustomPaint(
-                            painter: _MiniCandlePainter(
-                              candles: window,
-                              asLine: _tf == Timeframe.daily,
+                          // 時間軸を切り替えると左から描き込まれる
+                          child: TweenAnimationBuilder<double>(
+                            key: ValueKey(_tf),
+                            tween: Tween(begin: 0, end: 1),
+                            duration: const Duration(milliseconds: 800),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, progress, _) => CustomPaint(
+                              painter: _MiniCandlePainter(
+                                candles: window,
+                                asLine: _tf == Timeframe.daily,
+                                progress: progress,
+                              ),
                             ),
                           ),
                         ),
@@ -852,11 +860,25 @@ class _MiniCandlePainter extends CustomPainter {
   /// true なら終値のライン＋点だけで描く（日足用）。
   final bool asLine;
 
-  _MiniCandlePainter({required this.candles, this.asLine = false});
+  /// 描き込みの進行度 0.0〜1.0。左から順に現れる。
+  final double progress;
+
+  _MiniCandlePainter({
+    required this.candles,
+    this.asLine = false,
+    this.progress = 1.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (candles.isEmpty) return;
+
+    /// 進行度に応じて何本目まで描くか
+    final drawCount = (candles.length * progress).ceil().clamp(
+      0,
+      candles.length,
+    );
+    if (drawCount == 0) return;
 
     final minV = asLine
         ? candles.map((c) => c.close).reduce(min)
@@ -881,7 +903,7 @@ class _MiniCandlePainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
 
-    // 終値を結ぶ滑らかなライン
+    // 終値を結ぶ滑らかなライン（進行度ぶんだけ左から描き込む）
     final linePath = Path()..moveTo(xFor(0), yFor(candles.first.close));
     for (var i = 1; i < candles.length; i++) {
       final x0 = xFor(i - 1);
@@ -891,19 +913,26 @@ class _MiniCandlePainter extends CustomPainter {
       linePath.quadraticBezierTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
       if (i == candles.length - 1) linePath.lineTo(x1, y1);
     }
-    canvas.drawPath(
-      linePath,
-      Paint()
-        ..color = const Color(0xFF6E8FC9).withValues(alpha: asLine ? 0.9 : 0.7)
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
-    );
+    final linePaint = Paint()
+      ..color = const Color(0xFF6E8FC9).withValues(alpha: asLine ? 0.9 : 0.7)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    if (progress >= 1.0) {
+      canvas.drawPath(linePath, linePaint);
+    } else {
+      for (final metric in linePath.computeMetrics()) {
+        canvas.drawPath(
+          metric.extractPath(0, metric.length * progress),
+          linePaint,
+        );
+      }
+    }
 
     if (asLine) {
       // 日足: 記録がある日に緑/赤の点を打つ
       final dotRadius = (slot / 4).clamp(1.5, 4.0);
-      for (var i = 0; i < candles.length; i++) {
+      for (var i = 0; i < drawCount; i++) {
         final c = candles[i];
         if (!c.hasEntry) continue;
         canvas.drawCircle(
@@ -916,7 +945,7 @@ class _MiniCandlePainter extends CustomPainter {
     }
 
     // ローソク（丸みのある実体）
-    for (var i = 0; i < candles.length; i++) {
+    for (var i = 0; i < drawCount; i++) {
       final c = candles[i];
       final cx = xFor(i);
       final color = c.isBullish ? AppColors.bull : AppColors.bear;
@@ -944,5 +973,7 @@ class _MiniCandlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _MiniCandlePainter old) =>
-      old.candles != candles || old.asLine != asLine;
+      old.candles != candles ||
+      old.asLine != asLine ||
+      old.progress != progress;
 }
