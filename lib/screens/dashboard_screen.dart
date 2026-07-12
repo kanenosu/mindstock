@@ -9,6 +9,7 @@ import '../logic/chart_calculator.dart';
 import '../models/models.dart';
 import '../providers.dart';
 import '../theme.dart';
+import '../widgets/motion.dart';
 import 'entry_screen.dart';
 import 'review_screen.dart';
 
@@ -38,20 +39,27 @@ class DashboardScreen extends ConsumerWidget {
     final todayKey = ChartCalculator.dateKey(DateTime.now());
     final todayEntry = entries[todayKey];
 
+    // 各カードがふわっと順番に立ち上がる（初回表示のみ）
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
-            _Header(),
+            FadeSlideIn(child: _Header()),
             const SizedBox(height: 16),
-            _LifeIndexCard(daily: daily, onOpenChart: onOpenChart),
+            FadeSlideIn(
+              delayMs: 70,
+              child: _LifeIndexCard(daily: daily, onOpenChart: onOpenChart),
+            ),
             const SizedBox(height: 14),
-            _StatRow(daily: daily),
+            FadeSlideIn(delayMs: 140, child: _StatRow(daily: daily)),
             const SizedBox(height: 14),
-            _TodayCard(entry: todayEntry, onWrite: onOpenDiary),
+            FadeSlideIn(
+              delayMs: 210,
+              child: _TodayCard(entry: todayEntry, onWrite: onOpenDiary),
+            ),
             const SizedBox(height: 20),
-            _RecentSection(entries: entries),
+            FadeSlideIn(delayMs: 280, child: _RecentSection(entries: entries)),
           ],
         ),
       ),
@@ -159,141 +167,168 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: widget.onOpenChart,
-              child: Row(
-                children: [
-                  Text(
-                    'Life Index',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.inkSoft,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
+      child: Stack(
+        children: [
+          // 温かいグロー（右下にほんのり差す朝日のような光）
+          Positioned(
+            right: -60,
+            bottom: -60,
+            child: IgnorePointer(
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.18),
+                      AppColors.accent.withValues(alpha: 0.0),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.chevron_right,
-                    size: 16,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: widget.onOpenChart,
+                  child: Row(
+                    children: [
+                      Text(
+                        'Life Index',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppColors.inkSoft,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: AppColors.inkSoft,
+                      ),
+                      const Spacer(),
+                      _TrendBadge(daily: daily),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (current == null)
+                  Text(
+                    'まだ記録がありません',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // カウントアップで気持ちよく着地する現在値
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: current),
+                        duration: const Duration(milliseconds: 900),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) => Text(
+                          NumberFormat('#,##0.0').format(value),
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                height: 1.0,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (pct != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              color: pct >= 0 ? AppColors.bull : AppColors.bear,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 10),
+                Text(
+                  _message(daily),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.inkSoft,
+                    height: 1.6,
                   ),
-                  const Spacer(),
-                  _TrendBadge(daily: daily),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            if (current == null)
-              Text(
-                'まだ記録がありません',
-                style: Theme.of(context).textTheme.titleMedium,
-              )
-            else
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // カウントアップで気持ちよく着地する現在値
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: current),
-                    duration: const Duration(milliseconds: 900),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) => Text(
-                      NumberFormat('#,##0.0').format(value),
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        height: 1.0,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 14),
+                if (daily.isNotEmpty) ...[
+                  // 横ドラッグで過去へスクロールできるチャート
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final slot = constraints.maxWidth / _visibleCount;
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: widget.onOpenChart,
+                        onHorizontalDragUpdate: (details) {
+                          setState(() {
+                            _offset = (_offset + details.delta.dx / slot).clamp(
+                              0.0,
+                              maxOffset,
+                            );
+                          });
+                        },
+                        onDoubleTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _offset = 0);
+                        },
+                        child: SizedBox(
+                          height: 130,
+                          width: double.infinity,
+                          child: CustomPaint(
+                            painter: _MiniCandlePainter(
+                              candles: window,
+                              asLine: _tf == Timeframe.daily,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(width: 8),
-                  if (pct != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          color: pct >= 0 ? AppColors.bull : AppColors.bear,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 150,
+                        child: _TimeframePills(
+                          selected: _tf,
+                          onChanged: (tf) => setState(() {
+                            _tf = tf;
+                            _offset = 0;
+                          }),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            const SizedBox(height: 10),
-            Text(
-              _message(daily),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.inkSoft,
-                height: 1.6,
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (daily.isNotEmpty) ...[
-              // 横ドラッグで過去へスクロールできるチャート
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final slot = constraints.maxWidth / _visibleCount;
-                  return GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.onOpenChart,
-                    onHorizontalDragUpdate: (details) {
-                      setState(() {
-                        _offset = (_offset + details.delta.dx / slot).clamp(
-                          0.0,
-                          maxOffset,
-                        );
-                      });
-                    },
-                    onDoubleTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() => _offset = 0);
-                    },
-                    child: SizedBox(
-                      height: 130,
-                      width: double.infinity,
-                      child: CustomPaint(
-                        painter: _MiniCandlePainter(
-                          candles: window,
-                          asLine: _tf == Timeframe.daily,
+                      const Spacer(),
+                      Text(
+                        _rangeLabel(window),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.inkSoft,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 150,
-                    child: _TimeframePills(
-                      selected: _tf,
-                      onChanged: (tf) => setState(() {
-                        _tf = tf;
-                        _offset = 0;
-                      }),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _rangeLabel(window),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.inkSoft,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -508,23 +543,43 @@ class _StatRow extends StatelessWidget {
   }
 }
 
-/// 今日の記録カード。まだ書いてなければ「30秒でOK」の書く導線。
-class _TodayCard extends StatelessWidget {
+/// 今日の記録カード。
+/// まだ書いていない日は「いかにも空欄」な破線プレースホルダーが
+/// ゆっくり呼吸して、書くのを静かに待っている見た目にする。
+class _TodayCard extends StatefulWidget {
   final DiaryEntry? entry;
   final VoidCallback onWrite;
 
   const _TodayCard({required this.entry, required this.onWrite});
 
   @override
+  State<_TodayCard> createState() => _TodayCardState();
+}
+
+class _TodayCardState extends State<_TodayCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2000),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _breath.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final entry = widget.entry;
     final written =
-        entry != null && (entry!.text.isNotEmpty || entry!.moodScore != null);
+        entry != null && (entry.text.isNotEmpty || entry.moodScore != null);
     final total = entry?.events.fold<double>(0, (sum, e) => sum + e.delta) ?? 0;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onWrite,
+        onTap: widget.onWrite,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -553,38 +608,7 @@ class _TodayCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          written
-                              ? (entry!.text.isEmpty
-                                    ? '気分だけ記録した日'
-                                    : entry!.text.replaceAll('\n', ' '))
-                              : 'まだ書いてない',
-                          maxLines: written ? 2 : 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          written
-                              ? 'タップで続きを書ける。微調整もここから。'
-                              : '文章でも、気分の絵文字ひとつでもいい。空白でも罰しない。',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.inkSoft, height: 1.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _writeButton(),
-                ],
-              ),
+              written ? _writtenBody(entry) : _emptyBody(),
             ],
           ),
         ),
@@ -592,21 +616,161 @@ class _TodayCard extends StatelessWidget {
     );
   }
 
-  Widget _writeButton() {
-    return Material(
-      color: AppColors.inkButton,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onWrite,
-        borderRadius: BorderRadius.circular(20),
-        child: const SizedBox(
-          width: 56,
-          height: 56,
-          child: Center(child: Text('✍️', style: TextStyle(fontSize: 22))),
+  Widget _writtenBody(DiaryEntry entry) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                entry.text.isEmpty
+                    ? '気分だけ記録した日'
+                    : entry.text.replaceAll('\n', ' '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'タップで続きを書ける。微調整もここから。',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.inkSoft,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        _writeButton(),
+      ],
+    );
+  }
+
+  /// 空欄プレースホルダー: 破線の枠 + ノートの罫線みたいなゴースト行。
+  /// ゆっくり明滅して「ここが空いている」ことをやさしく主張する。
+  Widget _emptyBody() {
+    return AnimatedBuilder(
+      animation: _breath,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_breath.value);
+        return Opacity(opacity: 0.62 + t * 0.38, child: child);
+      },
+      child: CustomPaint(
+        painter: _DashedRRectPainter(
+          color: AppColors.inkSoft.withValues(alpha: 0.55),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ここに、今日のこと。',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _ghostLine(widthFactor: 0.9),
+                    const SizedBox(height: 8),
+                    _ghostLine(widthFactor: 0.6),
+                    const SizedBox(height: 12),
+                    Text(
+                      '一行でも、絵文字ひとつでも。空白でも罰しない。',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.inkSoft.withValues(alpha: 0.8),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _writeButton(),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  /// ノートの書きかけみたいな薄いダミー行。
+  Widget _ghostLine({required double widthFactor}) {
+    return FractionallySizedBox(
+      widthFactor: widthFactor,
+      child: Container(
+        height: 8,
+        decoration: BoxDecoration(
+          color: AppColors.ink.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+
+  Widget _writeButton() {
+    return PressableScale(
+      onTap: widget.onWrite,
+      pressedScale: 0.9,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: AppColors.inkButton,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.ink.withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Center(child: Text('✍️', style: TextStyle(fontSize: 22))),
+      ),
+    );
+  }
+}
+
+/// 角丸の破線枠を描くペインター（空欄プレースホルダー用）。
+class _DashedRRectPainter extends CustomPainter {
+  final Color color;
+
+  _DashedRRectPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(16),
+    );
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.4
+      ..style = PaintingStyle.stroke;
+
+    const dash = 6.0;
+    const gap = 5.0;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        canvas.drawPath(metric.extractPath(distance, distance + dash), paint);
+        distance += dash + gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRRectPainter old) => old.color != color;
 }
 
 /// 最近の記録（直近3件）。

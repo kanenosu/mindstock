@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../logic/chart_calculator.dart';
+import '../logic/weekly_summary.dart';
 import '../models/models.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/candlestick_chart.dart';
 import '../widgets/pill_selector.dart';
+import '../widgets/weekly_summary_card.dart';
 import 'review_screen.dart';
 
 /// メインチャート画面（仕様書 §7-2）。
@@ -79,11 +81,66 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
   }
 
   void _openReview(Candle candle) {
+    // 週足は「週のまとめ」をボトムシートでプレビューしてから日記へ
+    if (_tf == Timeframe.weekly) {
+      _showWeeklySummarySheet(candle);
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ReviewScreen(
           date: candle.date,
           weekly: _tf != Timeframe.daily,
+        ),
+      ),
+    );
+  }
+
+  void _showWeeklySummarySheet(Candle candle) {
+    final entries = ref.read(entriesProvider).valueOrNull ?? {};
+    final summary = WeeklySummary.compute(candle.date, entries);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              WeeklySummaryCard(summary: summary, elevated: false),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                icon: const Icon(Icons.menu_book_outlined, size: 18),
+                label: const Text('この週の日記を読む'),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ReviewScreen(date: summary.weekStart, weekly: true),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
