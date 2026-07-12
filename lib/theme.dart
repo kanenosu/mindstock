@@ -81,8 +81,8 @@ ThemeData buildAppTheme() {
     ),
     cardTheme: CardThemeData(
       color: AppColors.card,
-      elevation: 10,
-      shadowColor: AppColors.ink.withValues(alpha: 0.07),
+      elevation: 14,
+      shadowColor: AppColors.ink.withValues(alpha: 0.09),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       margin: EdgeInsets.zero,

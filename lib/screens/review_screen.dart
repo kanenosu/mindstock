@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../logic/chart_calculator.dart';
+import '../logic/weekly_summary.dart';
 import '../models/models.dart';
 import '../providers.dart';
-import 'edit_screen.dart';
 import '../theme.dart';
+import '../widgets/weekly_summary_card.dart';
+import 'edit_screen.dart';
 
 /// 振り返り画面（仕様書 §7-3）。
 ///
@@ -47,6 +49,11 @@ class ReviewScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 週の振り返りには自動生成の「週のまとめ」を先頭に置く
+          if (weekly) ...[
+            WeeklySummaryCard(summary: WeeklySummary.compute(date, entries)),
+            const SizedBox(height: 12),
+          ],
           if (candle != null) _positionCard(context, candle, current),
           const SizedBox(height: 16),
           if (dayEntries.isEmpty)
