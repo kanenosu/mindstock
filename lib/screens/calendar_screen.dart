@@ -71,28 +71,41 @@ class _EntryTile extends ConsumerWidget {
     final color = total >= 0 ? AppColors.bull : AppColors.bear;
     final preview = entry.text.replaceAll('\n', ' ');
 
-    return ListTile(
-      title: Text(
-        DateFormat('yyyy年M月d日 (E)', 'ja').format(entry.dateTime),
-        style: Theme.of(context).textTheme.titleSmall,
+    // 左スワイプで削除（確認ダイアログ付き、iOS標準の操作感）
+    return Dismissible(
+      key: ValueKey(entry.date),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: AppColors.bear,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
-      subtitle: preview.isEmpty
-          ? null
-          : Text(preview, maxLines: 2, overflow: TextOverflow.ellipsis),
-      trailing: Text(
-        '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}',
-        style: TextStyle(color: color, fontWeight: FontWeight.bold),
-      ),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ReviewScreen(date: entry.dateTime),
+      confirmDismiss: (_) => _confirmDelete(context, ref),
+      child: ListTile(
+        title: Text(
+          DateFormat('yyyy年M月d日 (E)', 'ja').format(entry.dateTime),
+          style: Theme.of(context).textTheme.titleSmall,
         ),
+        subtitle: preview.isEmpty
+            ? null
+            : Text(preview, maxLines: 2, overflow: TextOverflow.ellipsis),
+        trailing: Text(
+          '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}',
+          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ReviewScreen(date: entry.dateTime),
+          ),
+        ),
+        onLongPress: () => _confirmDelete(context, ref),
       ),
-      onLongPress: () => _confirmDelete(context, ref),
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+  /// 削除確認。削除を実行したら true を返す（Dismissible の判定にも使う）。
+  Future<bool> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -113,5 +126,6 @@ class _EntryTile extends ConsumerWidget {
     if (ok == true) {
       await ref.read(entriesProvider.notifier).deleteEntry(entry.date);
     }
+    return ok == true;
   }
 }

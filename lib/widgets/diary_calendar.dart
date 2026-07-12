@@ -59,23 +59,32 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
     final entries = ref.watch(entriesProvider).valueOrNull ?? {};
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-        child: Column(
-          children: [
-            _headerRow(context),
-            const SizedBox(height: 4),
-            _weekdayRow(context),
-            const SizedBox(height: 4),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topCenter,
-              child: _expanded
-                  ? _monthGrid(context, entries)
-                  : _weekRow(context, entries),
-            ),
-          ],
+      // 横スワイプで週/月を送れる（シェブロンと同じ操作）
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragEnd: (details) {
+          final velocity = details.primaryVelocity ?? 0;
+          if (velocity < -200) _shift(1);
+          if (velocity > 200) _shift(-1);
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          child: Column(
+            children: [
+              _headerRow(context),
+              const SizedBox(height: 4),
+              _weekdayRow(context),
+              const SizedBox(height: 4),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: _expanded
+                    ? _monthGrid(context, entries)
+                    : _weekRow(context, entries),
+              ),
+            ],
+          ),
         ),
       ),
     );

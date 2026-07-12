@@ -27,6 +27,9 @@ class ChartScreen extends ConsumerStatefulWidget {
 class _ChartScreenState extends ConsumerState<ChartScreen> {
   Timeframe _tf = Timeframe.daily;
 
+  /// タップで選択中の足。ヘッダーがこの足の情報に切り替わる。
+  Candle? _selected;
+
   @override
   Widget build(BuildContext context) {
     final daily = ref.watch(dailyCandlesProvider);
@@ -39,14 +42,22 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
           ? const _EmptyChart()
           : Column(
               children: [
-                _CurrentValueHeader(daily: daily),
+                _CurrentValueHeader(
+                  daily: daily,
+                  selected: _selected,
+                  tf: _tf,
+                  onOpenSelected: _openSelectedReview,
+                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: PillSelector<Timeframe>(
                     items: Timeframe.values,
                     selected: _tf,
                     labelOf: (tf) => tf.longLabel,
-                    onChanged: (tf) => setState(() => _tf = tf),
+                    onChanged: (tf) => setState(() {
+                      _tf = tf;
+                      _selected = null;
+                    }),
                   ),
                 ),
                 _ComparisonCards(daily: daily),
@@ -60,7 +71,7 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                       style: _tf == Timeframe.daily
                           ? ChartStyle.line
                           : ChartStyle.candle,
-                      onSelect: (candle) => _openReview(candle),
+                      onSelect: _onSelect,
                     ),
                   ),
                 ),
@@ -68,8 +79,8 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                   padding: const EdgeInsets.all(8),
                   child: Text(
                     _tf == Timeframe.daily
-                        ? 'ピンチで拡大縮小・ドラッグでスクロール・タップでその日を振り返る'
-                        : 'ヒゲはその期間の最高/最低到達点。タップで振り返り・ダブルタップでリセット',
+                        ? 'ピンチで拡大縮小・ドラッグでスクロール・タップで選択'
+                        : 'ヒゲはその期間の最高/最低到達点。タップで選択・ダブルタップでリセット',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.inkSoft,
                     ),
@@ -80,8 +91,16 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
     );
   }
 
-  void _openReview(Candle candle) {
-    // 週足は「週のまとめ」をボトムシートでプレビューしてから日記へ
+  void _onSelect(Candle candle) {
+    setState(() => _selected = candle);
+    // 週足は「週のまとめ」をボトムシートですぐ見せる
+    if (_tf == Timeframe.weekly) _showWeeklySummarySheet(candle);
+  }
+
+  /// ヘッダーの「振り返る」から。選択中の足の期間の日記へ。
+  void _openSelectedReview() {
+    final candle = _selected;
+    if (candle == null) return;
     if (_tf == Timeframe.weekly) {
       _showWeeklySummarySheet(candle);
       return;
@@ -147,56 +166,116 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
   }
 }
 
-/// 株アプリ風の現在値ヘッダー（値 + 前日比）。
+/// 株アプリ風の現在値ヘッダー。
+/// 足を選択中はその期間の日付・終値・変動に切り替わり、
+/// 「振り返る」で当時の日記へ飛べる。
 class _CurrentValueHeader extends StatelessWidget {
   final List<Candle> daily;
+  final Candle? selected;
+  final Timeframe tf;
+  final VoidCallback onOpenSelected;
 
-  const _CurrentValueHeader({required this.daily});
+  const _CurrentValueHeader({
+    required this.daily,
+    required this.selected,
+    required this.tf,
+    required this.onOpenSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final current = daily.last.close;
-    final diff = ChartCalculator.changeSince(daily, 1);
-    final pct = (diff != null && (current - diff).abs() > 1e-9)
-        ? diff / (current - diff) * 100
+    final candle = selected;
+    final value = candle?.close ?? daily.last.close;
+    final diff = candle != null
+        ? candle.close - candle.open
+        : ChartCalculator.changeSince(daily, 1);
+    final pct = (diff != null && (value - diff).abs() > 1e-9)
+        ? diff / (value - diff) * 100
         : null;
     final color = (diff ?? 0) >= 0 ? AppColors.bull : AppColors.bear;
 
+    final periodLabel = candle == null
+        ? '今日'
+        : switch (tf) {
+            Timeframe.daily =>
+              DateFormat('M/d (E)', 'ja').format(candle.date),
+            Timeframe.weekly => '${DateFormat('M/d').format(candle.date)}の週',
+            Timeframe.monthly =>
+              DateFormat('yyyy年M月', 'ja').format(candle.date),
+          };
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            NumberFormat('#,##0.0').format(current),
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              height: 1.0,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (diff != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(
-                '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}'
-                '${pct != null ? ' (${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%)' : ''}',
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
+      padding: const EdgeInsets.fromLTRB(20, 0, 12, 8),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 180),
+        child: Row(
+          key: ValueKey('$periodLabel-$value'),
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              NumberFormat('#,##0.0').format(value),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-          const Spacer(),
-          Text(
-            '今日',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.inkSoft,
-            ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            if (diff != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}'
+                  '${pct != null ? ' (${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(1)}%)' : ''}',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            const Spacer(),
+            if (candle == null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8, bottom: 2),
+                child: Text(
+                  periodLabel,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              )
+            else
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: AppColors.ink,
+                ),
+                icon: Text(
+                  periodLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      '振り返る',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, size: 16),
+                  ],
+                ),
+                onPressed: onOpenSelected,
+              ),
+          ],
+        ),
       ),
     );
   }
