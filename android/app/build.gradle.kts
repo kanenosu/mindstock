@@ -24,7 +24,8 @@ android {
         applicationId = "com.kanenosu.mindstock"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // recordパッケージ（音声入力）がAndroid 6.0 (API 23)以上を要求する
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
