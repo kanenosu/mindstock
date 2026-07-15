@@ -1,0 +1,41 @@
+name: iOS デモ版ビルド（署名なし）
+
+# 手動実行のみ。Sideloadly / AltStore などで無料のApple IDを使って
+# 端末に直接インストールするための、コード署名なしIPAを作る。
+on:
+  workflow_dispatch:
+
+jobs:
+  build-unsigned-ipa:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Flutterをセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: パッケージ取得
+        run: flutter pub get
+
+      - name: iOS向けビルド（署名なし）
+        run: flutter build ios --release --no-codesign
+
+      - name: 署名なしIPAにパッケージング
+        run: |
+          set -e
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/Runner.app
+          zip -r -y mindstock-unsigned.ipa Payload
+
+      - name: IPAをアーティファクトとしてアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: mindstock-unsigned-ipa
+          path: build/ios/iphoneos/mindstock-unsigned.ipa
+          retention-days: 14
