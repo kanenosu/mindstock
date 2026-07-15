@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -191,14 +193,20 @@ class _EventCard extends StatelessWidget {
                       onChanged(event.copyWith(isPositive: !event.isPositive)),
                 ),
                 Expanded(
-                  child: Slider(
-                    value: event.weight,
-                    min: 0,
-                    max: 10,
-                    divisions: 20,
-                    label: event.weight.toStringAsFixed(1),
-                    activeColor: color,
-                    onChanged: (v) => onChanged(event.copyWith(weight: v)),
+                  child: Builder(
+                    builder: (context) {
+                      // AI採点(baseImportance×倍率)は日常〜人生の節目まで
+                      // 幅が広いため、現在値に応じて上限を可変にする。
+                      final sliderMax = math.max(20.0, event.weight * 1.2);
+                      return Slider(
+                        value: event.weight.clamp(0, sliderMax),
+                        min: 0,
+                        max: sliderMax,
+                        label: event.weight.toStringAsFixed(1),
+                        activeColor: color,
+                        onChanged: (v) => onChanged(event.copyWith(weight: v)),
+                      );
+                    },
                   ),
                 ),
               ],

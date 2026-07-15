@@ -31,7 +31,9 @@ class LifeEvent {
   /// 方向。true = プラス。編集画面のプラス/マイナスボタンで反転できる。
   final bool isPositive;
 
-  /// 重み 0〜10。編集画面のスライダーで調整できる。
+  /// 重み（変動値の絶対値）。編集画面のスライダーで調整できる。
+  /// AI解析ではchange = 方向×baseImportance×durationMultiplier×moodMultiplier×1.5
+  /// の絶対値が入るため、日常の小さな出来事(1未満)から人生の節目(200超)まで幅がある。
   final double weight;
 
   const LifeEvent({
@@ -67,7 +69,7 @@ class LifeEvent {
     name: json['name'] as String? ?? '',
     kind: EventKind.fromName(json['kind'] as String? ?? 'daily'),
     isPositive: json['isPositive'] as bool? ?? true,
-    weight: (json['weight'] as num?)?.toDouble().clamp(0, 10) ?? 0,
+    weight: (json['weight'] as num?)?.toDouble().clamp(0, 300) ?? 0,
   );
 }
 

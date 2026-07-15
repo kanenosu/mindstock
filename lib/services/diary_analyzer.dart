@@ -13,29 +13,53 @@ abstract interface class DiaryAnalyzer {
 
 /// 採点プロンプト（仕様書 §4 プロンプト設計の核）。Claude / ChatGPT で共通。
 ///
-/// スコアリング自体に以下を織り込む:
-/// 1. 出来事の客観的重要度
-/// 2. 快楽順応 — 直近の日記を渡し、似た出来事が続けば点数を下げる
-/// 3. 損失回避 — ネガティブは 1.3〜1.5 倍重く採点する
+/// change = 方向 × baseImportance × durationMultiplier × moodMultiplier × 1.5
+/// という明示的な式でチャートへの変動値を計算させる（快楽順応込み）。
 const kAnalyzerSystemPrompt = '''
-あなたは日記アプリの解析エンジンです。ユーザーの日記本文から「出来事」を抽出し、
-人生チャート（株価のようなチャート）への変動値を採点します。
+あなたは日記アプリの解析エンジンです。日記本文から重要な出来事を最大4件抽出し、
+人生チャートの株価変動値を計算してください。
 
-採点ルール:
-1. 出来事の客観的な重要度を判定する（合格・失恋級 = 大、日常の小さな喜び = 小）。
-   ただし判定するのは客観的な性質と重要度のレンジまで。本人の主観的な感じ方を勝手に決めつけない。
-2. 快楽順応: 「直近の日記」に似た出来事が繰り返し登場している場合、今回の点数を意図的に下げる。
-   例: 「またバイトで褒められた」が3回目なら、1回目より明確に低く採点する。
-3. 損失回避: 同じ重要度でも、ネガティブな出来事はポジティブより1.3〜1.5倍重く採点する。
+株価変動値は次の式で求めます。
+change = 方向 × baseImportance × durationMultiplier × moodMultiplier × 1.5
+ポジティブはプラス、ネガティブはマイナス。最終値は四捨五入します。
+
+baseImportance（1〜100）: 出来事そのものの客観的重要度です。感情の強さとは分けて判断してください。
+- 小さな日常: 1〜5
+- 普通の日常: 6〜15
+- 重要な出来事: 16〜40
+- 人生の節目: 41〜75
+- 健康・生命・人生全体への重大な影響: 76〜100
+基礎重要度には、生活への影響範囲と元に戻りにくさを含めます。
+
+durationMultiplier:
+- 数時間: 0.5
+- 1日: 0.7
+- 数日: 0.9
+- 数週間: 1.1
+- 数か月: 1.3
+- 数年以上: 1.5
+
+moodMultiplier: 本文に明示された感情の強さだけを使います。
+- ほぼ感情なし: 0.8
+- 弱い: 0.9
+- 普通: 1.0
+- 強い: 1.15
+- 非常に強い: 1.3
+感情が強くても、日常的で短期的な出来事を大きく採点してはいけません。
+
+kind:
+- daily: 日常的・一時的な出来事
+- mood: 具体的な原因のない気分変化
+- milestone: 進路、人間関係、健康、所属などが長期的に変わる節目
+
+dailyのchangeは原則±10以内、1日のdaily合計は±15以内にしてください。
+同じ原因の出来事と感情は重複抽出しません。似た出来事が直近の日記で繰り返されている場合は、
+baseImportanceを下げます。判断材料が少ない場合は控えめに採点してください。
 
 出力ルール:
-- 1日あたり最大4件まで。重要なものから抽出する。
 - name は日本語で15文字以内の短い名詞句。
-- kind: "daily"(日常の出来事) / "mood"(気分・感情の揺れ) / "milestone"(人生の節目)。
-- isPositive: 出来事の方向。
-- weight: 0〜10 の実数。日常の小さな出来事は 0.5〜2、普通の出来事は 2〜4、
-  大きな出来事は 4〜7、人生の節目級は 7〜10 を目安にする。
 - 出来事が読み取れない場合は空の配列を返す。
+- JSON以外は出力しないでください。
 ''';
 
 /// 直近の日記（快楽順応の判定材料）込みのユーザーメッセージを組み立てる。
@@ -64,9 +88,23 @@ List<LifeEvent> parseAnalyzerEvents(dynamic parsed) {
   if (parsed is! Map<String, dynamic>) return const [];
   return ((parsed['events'] as List?) ?? const [])
       .whereType<Map<String, dynamic>>()
-      .map(LifeEvent.fromJson)
+      .map(_lifeEventFromAnalyzerJson)
       .take(4)
       .toList();
+}
+
+/// AIが返す change(= 方向 × baseImportance × durationMultiplier ×
+/// moodMultiplier × 1.5) を LifeEvent.weight（絶対値）に変換する。
+/// baseImportance/各倍率の内訳はAI側の計算過程であり、アプリ内では
+/// 既に計算済みのchangeだけを保持すれば十分なため保存しない。
+LifeEvent _lifeEventFromAnalyzerJson(Map<String, dynamic> json) {
+  final change = (json['change'] as num?)?.toDouble() ?? 0;
+  return LifeEvent(
+    name: json['name'] as String? ?? '',
+    kind: EventKind.fromName(json['kind'] as String? ?? 'daily'),
+    isPositive: json['isPositive'] as bool? ?? change >= 0,
+    weight: change.abs(),
+  );
 }
 
 /// Claude API による解析（仕様書 §4 プロンプト設計の核）。
@@ -99,9 +137,20 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
               'enum': ['daily', 'mood', 'milestone'],
             },
             'isPositive': {'type': 'boolean'},
-            'weight': {'type': 'number'},
+            'baseImportance': {'type': 'number'},
+            'durationMultiplier': {'type': 'number'},
+            'moodMultiplier': {'type': 'number'},
+            'change': {'type': 'number'},
           },
-          'required': ['name', 'kind', 'isPositive', 'weight'],
+          'required': [
+            'name',
+            'kind',
+            'isPositive',
+            'baseImportance',
+            'durationMultiplier',
+            'moodMultiplier',
+            'change',
+          ],
           'additionalProperties': false,
         },
       },
@@ -191,7 +240,8 @@ class OpenAiDiaryAnalyzer implements DiaryAnalyzer {
             'role': 'system',
             'content':
                 '$kAnalyzerSystemPrompt\n'
-                '必ず {"events": [{"name","kind","isPositive","weight"}, ...]} '
+                '必ず {"events": [{"name","kind","isPositive","baseImportance",'
+                '"durationMultiplier","moodMultiplier","change"}, ...]} '
                 'の形のJSONオブジェクトのみを出力すること。',
           },
           {
