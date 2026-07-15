@@ -16,11 +16,13 @@ jobs:
       - name: Flutterをセットアップ
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: "3.32.5"
           cache: true
 
-      - name: パッケージ取得
-        run: flutter pub get
+      - name: パッケージ取得（クリーン状態から）
+        run: |
+          flutter clean
+          flutter pub get
 
       - name: Xcodeプロジェクトを準備（ビルドはしない）
         run: flutter build ios --release --no-codesign --config-only
