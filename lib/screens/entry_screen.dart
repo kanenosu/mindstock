@@ -28,6 +28,7 @@ class EntryScreen extends ConsumerStatefulWidget {
 
 class _EntryScreenState extends ConsumerState<EntryScreen> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   late DateTime _date;
   double? _mood;
   bool _submitting = false;
@@ -42,11 +43,14 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
     final d = widget.initialDate ?? now;
     _date = DateTime(d.year, d.month, d.day);
     _loadEntryFor(_date);
+    // 書き始めたら（フォーカスが入ったら）カレンダーを畳んで本文に集中させる
+    _focusNode.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -122,8 +126,17 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // カレンダーから日付を選んですぐ移動できる（緑● / 赤● = その日の記録）
-              DiaryCalendar(selected: _date, onSelect: _selectDate),
+              // カレンダーから日付を選んですぐ移動できる（緑● / 赤● = その日の記録）。
+              // 本文入力中（キーボード表示中）は畳んで、狭い画面で本文と
+              // 重ならないようにする。フォーカスを外すとまた開く。
+              AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: _focusNode.hasFocus
+                    ? const SizedBox(width: double.infinity)
+                    : DiaryCalendar(selected: _date, onSelect: _selectDate),
+              ),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(
@@ -131,6 +144,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                     Positioned.fill(
                       child: TextField(
                         controller: _controller,
+                        focusNode: _focusNode,
                         maxLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,

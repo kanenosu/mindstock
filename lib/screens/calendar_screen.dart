@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../logic/chart_calculator.dart';
+import '../logic/weekly_summary.dart';
 import '../models/models.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/diary_calendar.dart';
 import '../widgets/motion.dart';
+import '../widgets/pill_selector.dart';
+import '../widgets/weekly_summary_card.dart';
 import 'entry_screen.dart';
 import 'review_screen.dart';
 
@@ -23,8 +26,12 @@ class CalendarScreen extends ConsumerStatefulWidget {
   ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
 }
 
+/// 記録一覧の表示単位。
+enum _RecordsView { monthly, weekly }
+
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _selected = DateTime.now();
+  _RecordsView _view = _RecordsView.monthly;
 
   void _onSelectDate(DateTime date) {
     setState(() => _selected = date);
@@ -39,18 +46,37 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
+  /// 記録のある週のまとめ（今週を含む）を新しい順に返す。
+  List<WeeklySummary> _weeklySummaries(Map<String, DiaryEntry> entries) {
+    if (entries.isEmpty) return const [];
+    final now = DateTime.now();
+    final thisMonday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
+    final firstDate = DateTime.parse(
+      entries.keys.reduce((a, b) => a.compareTo(b) <= 0 ? a : b),
+    );
+    final firstMonday = firstDate.subtract(
+      Duration(days: firstDate.weekday - 1),
+    );
+
+    final list = <WeeklySummary>[];
+    var weekStart = thisMonday;
+    while (!weekStart.isBefore(firstMonday)) {
+      final summary = WeeklySummary.compute(weekStart, entries);
+      if (summary.entryDays > 0) list.add(summary);
+      weekStart = weekStart.subtract(const Duration(days: 7));
+    }
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final entries = ref.watch(entriesProvider).valueOrNull ?? {};
     final sorted = entries.values.toList()
       ..sort((a, b) => b.date.compareTo(a.date));
-
-    // 月ごとにグループ化（新しい月から）
-    final groups = <String, List<DiaryEntry>>{};
-    for (final entry in sorted) {
-      final key = entry.date.substring(0, 7); // 'yyyy-MM'
-      groups.putIfAbsent(key, () => []).add(entry);
-    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('記録')),
@@ -60,26 +86,79 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           FadeSlideIn(
             child: DiaryCalendar(selected: _selected, onSelect: _onSelectDate),
           ),
+          const SizedBox(height: 12),
+          // 月ごとの記録一覧 / 週ごとのまとめ を切り替える
+          FadeSlideIn(
+            delayMs: 40,
+            child: PillSelector<_RecordsView>(
+              items: _RecordsView.values,
+              selected: _view,
+              labelOf: (v) => v == _RecordsView.monthly ? '月ごと' : '週ごと',
+              onChanged: (v) => setState(() => _view = v),
+            ),
+          ),
           const SizedBox(height: 16),
           if (sorted.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 48),
               child: Center(child: Text('まだ記録がありません')),
             )
+          else if (_view == _RecordsView.monthly)
+            ..._monthlyContent(sorted)
           else
-            for (final (gi, group) in groups.entries.indexed) ...[
-              FadeSlideIn(
-                delayMs: ((gi + 1) * 60).clamp(0, 300),
-                child: _MonthSection(
-                  monthKey: group.key,
-                  entries: group.value,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
+            ..._weeklyContent(entries),
         ],
       ),
     );
+  }
+
+  List<Widget> _monthlyContent(List<DiaryEntry> sorted) {
+    // 月ごとにグループ化（新しい月から）
+    final groups = <String, List<DiaryEntry>>{};
+    for (final entry in sorted) {
+      final key = entry.date.substring(0, 7); // 'yyyy-MM'
+      groups.putIfAbsent(key, () => []).add(entry);
+    }
+    return [
+      for (final (gi, group) in groups.entries.indexed) ...[
+        FadeSlideIn(
+          delayMs: ((gi + 1) * 60).clamp(0, 300),
+          child: _MonthSection(monthKey: group.key, entries: group.value),
+        ),
+        const SizedBox(height: 16),
+      ],
+    ];
+  }
+
+  List<Widget> _weeklyContent(Map<String, DiaryEntry> entries) {
+    final summaries = _weeklySummaries(entries);
+    if (summaries.isEmpty) {
+      return const [
+        Padding(
+          padding: EdgeInsets.only(top: 48),
+          child: Center(child: Text('まだ週のまとめがありません')),
+        ),
+      ];
+    }
+    return [
+      for (final (i, summary) in summaries.indexed) ...[
+        FadeSlideIn(
+          delayMs: ((i + 1) * 60).clamp(0, 300),
+          // タップでその週の振り返り（まとめ＋チャート）へ
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    ReviewScreen(date: summary.weekStart, weekly: true),
+              ),
+            ),
+            child: WeeklySummaryCard(summary: summary),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    ];
   }
 }
 
