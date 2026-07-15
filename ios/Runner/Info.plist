@@ -47,5 +47,31 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>日記を音声で入力するためにマイクを使用します。</string>
+	<!--
+	  Googleログイン用のURLスキーム。google_sign_in_ios はこれが無いと
+	  OAuthのリダイレクトを受け取れず正しく動作しない。
+
+	  Google Cloud Console で「iOS」用のOAuthクライアントIDを新規作成し
+	  （Androidで登録した既存のクライアントとは別物。バンドルID
+	  com.kanenosu.mindstock を指定）、クライアント詳細ページに表示される
+	  「REVERSED_CLIENT_ID」の値をそのまま下の REPLACE_WITH_REVERSED_CLIENT_ID
+	  と置き換えること。
+	  例: クライアントIDが 123-abc.apps.googleusercontent.com なら
+	      com.googleusercontent.apps.123-abc になる。
+
+	  未設定のままでもクラッシュはしない（アプリ側でエラーとして捕捉する）
+	  が、Googleログインは失敗する。
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
