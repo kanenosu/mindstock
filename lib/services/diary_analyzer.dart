@@ -77,7 +77,7 @@ List<LifeEvent> parseAnalyzerEvents(dynamic parsed) {
 /// 3. 損失回避 — ネガティブは 1.3〜1.5 倍重く採点する
 class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
   static const _endpoint = 'https://api.anthropic.com/v1/messages';
-  static const _model = 'claude-opus-4-8';
+  static const _model = 'claude-haiku-4-5';
 
   final String apiKey;
   final http.Client _client;
