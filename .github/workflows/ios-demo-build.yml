@@ -22,13 +22,30 @@ jobs:
       - name: パッケージ取得
         run: flutter pub get
 
-      - name: iOS向けビルド（署名なし）
-        run: flutter build ios --release --no-codesign
+      - name: Xcodeプロジェクトを準備（ビルドはしない）
+        run: flutter build ios --release --no-codesign --config-only
+
+      - name: xcodebuildで署名なしビルド
+        run: |
+          set -e
+          cd ios
+          xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            EXPANDED_CODE_SIGN_IDENTITY="-" \
+            build
 
       - name: 署名なしIPAにパッケージング
         run: |
           set -e
-          cd build/ios/iphoneos
+          cd ios/build/Build/Products/Release-iphoneos
           mkdir -p Payload
           cp -r Runner.app Payload/Runner.app
           zip -r -y mindstock-unsigned.ipa Payload
@@ -37,5 +54,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mindstock-unsigned-ipa
-          path: build/ios/iphoneos/mindstock-unsigned.ipa
+          path: ios/build/Build/Products/Release-iphoneos/mindstock-unsigned.ipa
           retention-days: 14
