@@ -2,11 +2,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'logic/chart_calculator.dart';
+import 'logic/weekly_summary.dart';
 import 'models/models.dart';
+import 'services/backup_service.dart';
 import 'services/database_service.dart';
 import 'services/demo_data.dart';
 import 'services/diary_analyzer.dart';
 import 'services/transcription_service.dart';
+
+/// 汎用: SharedPreferences に文字列を1つ保存するだけの Notifier。
+abstract class _PrefStringNotifier extends AsyncNotifier<String> {
+  String get prefKey;
+
+  @override
+  Future<String> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(prefKey) ?? '';
+  }
+
+  Future<void> save(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(prefKey, value.trim());
+    state = AsyncData(value.trim());
+  }
+}
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
@@ -15,48 +34,95 @@ final apiKeyProvider = AsyncNotifierProvider<ApiKeyNotifier, String>(
   ApiKeyNotifier.new,
 );
 
-class ApiKeyNotifier extends AsyncNotifier<String> {
-  static const _prefKey = 'claude_api_key';
+class ApiKeyNotifier extends _PrefStringNotifier {
+  @override
+  String get prefKey => 'claude_api_key';
+}
+
+/// OpenAI APIキー（ChatGPT解析 / Whisper音声入力で共用）。
+final openAiApiKeyProvider =
+    AsyncNotifierProvider<OpenAiApiKeyNotifier, String>(
+      OpenAiApiKeyNotifier.new,
+    );
+
+class OpenAiApiKeyNotifier extends _PrefStringNotifier {
+  @override
+  String get prefKey => 'openai_api_key';
+}
+
+/// AI解析のプロバイダー選択（Claude / ChatGPT）。
+enum AiProvider {
+  claude,
+  openai;
+
+  String get label => switch (this) {
+    AiProvider.claude => 'Claude',
+    AiProvider.openai => 'ChatGPT',
+  };
+}
+
+final aiProviderProvider = AsyncNotifierProvider<AiProviderNotifier, AiProvider>(
+  AiProviderNotifier.new,
+);
+
+class AiProviderNotifier extends AsyncNotifier<AiProvider> {
+  static const _prefKey = 'ai_provider';
 
   @override
-  Future<String> build() async {
+  Future<AiProvider> build() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_prefKey) ?? '';
+    final name = prefs.getString(_prefKey);
+    return AiProvider.values.firstWhere(
+      (p) => p.name == name,
+      orElse: () => AiProvider.claude,
+    );
   }
 
-  Future<void> save(String key) async {
+  Future<void> setProvider(AiProvider provider) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey, key.trim());
-    state = AsyncData(key.trim());
+    await prefs.setString(_prefKey, provider.name);
+    state = AsyncData(provider);
   }
 }
 
-/// APIキーが設定されていれば Claude API、なければ端末内の簡易解析。
-/// モード切替のUIは持たない — キーの有無で自動的に決まる。
+/// 選択中のプロバイダーのキーが設定されていればそのAPI、
+/// なければ端末内の簡易解析にフォールバックする。
 final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
-  final apiKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
-  if (apiKey.isNotEmpty) return ClaudeDiaryAnalyzer(apiKey: apiKey);
+  final provider =
+      ref.watch(aiProviderProvider).valueOrNull ?? AiProvider.claude;
+  final claudeKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
+  final openAiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
+
+  switch (provider) {
+    case AiProvider.claude:
+      if (claudeKey.isNotEmpty) return ClaudeDiaryAnalyzer(apiKey: claudeKey);
+    case AiProvider.openai:
+      if (openAiKey.isNotEmpty) return OpenAiDiaryAnalyzer(apiKey: openAiKey);
+  }
   return DemoDiaryAnalyzer();
 });
 
-/// OpenAI APIキー（Whisper音声入力用。設定画面から保存）。
-final openAiApiKeyProvider = AsyncNotifierProvider<OpenAiApiKeyNotifier, String>(
-  OpenAiApiKeyNotifier.new,
+/// Googleログイン + Driveバックアップ。
+final backupServiceProvider = Provider<BackupService>((ref) => BackupService());
+
+/// 初回チュートリアルを見終わったか。
+final onboardingDoneProvider = AsyncNotifierProvider<OnboardingNotifier, bool>(
+  OnboardingNotifier.new,
 );
 
-class OpenAiApiKeyNotifier extends AsyncNotifier<String> {
-  static const _prefKey = 'openai_api_key';
+class OnboardingNotifier extends AsyncNotifier<bool> {
+  static const _prefKey = 'onboarding_done';
 
   @override
-  Future<String> build() async {
+  Future<bool> build() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_prefKey) ?? '';
+    return prefs.getBool(_prefKey) ?? false;
   }
 
-  Future<void> save(String key) async {
+  Future<void> complete() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey, key.trim());
-    state = AsyncData(key.trim());
+    await prefs.setBool(_prefKey, true);
+    state = const AsyncData(true);
   }
 }
 
@@ -145,6 +211,18 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
     state = const AsyncData({});
   }
 
+  /// バックアップからの復元（同日の既存データは上書き）。
+  Future<int> importEntries(List<DiaryEntry> entries) async {
+    final db = ref.read(databaseProvider);
+    final map = Map<String, DiaryEntry>.from(state.valueOrNull ?? {});
+    for (final entry in entries) {
+      await db.upsert(entry);
+      map[entry.date] = entry;
+    }
+    state = AsyncData(map);
+    return entries.length;
+  }
+
   Future<void> _save(DiaryEntry entry) async {
     await ref.read(databaseProvider).upsert(entry);
     final map = Map<String, DiaryEntry>.from(state.valueOrNull ?? {});
@@ -168,4 +246,51 @@ final dailyCandlesProvider = Provider<List<Candle>>((ref) {
 /// 週足ローソク。
 final weeklyCandlesProvider = Provider<List<Candle>>((ref) {
   return ChartCalculator.weeklyCandles(ref.watch(dailyCandlesProvider));
+});
+
+/// 通知欄に出す週次レポート（完結した週のみ、新しい順・最大12件）。
+final weeklyReportsProvider = Provider<List<WeeklySummary>>((ref) {
+  final entries = ref.watch(entriesProvider).valueOrNull ?? {};
+  if (entries.isEmpty) return const [];
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final thisMonday = today.subtract(Duration(days: today.weekday - 1));
+
+  final firstDate = DateTime.parse(
+    entries.keys.reduce((a, b) => a.compareTo(b) <= 0 ? a : b),
+  );
+  final firstMonday = firstDate.subtract(
+    Duration(days: firstDate.weekday - 1),
+  );
+
+  final reports = <WeeklySummary>[];
+  // 直近の完結した週（先週）から過去へ
+  var weekStart = thisMonday.subtract(const Duration(days: 7));
+  while (!weekStart.isBefore(firstMonday) && reports.length < 12) {
+    final summary = WeeklySummary.compute(weekStart, entries);
+    if (summary.entryDays > 0) reports.add(summary);
+    weekStart = weekStart.subtract(const Duration(days: 7));
+  }
+  return reports;
+});
+
+/// 通知欄を最後に開いた時点の最新レポート週（既読管理）。
+final notificationsLastSeenProvider =
+    AsyncNotifierProvider<NotificationsLastSeenNotifier, String>(
+      NotificationsLastSeenNotifier.new,
+    );
+
+class NotificationsLastSeenNotifier extends _PrefStringNotifier {
+  @override
+  String get prefKey => 'notifications_last_seen';
+}
+
+/// 未読の週次レポート数（ベルのバッジ表示用）。
+final unreadNotificationsProvider = Provider<int>((ref) {
+  final reports = ref.watch(weeklyReportsProvider);
+  final lastSeen = ref.watch(notificationsLastSeenProvider).valueOrNull ?? '';
+  return reports
+      .where((r) => ChartCalculator.dateKey(r.weekStart).compareTo(lastSeen) > 0)
+      .length;
 });

@@ -11,6 +11,7 @@ import '../providers.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
 import 'entry_screen.dart';
+import 'notifications_screen.dart';
 import 'review_screen.dart';
 
 /// ダッシュボード（ホーム画面）。株アプリ風 × 温かいトーン。
@@ -67,9 +68,10 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(unreadNotificationsProvider);
     final hour = DateTime.now().hour;
     final (greeting, emoji) = switch (hour) {
       >= 5 && < 11 => ('おはよう。今日もゆっくり積み上げる', '🌅'),
@@ -83,7 +85,7 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                greeting,
+                '$greeting $emoji',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.inkSoft,
                   fontWeight: FontWeight.w600,
@@ -99,22 +101,50 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.ink.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        // お知らせベル（未読の週次レポートがあると赤バッジ）
+        PressableScale(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
           ),
-          alignment: Alignment.center,
-          child: Text(emoji, style: const TextStyle(fontSize: 20)),
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.ink.withValues(alpha: 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(
+                  Icons.notifications_none_rounded,
+                  color: AppColors.ink,
+                  size: 22,
+                ),
+                if (unread > 0)
+                  Positioned(
+                    top: 10,
+                    right: 11,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: AppColors.bear,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.card, width: 1.5),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ],
     );

@@ -51,6 +51,10 @@ class _CandlestickChartState extends State<CandlestickChart>
   double _scrollOffset = 0;
 
   double _scaleStartWidth = 14;
+
+  /// ピンチ開始時、焦点位置が右端から何本目だったか。
+  /// ズーム中もこの足が指の下に留まるようにオフセットを補正する。
+  double _scaleStartFocalFromRight = 0;
   int? _selectedIndex;
 
   /// 慣性スクロール（指を離した後もスッと滑る）用。
@@ -100,20 +104,30 @@ class _CandlestickChartState extends State<CandlestickChart>
           onScaleStart: (details) {
             _fling.stop();
             _scaleStartWidth = _candleWidth;
+            _scaleStartFocalFromRight =
+                _scrollOffset +
+                (size.width - details.localFocalPoint.dx) / _candleWidth;
           },
           onScaleUpdate: (details) {
             setState(() {
-              if (details.scale != 1.0) {
+              if (details.pointerCount >= 2) {
+                // ピンチ: 指の中心の足がその場に留まるようにズームする
                 _candleWidth = (_scaleStartWidth * details.scale).clamp(
                   _minWidth,
                   _maxWidth,
                 );
+                _scrollOffset =
+                    (_scaleStartFocalFromRight -
+                            (size.width - details.localFocalPoint.dx) /
+                                _candleWidth)
+                        .clamp(0, _maxOffset);
+              } else {
+                // 1本指: パン。focalPointDelta は1フレーム分の差分なので累積。
+                // 右へドラッグ = 過去へ戻る（オフセット増加）。
+                _scrollOffset = (_scrollOffset +
+                        details.focalPointDelta.dx / _candleWidth)
+                    .clamp(0, _maxOffset);
               }
-              // focalPointDelta は1フレーム分の差分なので累積する。
-              // 右へドラッグ = 過去へ戻る（オフセット増加）。
-              _scrollOffset = (_scrollOffset +
-                      details.focalPointDelta.dx / _candleWidth)
-                  .clamp(0, _maxOffset);
             });
           },
           onScaleEnd: (details) {

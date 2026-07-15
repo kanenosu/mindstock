@@ -11,23 +11,13 @@ abstract interface class DiaryAnalyzer {
   Future<List<LifeEvent>> analyze(String text, List<DiaryEntry> recentEntries);
 }
 
-/// Claude API による解析（仕様書 §4 プロンプト設計の核）。
+/// 採点プロンプト（仕様書 §4 プロンプト設計の核）。Claude / ChatGPT で共通。
 ///
 /// スコアリング自体に以下を織り込む:
 /// 1. 出来事の客観的重要度
 /// 2. 快楽順応 — 直近の日記を渡し、似た出来事が続けば点数を下げる
 /// 3. 損失回避 — ネガティブは 1.3〜1.5 倍重く採点する
-class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
-  static const _endpoint = 'https://api.anthropic.com/v1/messages';
-  static const _model = 'claude-opus-4-8';
-
-  final String apiKey;
-  final http.Client _client;
-
-  ClaudeDiaryAnalyzer({required this.apiKey, http.Client? client})
-    : _client = client ?? http.Client();
-
-  static const _systemPrompt = '''
+const kAnalyzerSystemPrompt = '''
 あなたは日記アプリの解析エンジンです。ユーザーの日記本文から「出来事」を抽出し、
 人生チャート（株価のようなチャート）への変動値を採点します。
 
@@ -47,6 +37,53 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
   大きな出来事は 4〜7、人生の節目級は 7〜10 を目安にする。
 - 出来事が読み取れない場合は空の配列を返す。
 ''';
+
+/// 直近の日記（快楽順応の判定材料）込みのユーザーメッセージを組み立てる。
+String buildAnalyzerUserMessage(String text, List<DiaryEntry> recentEntries) {
+  final recent = recentEntries
+      .take(7)
+      .map((e) => '- ${e.date}: ${_summarizeEntry(e)}')
+      .join('\n');
+  return '直近の日記（快楽順応の判定に使うこと）:\n'
+      '${recent.isEmpty ? '（なし）' : recent}\n\n'
+      '今日の日記本文:\n$text';
+}
+
+String _summarizeEntry(DiaryEntry e) {
+  if (e.events.isNotEmpty) {
+    return e.events
+        .map((ev) => '${ev.name}(${ev.isPositive ? '+' : '-'}${ev.weight})')
+        .join(', ');
+  }
+  final t = e.text.replaceAll('\n', ' ');
+  return t.length > 40 ? '${t.substring(0, 40)}…' : t;
+}
+
+/// 解析結果JSONの events 配列を LifeEvent に変換する（両プロバイダー共通）。
+List<LifeEvent> parseAnalyzerEvents(dynamic parsed) {
+  if (parsed is! Map<String, dynamic>) return const [];
+  return ((parsed['events'] as List?) ?? const [])
+      .whereType<Map<String, dynamic>>()
+      .map(LifeEvent.fromJson)
+      .take(4)
+      .toList();
+}
+
+/// Claude API による解析（仕様書 §4 プロンプト設計の核）。
+///
+/// スコアリング自体に以下を織り込む:
+/// 1. 出来事の客観的重要度
+/// 2. 快楽順応 — 直近の日記を渡し、似た出来事が続けば点数を下げる
+/// 3. 損失回避 — ネガティブは 1.3〜1.5 倍重く採点する
+class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
+  static const _endpoint = 'https://api.anthropic.com/v1/messages';
+  static const _model = 'claude-opus-4-8';
+
+  final String apiKey;
+  final http.Client _client;
+
+  ClaudeDiaryAnalyzer({required this.apiKey, http.Client? client})
+    : _client = client ?? http.Client();
 
   static const _outputSchema = {
     'type': 'object',
@@ -78,16 +115,6 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
     String text,
     List<DiaryEntry> recentEntries,
   ) async {
-    final recent = recentEntries
-        .take(7)
-        .map((e) => '- ${e.date}: ${_summarize(e)}')
-        .join('\n');
-
-    final userMessage =
-        '直近の日記（快楽順応の判定に使うこと）:\n'
-        '${recent.isEmpty ? '（なし）' : recent}\n\n'
-        '今日の日記本文:\n$text';
-
     final response = await _client.post(
       Uri.parse(_endpoint),
       headers: {
@@ -98,12 +125,15 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
       body: jsonEncode({
         'model': _model,
         'max_tokens': 2048,
-        'system': _systemPrompt,
+        'system': kAnalyzerSystemPrompt,
         'output_config': {
           'format': {'type': 'json_schema', 'schema': _outputSchema},
         },
         'messages': [
-          {'role': 'user', 'content': userMessage},
+          {
+            'role': 'user',
+            'content': buildAnalyzerUserMessage(text, recentEntries),
+          },
         ],
       }),
     );
@@ -126,21 +156,62 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
     );
     if (textBlock == null) return const [];
 
-    final parsed = jsonDecode(textBlock['text'] as String);
-    return ((parsed['events'] as List?) ?? const [])
-        .map((e) => LifeEvent.fromJson(e as Map<String, dynamic>))
-        .take(4)
-        .toList();
+    return parseAnalyzerEvents(jsonDecode(textBlock['text'] as String));
   }
+}
 
-  String _summarize(DiaryEntry e) {
-    if (e.events.isNotEmpty) {
-      return e.events
-          .map((ev) => '${ev.name}(${ev.isPositive ? '+' : '-'}${ev.weight})')
-          .join(', ');
+/// OpenAI Chat Completions (ChatGPT) による解析。
+/// プロンプトはClaude版と共通で、JSONモードで構造化出力を受け取る。
+class OpenAiDiaryAnalyzer implements DiaryAnalyzer {
+  static const _endpoint = 'https://api.openai.com/v1/chat/completions';
+  static const _model = 'gpt-4o-mini';
+
+  final String apiKey;
+  final http.Client _client;
+
+  OpenAiDiaryAnalyzer({required this.apiKey, http.Client? client})
+    : _client = client ?? http.Client();
+
+  @override
+  Future<List<LifeEvent>> analyze(
+    String text,
+    List<DiaryEntry> recentEntries,
+  ) async {
+    final response = await _client.post(
+      Uri.parse(_endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $apiKey',
+      },
+      body: jsonEncode({
+        'model': _model,
+        'response_format': {'type': 'json_object'},
+        'messages': [
+          {
+            'role': 'system',
+            'content':
+                '$kAnalyzerSystemPrompt\n'
+                '必ず {"events": [{"name","kind","isPositive","weight"}, ...]} '
+                'の形のJSONオブジェクトのみを出力すること。',
+          },
+          {
+            'role': 'user',
+            'content': buildAnalyzerUserMessage(text, recentEntries),
+          },
+        ],
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw AnalyzerException(
+        'OpenAI API error ${response.statusCode}: ${response.body}',
+      );
     }
-    final t = e.text.replaceAll('\n', ' ');
-    return t.length > 40 ? '${t.substring(0, 40)}…' : t;
+
+    final body = jsonDecode(utf8.decode(response.bodyBytes));
+    final content =
+        body['choices']?[0]?['message']?['content'] as String? ?? '{}';
+    return parseAnalyzerEvents(jsonDecode(content));
   }
 }
 
