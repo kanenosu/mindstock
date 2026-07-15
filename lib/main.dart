@@ -4,10 +4,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'providers.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/chart_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/entry_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme.dart';
 
@@ -33,7 +35,28 @@ class MindStockApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const HomeShell(),
+      home: const _RootGate(),
+    );
+  }
+}
+
+/// 初回起動ならチュートリアル、以後はホームへ。切替はクロスフェード。
+class _RootGate extends ConsumerWidget {
+  const _RootGate();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final done = ref.watch(onboardingDoneProvider);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      child: switch (done.valueOrNull) {
+        null => const ColoredBox(
+          key: ValueKey('loading'),
+          color: AppColors.cream,
+        ),
+        false => const OnboardingScreen(key: ValueKey('onboarding')),
+        true => const HomeShell(key: ValueKey('home')),
+      },
     );
   }
 }
@@ -74,19 +97,21 @@ class _HomeShellState extends State<HomeShell> {
     ];
     return Scaffold(
       // 横スワイプでもタブを切り替えられるようにする。
-      // 内側のチャート（ピンチズーム・横ドラッグ）は子ウィジェットの
-      // ジェスチャーが先に処理されるため、ここでは奪わない。
+      // 推移タブ(index 2)ではハンドラ自体を外して認識器を登録しない —
+      // 親のドラッグ認識がチャートのピンチ/パンを奪ってしまうため。
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onHorizontalDragEnd: (details) {
-          final velocity = details.primaryVelocity ?? 0;
-          const threshold = 250.0;
-          if (velocity < -threshold) {
-            _goTo(_index + 1); // 左スワイプ → 次のタブ
-          } else if (velocity > threshold) {
-            _goTo(_index - 1); // 右スワイプ → 前のタブ
-          }
-        },
+        onHorizontalDragEnd: _index == 2
+            ? null
+            : (details) {
+                final velocity = details.primaryVelocity ?? 0;
+                const threshold = 250.0;
+                if (velocity < -threshold) {
+                  _goTo(_index + 1); // 左スワイプ → 次のタブ
+                } else if (velocity > threshold) {
+                  _goTo(_index - 1); // 右スワイプ → 前のタブ
+                }
+              },
         child: IndexedStack(index: _index, children: screens),
       ),
       bottomNavigationBar: NavigationBar(
