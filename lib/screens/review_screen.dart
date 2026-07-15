@@ -7,6 +7,7 @@ import '../logic/weekly_summary.dart';
 import '../models/models.dart';
 import '../providers.dart';
 import '../theme.dart';
+import '../widgets/candlestick_chart.dart';
 import '../widgets/weekly_summary_card.dart';
 import 'edit_screen.dart';
 
@@ -53,6 +54,8 @@ class ReviewScreen extends ConsumerWidget {
           if (weekly) ...[
             WeeklySummaryCard(summary: WeeklySummary.compute(date, entries)),
             const SizedBox(height: 12),
+            _weekChartCard(context, daily),
+            const SizedBox(height: 12),
           ],
           if (candle != null) _positionCard(context, candle, current),
           const SizedBox(height: 16),
@@ -67,6 +70,50 @@ class ReviewScreen extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
         ],
+      ),
+    );
+  }
+
+  /// その週の日足チャート（月曜〜日曜の7本）。週のまとめの直下に置く。
+  Widget _weekChartCard(BuildContext context, List<Candle> daily) {
+    final weekStart = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).subtract(Duration(days: date.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final weekCandles = daily
+        .where(
+          (c) => !c.date.isBefore(weekStart) && !c.date.isAfter(weekEnd),
+        )
+        .toList();
+
+    if (weekCandles.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'この週のチャート',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: AppColors.inkSoft,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 160,
+              // 日足なので点＋ラインで表示（週内の1日1本）
+              child: CandlestickChart(
+                candles: weekCandles,
+                style: ChartStyle.line,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
