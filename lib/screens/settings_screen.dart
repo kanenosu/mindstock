@@ -31,10 +31,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    // 前回のGoogleログインを復元
-    ref.read(backupServiceProvider).signInSilently().then((account) {
-      if (mounted) setState(() => _account = account);
-    });
+    // 前回のGoogleログインを復元。
+    // signInSilently自体が例外を投げない実装だが、念のため二重にガードし、
+    // 設定画面を開いただけで（何も操作していないのに）落ちることがないようにする。
+    ref
+        .read(backupServiceProvider)
+        .signInSilently()
+        .then((account) {
+          if (mounted) setState(() => _account = account);
+        })
+        .catchError((_) {
+          // 復元に失敗しても未ログイン状態として扱うだけ。ユーザーには
+          // 何も表示しない（明示的にログインボタンを押した時だけエラーを見せる）。
+        });
   }
 
   @override

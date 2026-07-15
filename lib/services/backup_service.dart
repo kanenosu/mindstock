@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -27,13 +28,27 @@ class BackupService {
   GoogleSignInAccount? get account => _account;
 
   /// 起動時などに前回のログインを復元する。
+  /// 「silently」という名の通り、失敗しても例外は投げない
+  /// （前回ログインが無い/iOS側のOAuthクライアント未設定など、
+  /// 理由を問わずアプリを落とさず null を返すだけにする）。
   Future<GoogleSignInAccount?> signInSilently() async {
-    _account = await _google.signInSilently();
+    try {
+      _account = await _google.signInSilently();
+    } catch (_) {
+      _account = null;
+    }
     return _account;
   }
 
   Future<GoogleSignInAccount?> signIn() async {
-    _account = await _google.signIn();
+    try {
+      _account = await _google.signIn();
+    } on PlatformException catch (e) {
+      throw BackupException(
+        'Googleログインに失敗しました。iOS側のOAuth設定が未完了の可能性があります '
+        '(${e.code})',
+      );
+    }
     return _account;
   }
 
