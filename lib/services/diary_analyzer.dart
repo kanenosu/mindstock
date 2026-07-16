@@ -109,6 +109,42 @@ LifeEvent _lifeEventFromAnalyzerJson(Map<String, dynamic> json) {
   );
 }
 
+/// オフライン採点（キーワード辞書・サンプルデータ）を、AI採点と同じ
+/// スケールに揃えるための共通ロジック（改善点§3）。
+///
+/// AIの式 `change = baseImportance × durationMultiplier × moodMultiplier × 1.5`
+/// をオフラインでも使う。オフラインは本文から期間・感情の強さを厳密に
+/// 読み取れないため、durationMultiplier は種別ごとの既定値を使い、
+/// moodMultiplier は 1.0（中立）とする。これでキーの有無に関わらず
+/// チャートの変動幅（迫力）が揃う。
+class OfflineScoring {
+  OfflineScoring._();
+
+  /// 損失回避: ネガティブは重く見る（仕様書 §4／オフライン共通）。
+  static const lossAversion = 1.4;
+
+  /// 種別ごとの durationMultiplier 既定値（本文から期間を読めないため）。
+  static double durationFor(EventKind kind) => switch (kind) {
+    EventKind.mood => 0.5, // 一時的な気分 = 数時間相当
+    EventKind.daily => 0.7, // 日常 = 1日相当
+    EventKind.milestone => 1.3, // 節目 = 数か月相当
+  };
+
+  /// baseImportance(1〜100) と種別から変動値の絶対値を求める。
+  /// ネガティブは損失回避で少し重くする。
+  static double weightFor({
+    required double baseImportance,
+    required EventKind kind,
+    required bool isPositive,
+    double moodMultiplier = 1.0,
+  }) {
+    final base = baseImportance.clamp(0.0, 100.0);
+    var change = base * durationFor(kind) * moodMultiplier * 1.5;
+    if (!isPositive) change *= lossAversion;
+    return double.parse(change.toStringAsFixed(1));
+  }
+}
+
 /// Claude API による解析（仕様書 §4 プロンプト設計の核）。
 ///
 /// スコアリング自体に以下を織り込む:
@@ -272,19 +308,19 @@ class OpenAiDiaryAnalyzer implements DiaryAnalyzer {
 /// Claude APIを使わずに「AIが解析した風」の結果を返す。
 /// 文単位で出来事を抽出し、名前は文そのものから切り出すので
 /// キーワードの羅列より本物の解析に近い見た目になる。
-/// 快楽順応（似た出来事の減衰）と損失回避（ネガティブ1.4倍）も
-/// 本実装と同じ思想でシミュレートする。
+/// 採点は [OfflineScoring] を通してAIと同じスケールに揃える（改善点§3）。
 class DemoDiaryAnalyzer implements DiaryAnalyzer {
-  /// 損失回避: ネガティブを1.4倍重く見る（仕様書 §4）。
-  static const _lossAversion = 1.4;
-
   /// 快楽順応: 直近に似た出来事が1回あるごとに0.7倍に減衰。
   static const _adaptationDecay = 0.7;
 
+  /// 種別を節目に引き上げるキーワード（感情語と一緒に出た時に効く）。
   static const _milestoneWords = [
     '合格', '不合格', '内定', '退職', '転職', '失恋', '結婚', '離婚',
     '出産', '入学', '卒業', '引っ越し', '昇進', '起業',
   ];
+
+  /// 節目語だけ出てきた時の基礎重要度の下限。
+  static const _milestoneFloor = 45.0;
 
   @override
   Future<List<LifeEvent>> analyze(
@@ -318,27 +354,43 @@ class DemoDiaryAnalyzer implements DiaryAnalyzer {
   }
 
   LifeEvent? _scoreSentence(String sentence) {
+    // 文中で当たった語の基礎重要度を方向ごとに合算し、
+    // 支配的な側の種別（最も重要な語の種別）を採用する。
     double positive = 0;
     double negative = 0;
+    EventKind? posKind;
+    EventKind? negKind;
+    double posMax = 0;
+    double negMax = 0;
     for (final e in HeuristicDiaryAnalyzer._positiveWords.entries) {
-      if (sentence.contains(e.key)) positive += e.value;
+      if (!sentence.contains(e.key)) continue;
+      final (importance, kind) = e.value;
+      positive += importance;
+      if (importance > posMax) {
+        posMax = importance;
+        posKind = kind;
+      }
     }
     for (final e in HeuristicDiaryAnalyzer._negativeWords.entries) {
-      if (sentence.contains(e.key)) negative += e.value;
+      if (!sentence.contains(e.key)) continue;
+      final (importance, kind) = e.value;
+      negative += importance;
+      if (importance > negMax) {
+        negMax = importance;
+        negKind = kind;
+      }
     }
     if (positive == 0 && negative == 0) return null;
 
     final isPositive = positive >= negative;
-    var weight = (isPositive ? positive : negative * _lossAversion).clamp(
-      0.5,
-      10.0,
-    );
+    var baseImportance = (isPositive ? positive : negative).clamp(1.0, 100.0);
+    var kind = (isPositive ? posKind : negKind) ?? EventKind.daily;
 
-    final isMilestone = _milestoneWords.any(sentence.contains);
-    final kind = isMilestone
-        ? EventKind.milestone
-        : (weight <= 2 ? EventKind.mood : EventKind.daily);
-    if (isMilestone) weight = weight.clamp(4.0, 10.0);
+    // 節目語が含まれていれば種別を節目に引き上げる。
+    if (_milestoneWords.any(sentence.contains)) {
+      kind = EventKind.milestone;
+      baseImportance = baseImportance.clamp(_milestoneFloor, 100.0);
+    }
 
     // 名前は文の先頭から切り出す（AIが要約した風の見た目）
     final name = sentence.length <= 15 ? sentence : sentence.substring(0, 15);
@@ -346,7 +398,11 @@ class DemoDiaryAnalyzer implements DiaryAnalyzer {
       name: name,
       kind: kind,
       isPositive: isPositive,
-      weight: double.parse(weight.toStringAsFixed(1)),
+      weight: OfflineScoring.weightFor(
+        baseImportance: baseImportance,
+        kind: kind,
+        isPositive: isPositive,
+      ),
     );
   }
 
@@ -365,52 +421,52 @@ class DemoDiaryAnalyzer implements DiaryAnalyzer {
     final decayed = event.weight *
         List.filled(count, _adaptationDecay).fold<double>(1, (a, b) => a * b);
     return event.copyWith(
-      weight: double.parse(decayed.clamp(0.3, 10.0).toStringAsFixed(1)),
+      weight: double.parse(decayed.clamp(0.1, 300.0).toStringAsFixed(1)),
     );
   }
 }
 
 /// APIキー未設定・オフライン時のフォールバック。
 /// 簡易的なキーワード採点で「書けば必ずチャートに反映される」体験を守る。
+///
+/// 辞書の値は (baseImportance 1〜100, 種別)。採点は [OfflineScoring] を
+/// 通してAI採点と同じスケールに揃える（改善点§3）。
 class HeuristicDiaryAnalyzer implements DiaryAnalyzer {
-  static const _positiveWords = {
-    '嬉しい': 2.0,
-    'うれしい': 2.0,
-    '楽しい': 2.0,
-    'たのしい': 2.0,
-    '合格': 6.0,
-    '内定': 6.0,
-    '昇進': 5.0,
-    '褒められ': 2.5,
-    '成功': 3.0,
-    '達成': 3.0,
-    '最高': 2.5,
-    '好き': 1.5,
-    '幸せ': 2.5,
-    'ありがとう': 1.5,
-    '感謝': 1.5,
+  static const _positiveWords = <String, (double, EventKind)>{
+    '嬉しい': (4, EventKind.mood),
+    'うれしい': (4, EventKind.mood),
+    '楽しい': (4, EventKind.mood),
+    'たのしい': (4, EventKind.mood),
+    '合格': (55, EventKind.milestone),
+    '内定': (60, EventKind.milestone),
+    '昇進': (50, EventKind.milestone),
+    '褒められ': (8, EventKind.daily),
+    '成功': (14, EventKind.daily),
+    '達成': (14, EventKind.daily),
+    '最高': (6, EventKind.mood),
+    '好き': (4, EventKind.mood),
+    '幸せ': (7, EventKind.mood),
+    'ありがとう': (5, EventKind.daily),
+    '感謝': (5, EventKind.daily),
   };
 
-  static const _negativeWords = {
-    '辛い': 2.5,
-    'つらい': 2.5,
-    '悲しい': 2.5,
-    'かなしい': 2.5,
-    '失恋': 6.0,
-    '不合格': 5.0,
-    '退職': 4.0,
-    '失敗': 3.0,
-    '怒られ': 2.5,
-    '疲れた': 1.5,
-    '最悪': 3.0,
-    '不安': 2.0,
-    '嫌': 1.5,
-    'いや': 1.0,
-    '病気': 3.5,
+  static const _negativeWords = <String, (double, EventKind)>{
+    '辛い': (8, EventKind.mood),
+    'つらい': (8, EventKind.mood),
+    '悲しい': (8, EventKind.mood),
+    'かなしい': (8, EventKind.mood),
+    '失恋': (55, EventKind.milestone),
+    '不合格': (50, EventKind.milestone),
+    '退職': (45, EventKind.milestone),
+    '失敗': (14, EventKind.daily),
+    '怒られ': (8, EventKind.daily),
+    '疲れた': (4, EventKind.mood),
+    '最悪': (10, EventKind.mood),
+    '不安': (6, EventKind.mood),
+    '嫌': (4, EventKind.mood),
+    'いや': (3, EventKind.mood),
+    '病気': (40, EventKind.daily),
   };
-
-  /// 損失回避: ネガティブを1.4倍重く見る（仕様書 §4）。
-  static const _lossAversion = 1.4;
 
   @override
   Future<List<LifeEvent>> analyze(
@@ -419,30 +475,30 @@ class HeuristicDiaryAnalyzer implements DiaryAnalyzer {
   ) async {
     final events = <LifeEvent>[];
 
-    for (final entry in _positiveWords.entries) {
-      if (text.contains(entry.key)) {
+    void addMatches(
+      Map<String, (double, EventKind)> dict, {
+      required bool isPositive,
+    }) {
+      for (final entry in dict.entries) {
+        if (!text.contains(entry.key)) continue;
+        final (importance, kind) = entry.value;
         events.add(
           LifeEvent(
             name: entry.key,
-            kind: entry.value >= 4 ? EventKind.milestone : EventKind.mood,
-            isPositive: true,
-            weight: entry.value,
+            kind: kind,
+            isPositive: isPositive,
+            weight: OfflineScoring.weightFor(
+              baseImportance: importance,
+              kind: kind,
+              isPositive: isPositive,
+            ),
           ),
         );
       }
     }
-    for (final entry in _negativeWords.entries) {
-      if (text.contains(entry.key)) {
-        events.add(
-          LifeEvent(
-            name: entry.key,
-            kind: entry.value >= 4 ? EventKind.milestone : EventKind.mood,
-            isPositive: false,
-            weight: (entry.value * _lossAversion).clamp(0, 10),
-          ),
-        );
-      }
-    }
+
+    addMatches(_positiveWords, isPositive: true);
+    addMatches(_negativeWords, isPositive: false);
 
     events.sort((a, b) => b.weight.compareTo(a.weight));
     if (events.isEmpty && text.trim().isNotEmpty) {
