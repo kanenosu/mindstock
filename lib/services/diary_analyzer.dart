@@ -160,6 +160,47 @@ class OfflineScoring {
   }
 }
 
+/// バックエンド経由の解析（マネタイズ用の本番構成）。
+///
+/// AI解析キーはアプリに埋め込めない（抜き取られて悪用される）ため、
+/// 開発者のキーはサーバー側に置き、アプリはサーバーへ本文を送って
+/// 採点結果だけ受け取る。ポイント制で解析回数を制御する。
+///
+/// サーバーは POST {baseUrl}/analyze に {text, recent:[{date, summary}]} を
+/// 受け取り、Claude等を叩いて {events:[...]} を返す（backend/ を参照）。
+class BackendDiaryAnalyzer implements DiaryAnalyzer {
+  final String baseUrl;
+  final http.Client _client;
+
+  BackendDiaryAnalyzer({required this.baseUrl, http.Client? client})
+    : _client = client ?? http.Client();
+
+  @override
+  Future<List<LifeEvent>> analyze(
+    String text,
+    List<DiaryEntry> recentEntries,
+  ) async {
+    final uri = Uri.parse('${baseUrl.replaceAll(RegExp(r'/+$'), '')}/analyze');
+    final response = await _client.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'text': text,
+        'recent': [
+          for (final e in recentEntries.take(7))
+            {'date': e.date, 'summary': _summarizeEntry(e)},
+        ],
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw AnalyzerException('バックエンド解析に失敗しました (${response.statusCode})');
+    }
+    final body = jsonDecode(utf8.decode(response.bodyBytes));
+    return parseAnalyzerEvents(body);
+  }
+}
+
 /// Claude API による解析（仕様書 §4 プロンプト設計の核）。
 ///
 /// スコアリング自体に以下を織り込む:

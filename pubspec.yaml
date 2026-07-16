@@ -21,6 +21,8 @@ dependencies:
   record: ^6.2.1
   path_provider: ^2.1.5
   google_sign_in: ^6.3.0
+  google_mobile_ads: ^6.0.0
+  in_app_purchase: ^3.2.3
 
 dev_dependencies:
   flutter_test:

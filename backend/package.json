@@ -1,0 +1,17 @@
+{
+  "name": "mindstock-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MindStock の解析バックエンド（開発者のAIキーを保持し、アプリからの解析リクエストを代理実行する）",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
