@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/intl.dart';
 
 import '../providers.dart';
 import '../theme.dart';
@@ -142,6 +143,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ),
   );
 
+  /// 最終バックアップ日時の表示（自動・手動共通）。
+  /// 7日以上経つと自動でバックアップされる旨も添える。
+  Widget _lastBackupLine(BuildContext context) {
+    final iso = ref.watch(lastBackupAtProvider).valueOrNull ?? '';
+    final at = DateTime.tryParse(iso);
+    final text = at == null
+        ? 'まだバックアップしていません（ログイン中は7日ごとに自動保存されます）'
+        : '最終バックアップ: ${DateFormat('M/d HH:mm', 'ja').format(at)}'
+              '（7日ごとに自動保存）';
+    return Row(
+      children: [
+        Icon(Icons.schedule_rounded, size: 13, color: AppColors.inkSoft),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 11, color: AppColors.inkSoft),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ── アカウント ────────────────────────────────────────
 
   Widget _accountSection(BuildContext context) {
@@ -246,6 +270,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   await ref
                                       .read(backupServiceProvider)
                                       .backup(entries);
+                                  // 自動バックアップと共通のタイムスタンプを更新
+                                  await ref
+                                      .read(lastBackupAtProvider.notifier)
+                                      .save(
+                                        DateTime.now().toIso8601String(),
+                                      );
                                   HapticFeedback.mediumImpact();
                                   _toast('Driveにバックアップしました');
                                 }),
@@ -273,6 +303,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  _lastBackupLine(context),
                 ],
                 if (_busy) ...[
                   const SizedBox(height: 12),
