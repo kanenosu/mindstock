@@ -1,0 +1,17 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景: MindStockのテーマカラー（温かいクリーム） -->
+  <rect width="1024" height="1024" rx="230" ry="230" fill="#F7F1E8"/>
+
+  <!-- 左のローソク足（低め・陽線グリーン） -->
+  <line x1="430" y1="481" x2="430" y2="809" stroke="#2E9E6B" stroke-width="22" stroke-linecap="round"/>
+  <rect x="368" y="532" width="124" height="226" rx="42" fill="#2E9E6B"/>
+
+  <!-- 右のローソク足（高め・上昇を表現） -->
+  <line x1="604" y1="328" x2="604" y2="727" stroke="#2E9E6B" stroke-width="22" stroke-linecap="round"/>
+  <rect x="542" y="389" width="124" height="277" rx="42" fill="#2E9E6B"/>
+
+  <!-- 右上のきらめき（アクセントのアンバー、成長・光を表現） -->
+  <line x1="826" y1="290" x2="806" y2="345" stroke="#EFA94A" stroke-width="20" stroke-linecap="round"/>
+  <line x1="908" y1="335" x2="868" y2="375" stroke="#EFA94A" stroke-width="20" stroke-linecap="round"/>
+  <line x1="932" y1="418" x2="884" y2="428" stroke="#EFA94A" stroke-width="20" stroke-linecap="round"/>
+</svg>
