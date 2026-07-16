@@ -27,6 +27,10 @@ class MindStockApp extends StatelessWidget {
     return MaterialApp(
       title: 'MindStock',
       theme: buildAppTheme(),
+      // 「温かいクリーム基調」がこのアプリのアイデンティティなので、
+      // 端末がダークモードでも常にライトテーマで表示する（意図的な固定・改善点§4）。
+      // 端末のダーク設定に引きずられて中途半端に暗転しないよう明示する。
+      themeMode: ThemeMode.light,
       scrollBehavior: const _BouncyScrollBehavior(),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
@@ -62,17 +66,27 @@ class _RootGate extends ConsumerWidget {
 }
 
 /// ボトムナビゲーション: ホーム / 日記 / 推移 / 記録 / 設定。
-class HomeShell extends StatefulWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell> {
   static const _tabCount = 5;
 
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 起動時の自動バックアップ（ログイン済み & 前回から7日以上経過時のみ）。
+    // 第一フレーム後に静かに走らせる（改善点§6）。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) maybeAutoBackup(ref);
+    });
+  }
 
   void _goTo(int i) {
     if (i < 0 || i >= _tabCount) return;

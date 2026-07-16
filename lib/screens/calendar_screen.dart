@@ -313,6 +313,9 @@ class _EntryTile extends ConsumerWidget {
 
   /// 削除確認。削除を実行したら true を返す（Dismissible の判定にも使う）。
   Future<bool> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    // 非同期の前にメッセンジャーを掴んでおく（ダイアログ/行の消滅で
+    // contextが無効になっても安全にスナックバーを出せるように）。
+    final messenger = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -331,7 +334,22 @@ class _EntryTile extends ConsumerWidget {
       ),
     );
     if (ok == true) {
-      await ref.read(entriesProvider.notifier).deleteEntry(entry.date);
+      final removed = await ref
+          .read(entriesProvider.notifier)
+          .deleteEntry(entry.date);
+      if (removed != null) {
+        messenger.clearSnackBars();
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text('記録を削除しました'),
+            action: SnackBarAction(
+              label: '元に戻す',
+              onPressed: () =>
+                  ref.read(entriesProvider.notifier).restoreEntry(removed),
+            ),
+          ),
+        );
+      }
     }
     return ok == true;
   }

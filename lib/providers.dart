@@ -105,6 +105,51 @@ final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
 /// Googleログイン + Driveバックアップ。
 final backupServiceProvider = Provider<BackupService>((ref) => BackupService());
 
+/// 最後にDriveへバックアップした日時（ISO8601文字列。手動・自動共通）。
+final lastBackupAtProvider =
+    AsyncNotifierProvider<LastBackupAtNotifier, String>(
+      LastBackupAtNotifier.new,
+    );
+
+class LastBackupAtNotifier extends _PrefStringNotifier {
+  @override
+  String get prefKey => 'last_backup_at';
+}
+
+/// 自動バックアップの間隔。前回からこれ以上経っていれば起動時に実行する。
+const kAutoBackupInterval = Duration(days: 7);
+
+/// 起動時の自動バックアップ（改善点§6）。
+///
+/// Googleにログイン済みで、前回バックアップから[kAutoBackupInterval]以上
+/// 経っている場合だけ、静かにDriveへ退避する。未ログイン・記録ゼロ・
+/// 失敗時は何もしない（ユーザーの操作を一切邪魔しない）。
+/// 「機種変更で全部消えた」を防ぐための保険。
+Future<void> maybeAutoBackup(WidgetRef ref) async {
+  try {
+    final backup = ref.read(backupServiceProvider);
+    final account = await backup.signInSilently();
+    if (account == null) return; // 未ログインなら何もしない
+
+    final entries = await ref.read(entriesProvider.future);
+    if (entries.isEmpty) return;
+
+    final lastIso = await ref.read(lastBackupAtProvider.future);
+    final last = DateTime.tryParse(lastIso);
+    if (last != null &&
+        DateTime.now().difference(last) < kAutoBackupInterval) {
+      return; // まだ間隔が空いていない
+    }
+
+    await backup.backup(entries.values);
+    await ref
+        .read(lastBackupAtProvider.notifier)
+        .save(DateTime.now().toIso8601String());
+  } catch (_) {
+    // 自動バックアップは失敗しても静かに諦める。
+  }
+}
+
 /// 初回チュートリアルを見終わったか。
 final onboardingDoneProvider = AsyncNotifierProvider<OnboardingNotifier, bool>(
   OnboardingNotifier.new,
@@ -187,12 +232,19 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
     await _save(entry.copyWith(events: events));
   }
 
-  Future<void> deleteEntry(String dateKey) async {
+  /// 記録を削除する。削除した [DiaryEntry] を返すので、UI側で
+  /// 「元に戻す」（[restoreEntry]）に渡せる（改善点§5）。
+  Future<DiaryEntry?> deleteEntry(String dateKey) async {
+    final removed = state.valueOrNull?[dateKey];
     await ref.read(databaseProvider).delete(dateKey);
     final map = Map<String, DiaryEntry>.from(state.valueOrNull ?? {})
       ..remove(dateKey);
     state = AsyncData(map);
+    return removed;
   }
+
+  /// 削除の取り消し（スナックバーの「元に戻す」から呼ぶ）。
+  Future<void> restoreEntry(DiaryEntry entry) => _save(entry);
 
   /// デモデータ投入（谷→回復の軌跡入り・約4ヶ月分）。同日の既存データは上書き。
   Future<void> seedDemoData() async {
