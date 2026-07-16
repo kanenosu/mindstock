@@ -28,10 +28,7 @@ void main() {
     });
 
     test('最大4件まで', () async {
-      final events = await analyzer.analyze(
-        '嬉しい。楽しい。最高。幸せ。感謝。ありがとう。成功した。',
-        [],
-      );
+      final events = await analyzer.analyze('嬉しい。楽しい。最高。幸せ。感謝。ありがとう。成功した。', []);
       expect(events.length, lessThanOrEqualTo(4));
     });
   });

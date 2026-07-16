@@ -83,9 +83,7 @@ class ReviewScreen extends ConsumerWidget {
     ).subtract(Duration(days: date.weekday - 1));
     final weekEnd = weekStart.add(const Duration(days: 6));
     final weekCandles = daily
-        .where(
-          (c) => !c.date.isBefore(weekStart) && !c.date.isAfter(weekEnd),
-        )
+        .where((c) => !c.date.isBefore(weekStart) && !c.date.isAfter(weekEnd))
         .toList();
 
     if (weekCandles.isEmpty) return const SizedBox.shrink();
@@ -133,9 +131,7 @@ class ReviewScreen extends ConsumerWidget {
                 context,
                 '今との差',
                 '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}',
-                color: diff >= 0
-                    ? AppColors.bull
-                    : AppColors.bear,
+                color: diff >= 0 ? AppColors.bull : AppColors.bear,
               ),
           ],
         ),
@@ -143,18 +139,22 @@ class ReviewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _metric(BuildContext context, String label, String value,
-      {Color? color}) {
+  Widget _metric(
+    BuildContext context,
+    String label,
+    String value, {
+    Color? color,
+  }) {
     return Column(
       children: [
         Text(label, style: Theme.of(context).textTheme.labelMedium),
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(color: color, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -201,12 +201,12 @@ class ReviewScreen extends ConsumerWidget {
                       avatar: Icon(
                         e.isPositive ? Icons.trending_up : Icons.trending_down,
                         size: 16,
-                        color: e.isPositive
-                            ? AppColors.bull
-                            : AppColors.bear,
+                        color: e.isPositive ? AppColors.bull : AppColors.bear,
                       ),
-                      label: Text('${e.name} ${e.isPositive ? '+' : '-'}'
-                          '${e.weight.toStringAsFixed(1)}'),
+                      label: Text(
+                        '${e.name} ${e.isPositive ? '+' : '-'}'
+                        '${e.weight.toStringAsFixed(1)}',
+                      ),
                     ),
                 ],
               ),

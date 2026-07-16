@@ -242,9 +242,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPressed: _busy
                             ? null
                             : () => _run(() async {
-                                await ref
-                                    .read(backupServiceProvider)
-                                    .signOut();
+                                await ref.read(backupServiceProvider).signOut();
                                 setState(() => _account = null);
                               }),
                         child: const Text('ログアウト'),
@@ -256,13 +254,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       Expanded(
                         child: FilledButton.icon(
-                          icon: const Icon(Icons.cloud_upload_outlined,
-                              size: 18),
+                          icon: const Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 18,
+                          ),
                           label: const Text('バックアップ'),
                           onPressed: _busy
                               ? null
                               : () => _run(() async {
-                                  final entries = ref
+                                  final entries =
+                                      ref
                                           .read(entriesProvider)
                                           .valueOrNull
                                           ?.values ??
@@ -273,9 +274,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   // 自動バックアップと共通のタイムスタンプを更新
                                   await ref
                                       .read(lastBackupAtProvider.notifier)
-                                      .save(
-                                        DateTime.now().toIso8601String(),
-                                      );
+                                      .save(DateTime.now().toIso8601String());
                                   HapticFeedback.mediumImpact();
                                   _toast('Driveにバックアップしました');
                                 }),
@@ -284,8 +283,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: OutlinedButton.icon(
-                          icon: const Icon(Icons.cloud_download_outlined,
-                              size: 18),
+                          icon: const Icon(
+                            Icons.cloud_download_outlined,
+                            size: 18,
+                          ),
                           label: const Text('復元'),
                           onPressed: _busy
                               ? null

@@ -100,10 +100,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      DashboardScreen(
-        onOpenChart: () => _goTo(2),
-        onOpenDiary: () => _goTo(1),
-      ),
+      DashboardScreen(onOpenChart: () => _goTo(2), onOpenDiary: () => _goTo(1)),
       const EntryScreen(),
       const ChartScreen(),
       const CalendarScreen(),

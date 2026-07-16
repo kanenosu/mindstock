@@ -187,16 +187,16 @@ class _MonthSection extends ConsumerWidget {
             children: [
               Text(
                 DateFormat('yyyy年M月', 'ja').format(month),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               Text(
                 '${entries.length}件',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.inkSoft,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: AppColors.inkSoft),
               ),
               const Spacer(),
               Text(
@@ -294,18 +294,15 @@ class _EntryTile extends ConsumerWidget {
                 entry.events.map((e) => e.name).join(' / '),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.inkSoft,
-                ),
+                style: const TextStyle(fontSize: 11, color: AppColors.inkSoft),
               ),
         trailing: Text(
           '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}',
           style: TextStyle(color: color, fontWeight: FontWeight.w800),
         ),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ReviewScreen(date: day)),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => ReviewScreen(date: day))),
         onLongPress: () => _confirmDelete(context, ref),
       ),
     );

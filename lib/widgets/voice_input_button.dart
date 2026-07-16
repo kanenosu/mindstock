@@ -63,9 +63,7 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
     // 先にAPIキーを確認して、録音してから失敗させない
     final apiKey = ref.read(openAiApiKeyProvider).valueOrNull ?? '';
     if (apiKey.isEmpty) {
-      setState(
-        () => _error = '音声入力を使うには設定画面でOpenAI APIキーを登録してください',
-      );
+      setState(() => _error = '音声入力を使うには設定画面でOpenAI APIキーを登録してください');
       return;
     }
     if (!await _recorder.hasPermission()) {

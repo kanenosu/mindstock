@@ -36,8 +36,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final reports = ref.watch(weeklyReportsProvider);
-    final lastSeen =
-        ref.watch(notificationsLastSeenProvider).valueOrNull ?? '';
+    final lastSeen = ref.watch(notificationsLastSeenProvider).valueOrNull ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('お知らせ')),
@@ -99,8 +98,7 @@ class _ReportTile extends StatelessWidget {
       child: InkWell(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                ReviewScreen(date: report.weekStart, weekly: true),
+            builder: (_) => ReviewScreen(date: report.weekStart, weekly: true),
           ),
         ),
         child: Padding(

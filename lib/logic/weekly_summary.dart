@@ -138,9 +138,7 @@ class WeeklySummary {
       }
     }
     if (total >= 3) {
-      return best != null
-          ? '上向きの週。「${best.name}」が効いた。'
-          : '静かに積み上がった週。';
+      return best != null ? '上向きの週。「${best.name}」が効いた。' : '静かに積み上がった週。';
     }
     if (total <= -3) {
       return best != null

@@ -124,16 +124,15 @@ class _CandlestickChartState extends State<CandlestickChart>
               } else {
                 // 1本指: パン。focalPointDelta は1フレーム分の差分なので累積。
                 // 右へドラッグ = 過去へ戻る（オフセット増加）。
-                _scrollOffset = (_scrollOffset +
-                        details.focalPointDelta.dx / _candleWidth)
-                    .clamp(0, _maxOffset);
+                _scrollOffset =
+                    (_scrollOffset + details.focalPointDelta.dx / _candleWidth)
+                        .clamp(0, _maxOffset);
               }
             });
           },
           onScaleEnd: (details) {
             // 指を離した速度で慣性スクロール
-            final velocity =
-                details.velocity.pixelsPerSecond.dx / _candleWidth;
+            final velocity = details.velocity.pixelsPerSecond.dx / _candleWidth;
             if (velocity.abs() < 1) return;
             _fling.animateWith(
               FrictionSimulation(0.135, _scrollOffset, velocity),
@@ -448,10 +447,7 @@ class _CandlePainter extends CustomPainter {
         text: TextSpan(text: fmt.format(visible[i].date), style: labelStyle),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(
-        canvas,
-        Offset(cx - tp.width / 2, size.height - tp.height - 4),
-      );
+      tp.paint(canvas, Offset(cx - tp.width / 2, size.height - tp.height - 4));
     }
   }
 

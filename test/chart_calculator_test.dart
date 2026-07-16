@@ -44,10 +44,7 @@ void main() {
 
     test('高値はポジティブ積み上げ、安値はネガティブ積み上げ（ヒゲの表現）', () {
       final entries = {
-        '2026-01-01': entry('2026-01-01', [
-          ev(5),
-          ev(3, positive: false),
-        ]),
+        '2026-01-01': entry('2026-01-01', [ev(5), ev(3, positive: false)]),
       };
       final c = ChartCalculator.dailyCandles(
         entries,
@@ -170,7 +167,9 @@ void main() {
     });
 
     test('forTimeframe は時間軸に応じた足を返す', () {
-      final entries = {'2026-01-05': entry('2026-01-05', [ev(1)])};
+      final entries = {
+        '2026-01-05': entry('2026-01-05', [ev(1)]),
+      };
       final daily = ChartCalculator.dailyCandles(
         entries,
         until: DateTime(2026, 1, 12),

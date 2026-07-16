@@ -61,9 +61,10 @@ enum AiProvider {
   };
 }
 
-final aiProviderProvider = AsyncNotifierProvider<AiProviderNotifier, AiProvider>(
-  AiProviderNotifier.new,
-);
+final aiProviderProvider =
+    AsyncNotifierProvider<AiProviderNotifier, AiProvider>(
+      AiProviderNotifier.new,
+    );
 
 class AiProviderNotifier extends AsyncNotifier<AiProvider> {
   static const _prefKey = 'ai_provider';
@@ -136,8 +137,7 @@ Future<void> maybeAutoBackup(WidgetRef ref) async {
 
     final lastIso = await ref.read(lastBackupAtProvider.future);
     final last = DateTime.tryParse(lastIso);
-    if (last != null &&
-        DateTime.now().difference(last) < kAutoBackupInterval) {
+    if (last != null && DateTime.now().difference(last) < kAutoBackupInterval) {
       return; // まだ間隔が空いていない
     }
 
@@ -312,9 +312,7 @@ final weeklyReportsProvider = Provider<List<WeeklySummary>>((ref) {
   final firstDate = DateTime.parse(
     entries.keys.reduce((a, b) => a.compareTo(b) <= 0 ? a : b),
   );
-  final firstMonday = firstDate.subtract(
-    Duration(days: firstDate.weekday - 1),
-  );
+  final firstMonday = firstDate.subtract(Duration(days: firstDate.weekday - 1));
 
   final reports = <WeeklySummary>[];
   // 直近の完結した週（先週）から過去へ
@@ -343,6 +341,8 @@ final unreadNotificationsProvider = Provider<int>((ref) {
   final reports = ref.watch(weeklyReportsProvider);
   final lastSeen = ref.watch(notificationsLastSeenProvider).valueOrNull ?? '';
   return reports
-      .where((r) => ChartCalculator.dateKey(r.weekStart).compareTo(lastSeen) > 0)
+      .where(
+        (r) => ChartCalculator.dateKey(r.weekStart).compareTo(lastSeen) > 0,
+      )
       .length;
 });

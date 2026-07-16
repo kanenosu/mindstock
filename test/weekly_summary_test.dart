@@ -40,10 +40,7 @@ void main() {
 
     test('ベスト/ワーストの出来事を選ぶ', () {
       final entries = {
-        '2026-01-05': entry('2026-01-05', [
-          ev('小さな喜び', 1),
-          ev('大きな喜び', 6),
-        ]),
+        '2026-01-05': entry('2026-01-05', [ev('小さな喜び', 1), ev('大きな喜び', 6)]),
         '2026-01-06': entry('2026-01-06', [ev('つらい出来事', 4, positive: false)]),
       };
       final s = WeeklySummary.compute(DateTime(2026, 1, 5), entries);

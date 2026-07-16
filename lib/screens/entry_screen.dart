@@ -88,18 +88,20 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
     if (!_canSubmit) return;
     setState(() => _submitting = true);
     try {
-      await ref.read(entriesProvider.notifier).submitDiary(
-        date: _date,
-        text: text,
-        // 文章を書いた日は気分は使わない — 採点はAIに任せる
-        moodScore: text.isNotEmpty ? null : _mood,
-      );
+      await ref
+          .read(entriesProvider.notifier)
+          .submitDiary(
+            date: _date,
+            text: text,
+            // 文章を書いた日は気分は使わない — 採点はAIに任せる
+            moodScore: text.isNotEmpty ? null : _mood,
+          );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       FocusManager.instance.primaryFocus?.unfocus();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('記録しました。チャートに反映済みです')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('記録しました。チャートに反映済みです')));
       Navigator.of(context).maybePop();
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -155,10 +157,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                           hintText: '今日のことを、ただ書くだけ。\n（マイクをタップして話しても書ける）',
                           border: InputBorder.none,
                           filled: false,
-                          contentPadding: EdgeInsets.only(
-                            bottom: 64,
-                            right: 8,
-                          ),
+                          contentPadding: EdgeInsets.only(bottom: 64, right: 8),
                         ),
                         style: const TextStyle(fontSize: 16, height: 1.7),
                       ),
@@ -183,9 +182,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         child: Text(
                           '文章を書いた日は、採点はAIにおまかせ。',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.inkSoft),
                         ),
                       )
@@ -245,10 +242,9 @@ class MoodEmojiPicker extends StatelessWidget {
       children: [
         Text(
           '書かない日は、気分をひとつだけ。',
-          style: Theme.of(context)
-              .textTheme
-              .labelMedium
-              ?.copyWith(color: AppColors.inkSoft),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(color: AppColors.inkSoft),
         ),
         const SizedBox(height: 8),
         Row(
