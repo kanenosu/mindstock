@@ -8,10 +8,7 @@ void main() {
     final analyzer = DemoDiaryAnalyzer();
 
     test('文単位で出来事を抽出し、名前は文から切り出す', () async {
-      final events = await analyzer.analyze(
-        '試験に合格した。夜は友達と祝杯をあげて楽しかった。',
-        [],
-      );
+      final events = await analyzer.analyze('試験に合格した。夜は友達と祝杯をあげて楽しかった。', []);
       expect(events, isNotEmpty);
       expect(events.length, lessThanOrEqualTo(4));
       // 名前は15文字以内

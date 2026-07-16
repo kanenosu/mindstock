@@ -96,10 +96,9 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
         const SizedBox(width: 4),
         Text(
           DateFormat('yyyy年M月', 'ja').format(_anchor),
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: 4),
         // 今日へ戻るショートカット（今日以外を見ている時だけ表示）

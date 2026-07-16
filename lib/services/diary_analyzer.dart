@@ -315,8 +315,20 @@ class DemoDiaryAnalyzer implements DiaryAnalyzer {
 
   /// 種別を節目に引き上げるキーワード（感情語と一緒に出た時に効く）。
   static const _milestoneWords = [
-    '合格', '不合格', '内定', '退職', '転職', '失恋', '結婚', '離婚',
-    '出産', '入学', '卒業', '引っ越し', '昇進', '起業',
+    '合格',
+    '不合格',
+    '内定',
+    '退職',
+    '転職',
+    '失恋',
+    '結婚',
+    '離婚',
+    '出産',
+    '入学',
+    '卒業',
+    '引っ越し',
+    '昇進',
+    '起業',
   ];
 
   /// 節目語だけ出てきた時の基礎重要度の下限。
@@ -418,7 +430,8 @@ class DemoDiaryAnalyzer implements DiaryAnalyzer {
       }
     }
     if (count == 0) return event;
-    final decayed = event.weight *
+    final decayed =
+        event.weight *
         List.filled(count, _adaptationDecay).fold<double>(1, (a, b) => a * b);
     return event.copyWith(
       weight: double.parse(decayed.clamp(0.1, 300.0).toStringAsFixed(1)),

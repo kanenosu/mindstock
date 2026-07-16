@@ -81,9 +81,9 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                     _tf == Timeframe.daily
                         ? 'ピンチで拡大縮小・ドラッグでスクロール・タップで選択'
                         : 'ヒゲはその期間の最高/最低到達点。タップで選択・ダブルタップでリセット',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.inkSoft,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.inkSoft),
                   ),
                 ),
               ],
@@ -107,10 +107,8 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
     }
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ReviewScreen(
-          date: candle.date,
-          weekly: _tf != Timeframe.daily,
-        ),
+        builder: (_) =>
+            ReviewScreen(date: candle.date, weekly: _tf != Timeframe.daily),
       ),
     );
   }
@@ -197,11 +195,12 @@ class _CurrentValueHeader extends StatelessWidget {
     final periodLabel = candle == null
         ? '今日'
         : switch (tf) {
-            Timeframe.daily =>
-              DateFormat('M/d (E)', 'ja').format(candle.date),
+            Timeframe.daily => DateFormat('M/d (E)', 'ja').format(candle.date),
             Timeframe.weekly => '${DateFormat('M/d').format(candle.date)}の週',
-            Timeframe.monthly =>
-              DateFormat('yyyy年M月', 'ja').format(candle.date),
+            Timeframe.monthly => DateFormat(
+              'yyyy年M月',
+              'ja',
+            ).format(candle.date),
           };
 
     return Padding(
@@ -240,9 +239,9 @@ class _CurrentValueHeader extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 8, bottom: 2),
                 child: Text(
                   periodLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.inkSoft,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: AppColors.inkSoft),
                 ),
               )
             else
@@ -307,9 +306,9 @@ class _EmptyChart extends ConsumerWidget {
             onPressed: () async {
               await ref.read(entriesProvider.notifier).seedDemoData();
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('サンプルデータを投入しました')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('サンプルデータを投入しました')));
               }
             },
           ),
@@ -359,8 +358,9 @@ class _ComparisonCards extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: Theme.of(context).textTheme.labelSmall
-                            ?.copyWith(color: AppColors.inkSoft),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.inkSoft,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(

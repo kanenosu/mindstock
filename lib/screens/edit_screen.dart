@@ -68,22 +68,28 @@ class _EditScreenState extends ConsumerState<EditScreen> {
     if (name == null || name.isEmpty) return;
     setState(() {
       _events.add(
-        LifeEvent(name: name, kind: EventKind.daily, isPositive: true, weight: 2),
+        LifeEvent(
+          name: name,
+          kind: EventKind.daily,
+          isPositive: true,
+          weight: 2,
+        ),
       );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final date = DateFormat('M月d日 (E)', 'ja').format(DateTime.parse(widget.dateKey));
+    final date = DateFormat(
+      'M月d日 (E)',
+      'ja',
+    ).format(DateTime.parse(widget.dateKey));
     final total = _events.fold<double>(0, (sum, e) => sum + e.delta);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('$date の出来事'),
-        actions: [
-          TextButton(onPressed: _save, child: const Text('保存')),
-        ],
+        actions: [TextButton(onPressed: _save, child: const Text('保存'))],
       ),
       body: Column(
         children: [
@@ -92,15 +98,15 @@ class _EditScreenState extends ConsumerState<EditScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('この日の変動合計: ',
-                    style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  'この日の変動合計: ',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
                 Text(
                   '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: total >= 0
-                        ? AppColors.bull
-                        : AppColors.bear,
+                    color: total >= 0 ? AppColors.bull : AppColors.bear,
                   ),
                 ),
               ],
@@ -144,9 +150,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = event.isPositive
-        ? AppColors.bull
-        : AppColors.bear;
+    final color = event.isPositive ? AppColors.bull : AppColors.bear;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(

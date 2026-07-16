@@ -21,9 +21,17 @@ class BackupService {
   final GoogleSignIn _google = GoogleSignIn(scopes: const [_scope]);
   final http.Client _client;
 
+  /// 認証ヘッダの供給元（テストで差し替え可能にするための注入点）。
+  /// null の場合は Google ログイン済みアカウントの authHeaders を使う。
+  final Future<Map<String, String>> Function()? _headerProvider;
+
   GoogleSignInAccount? _account;
 
-  BackupService({http.Client? client}) : _client = client ?? http.Client();
+  BackupService({
+    http.Client? client,
+    Future<Map<String, String>> Function()? headerProvider,
+  }) : _client = client ?? http.Client(),
+       _headerProvider = headerProvider;
 
   GoogleSignInAccount? get account => _account;
 
@@ -58,6 +66,7 @@ class BackupService {
   }
 
   Future<Map<String, String>> _headers() async {
+    if (_headerProvider != null) return _headerProvider();
     final account = _account ?? await signIn();
     if (account == null) {
       throw BackupException('Googleログインが必要です');
@@ -93,7 +102,10 @@ class BackupService {
       final body =
           '--$boundary\r\n'
           'Content-Type: application/json; charset=UTF-8\r\n\r\n'
-          '${jsonEncode({'name': _fileName, 'parents': ['appDataFolder']})}\r\n'
+          '${jsonEncode({
+            'name': _fileName,
+            'parents': ['appDataFolder'],
+          })}\r\n'
           '--$boundary\r\n'
           'Content-Type: application/json\r\n\r\n'
           '$data\r\n'
