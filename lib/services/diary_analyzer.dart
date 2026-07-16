@@ -23,16 +23,18 @@ const kAnalyzerSystemPrompt = '''
 以下は「まだ起きていないこと」なので、絶対に出来事として抽出しない（採点もしない）:
 - 未来の目標・決意・意気込み（例:「これから毎日走る」「強い男になる」「絶対に合格する」「痩せたい」「変わろうと思う」「頑張る」）
 - 願望・仮定・たとえ話（例:「〜だったらいいな」「もし〜なら」）
+- 具体例として、次のような文も決意として扱う:「これから毎日走る」「強い男になる」「絶対に合格する」「痩せたい」
 判定のコツ: 文末が「〜たい / 〜しよう / 〜するつもり / 〜になる / 〜がんばる」のような
-未来・意志の形なら、それは決意であって出来事ではない。
+未来・意志の形なら、それは決意であって出来事ではない。これは機械的に見分ける基準として使う。
 実際に「やった」「起きた」「言われた」など、過去・完了の事実だけを出来事として扱う。
 その文に実際の行動・結果が伴っていなければ採点しない。決意しか書かれていない日は
 events を空配列 [] にする。
 
-【例】
+【対比の例】
 - 「今日はジムに行った。これから毎日通って絶対に痩せる！」
   → 抽出するのは「ジムに行った」だけ。「絶対に痩せる」は決意なので無視。
 - 「強い男になると決めた。」→ 実際の行動がまだ無いので events は [] にする。
+- 「今日、会社でプレゼンをした。」→ 実際の出来事なので抽出対象。
 
 株価変動値は次の式で求めます。
 change = 方向 × baseImportance × durationMultiplier × moodMultiplier × 1.5
@@ -166,7 +168,7 @@ class OfflineScoring {
 /// 3. 損失回避 — ネガティブは 1.3〜1.5 倍重く採点する
 class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
   static const _endpoint = 'https://api.anthropic.com/v1/messages';
-  static const _model = 'claude-haiku-4-5';
+  static const _model = 'claude-sonnet-5';
 
   final String apiKey;
   final http.Client _client;
@@ -264,7 +266,7 @@ class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
 /// プロンプトはClaude版と共通で、JSONモードで構造化出力を受け取る。
 class OpenAiDiaryAnalyzer implements DiaryAnalyzer {
   static const _endpoint = 'https://api.openai.com/v1/chat/completions';
-  static const _model = 'gpt-4o-mini';
+  static const _model = 'gpt-5.1';
 
   final String apiKey;
   final http.Client _client;
