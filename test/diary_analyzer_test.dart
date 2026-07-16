@@ -35,7 +35,10 @@ void main() {
 
   test('強化したプロンプトに決意を排除する具体例と判定基準が含まれる', () {
     expect(kAnalyzerSystemPrompt, contains('「これから毎日走る」'));
-    expect(kAnalyzerSystemPrompt, contains('〜たい / 〜しよう / 〜するつもり / 〜になる / 〜がんばる'));
+    expect(
+      kAnalyzerSystemPrompt,
+      contains('〜たい / 〜しよう / 〜するつもり / 〜になる / 〜がんばる'),
+    );
     expect(kAnalyzerSystemPrompt, contains('「強い男になると決めた。」'));
   });
 
