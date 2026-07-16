@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 
+import '../config/monetization.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
 import '../widgets/pill_selector.dart';
+import '../widgets/points_sheet.dart';
 
 /// 設定画面。iOS風のグループセクションで構成する。
 ///
@@ -84,10 +86,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
-          FadeSlideIn(child: _accountSection(context)),
+          FadeSlideIn(child: _pointsSection(context)),
+          const SizedBox(height: 20),
+          FadeSlideIn(delayMs: 40, child: _accountSection(context)),
           const SizedBox(height: 20),
           FadeSlideIn(
-            delayMs: 60,
+            delayMs: 80,
             child: _aiSection(context, provider, claudeKey, openAiKey),
           ),
           const SizedBox(height: 20),
@@ -160,6 +164,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Text(
             text,
             style: const TextStyle(fontSize: 11, color: AppColors.inkSoft),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── ポイント ─────────────────────────────────────────
+
+  Widget _pointsSection(BuildContext context) {
+    final points = ref.watch(pointsProvider).valueOrNull ?? 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(context, Icons.stars_rounded, 'ポイント'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '◆ $points',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    Text(
+                      'AI解析1回 ${Monetization.analysisCost}ポイント',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: () => showPointsSheet(context),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('補充する'),
+                ),
+              ],
+            ),
           ),
         ),
       ],

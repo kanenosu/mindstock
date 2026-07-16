@@ -1,10 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 音声入力（Whisper文字起こし）用のマイク権限 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- 広告・バックエンド解析・バックアップ用のネットワーク権限 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- アプリ内課金（in_app_purchase）用 -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
     <application
         android:label="mindstock"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- AdMob アプリID（現在はGoogle公式のテストID。リリース前に
+             lib/config/monetization.dart と同じ本番IDへ差し替えること。
+             この値が無いとMobileAds初期化時にアプリが落ちる）。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'config/monetization.dart';
 import 'logic/chart_calculator.dart';
 import 'logic/weekly_summary.dart';
 import 'models/models.dart';
@@ -8,6 +9,8 @@ import 'services/backup_service.dart';
 import 'services/database_service.dart';
 import 'services/demo_data.dart';
 import 'services/diary_analyzer.dart';
+import 'services/iap_service.dart';
+import 'services/rewarded_ad_service.dart';
 import 'services/transcription_service.dart';
 
 /// 汎用: SharedPreferences に文字列を1つ保存するだけの Notifier。
@@ -86,9 +89,41 @@ class AiProviderNotifier extends AsyncNotifier<AiProvider> {
   }
 }
 
-/// 選択中のプロバイダーのキーが設定されていればそのAPI、
-/// なければ端末内の簡易解析にフォールバックする。
+/// 解析バックエンドのURL（マネタイズ本番構成）。設定されていれば、
+/// 開発者のキーを持つサーバー経由で解析する（アプリにキーを埋め込まない）。
+///
+/// リリースビルドでは `--dart-define=BACKEND_URL=https://...` で焼き込む。
+/// 保存された値があればそちらを優先（開発中の差し替え用）。
+final backendUrlProvider = AsyncNotifierProvider<BackendUrlNotifier, String>(
+  BackendUrlNotifier.new,
+);
+
+class BackendUrlNotifier extends _PrefStringNotifier {
+  /// ビルド時に焼き込む既定のバックエンドURL。
+  static const _envDefault = String.fromEnvironment('BACKEND_URL');
+
+  @override
+  String get prefKey => 'backend_url';
+
+  @override
+  Future<String> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(prefKey);
+    // 保存値が無ければビルド時のBACKEND_URLを使う。
+    return (saved == null || saved.isEmpty) ? _envDefault : saved;
+  }
+}
+
+/// 解析器の選択。優先順位:
+/// 1. バックエンドURLが設定されていればサーバー経由（本番・ポイント制）
+/// 2. ユーザーが自分のAPIキーを入れていればそのAPI（開発・上級者向け）
+/// 3. どちらも無ければ端末内の簡易解析（オフライン）
 final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
+  final backendUrl = ref.watch(backendUrlProvider).valueOrNull ?? '';
+  if (backendUrl.isNotEmpty) {
+    return BackendDiaryAnalyzer(baseUrl: backendUrl);
+  }
+
   final provider =
       ref.watch(aiProviderProvider).valueOrNull ?? AiProvider.claude;
   final claudeKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
@@ -101,6 +136,65 @@ final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
       if (openAiKey.isNotEmpty) return OpenAiDiaryAnalyzer(apiKey: openAiKey);
   }
   return DemoDiaryAnalyzer();
+});
+
+/// ポイント残高（マネタイズ）。AI解析1回で[Monetization.analysisCost]消費し、
+/// 広告視聴・課金で補充する。初回は[Monetization.initialPoints]付与。
+final pointsProvider = AsyncNotifierProvider<PointsNotifier, int>(
+  PointsNotifier.new,
+);
+
+class PointsNotifier extends AsyncNotifier<int> {
+  static const _prefKey = 'points_balance';
+
+  @override
+  Future<int> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    // 初回起動時だけ初期ポイントを付与する。
+    if (!prefs.containsKey(_prefKey)) {
+      await prefs.setInt(_prefKey, Monetization.initialPoints);
+      return Monetization.initialPoints;
+    }
+    return prefs.getInt(_prefKey) ?? Monetization.initialPoints;
+  }
+
+  Future<void> _set(int value) async {
+    final clamped = value < 0 ? 0 : value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_prefKey, clamped);
+    state = AsyncData(clamped);
+  }
+
+  /// [n]ポイント消費する。足りなければ何もせず false を返す。
+  Future<bool> spend(int n) async {
+    final current = state.valueOrNull ?? 0;
+    if (current < n) return false;
+    await _set(current - n);
+    return true;
+  }
+
+  /// [n]ポイント補充する（広告報酬・課金）。
+  Future<void> add(int n) async {
+    await _set((state.valueOrNull ?? 0) + n);
+  }
+}
+
+/// リワード広告サービス（広告視聴でポイント獲得）。
+final rewardedAdServiceProvider = Provider<RewardedAdService>((ref) {
+  final service = RewardedAdService();
+  ref.onDispose(service.dispose);
+  return service;
+});
+
+/// アプリ内課金サービス（ポイントパック購入）。
+/// 購入成立時に自動でポイントを付与する。
+final iapServiceProvider = Provider<IapService>((ref) {
+  final service = IapService();
+  ref.onDispose(service.dispose);
+  service.init(
+    onGrant: (points) => ref.read(pointsProvider.notifier).add(points),
+  );
+  return service;
 });
 
 /// Googleログイン + Driveバックアップ。
