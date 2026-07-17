@@ -14,20 +14,70 @@
 //   3. `npm start`（デフォルト3000番ポート）
 //   4. 公開URLを、アプリのビルド時に --dart-define=BACKEND_URL=https://... で渡す
 //
-// ⚠️ 本番の注意: このままだと誰でも /analyze を叩けて、あなたのAIキーで
-// 課金が発生し得る。実運用では最低限、以下を足すこと:
-//   - アプリ側の認証（App Check / Play Integrity / DeviceCheck など）を検証
-//   - サーバー側でポイント残高を管理し、広告報酬・課金レシートを検証してから解析
-//   - レート制限
-// （今はMVP。上記フックを入れる場所は analyze ハンドラ内にコメントで示す）
+// ⚠️ 本番の注意: 以下の認証・レート制限は「誰でも無制限に叩ける」状態を
+// 塞ぐための暫定策であり、Play Integrity / App Check のような
+// 端末の正当性そのものを検証する仕組みではない（APP_SHARED_SECRETは
+// アプリのビルド成果物を解析すれば抜き出せる）。本格的な不正対策には
+// 別途 Play Integrity API / App Check の導入が必要。
+//   - APP_SHARED_SECRET: アプリ・サーバー間の共有シークレット（下記参照）
+//   - レート制限: IPごとに一定時間あたりのリクエスト数を制限
+// 将来的にサーバー側でポイント残高を管理し、広告報酬・課金レシートを
+// 検証してから解析する設計にする場合のフックは analyze ハンドラ内にコメントで示す。
 
 import express from "express";
 
 const app = express();
+app.set("trust proxy", true); // Render等リバースプロキシ配下でreq.ipを正しく取るため
 app.use(express.json({ limit: "256kb" }));
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = process.env.MODEL || "claude-haiku-4-5";
+
+// アプリ・サーバー間の共有シークレット。設定した場合、アプリ側は
+// リクエストヘッダー `X-App-Secret` に同じ値を付けて送る必要がある。
+// 未設定の場合はこのチェックをスキップする（後方互換・開発用）。
+const APP_SHARED_SECRET = process.env.APP_SHARED_SECRET;
+
+// ── 簡易レート制限（IPごと・インメモリ） ──────────────────────
+// 複数インスタンスにスケールすると各インスタンスで別カウントになる点に
+// 注意（MVPとしては許容。厳密にやるならRedis等の共有ストアが必要）。
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1分
+const RATE_LIMIT_MAX = 20; // 1分あたり最大20リクエスト/IP
+const rateLimitBuckets = new Map(); // ip -> {count, resetAt}
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || "unknown";
+  const now = Date.now();
+  const bucket = rateLimitBuckets.get(ip);
+  if (!bucket || now > bucket.resetAt) {
+    rateLimitBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+  if (bucket.count >= RATE_LIMIT_MAX) {
+    const retryAfterSec = Math.ceil((bucket.resetAt - now) / 1000);
+    res.set("Retry-After", String(retryAfterSec));
+    return res.status(429).json({ error: "too many requests" });
+  }
+  bucket.count++;
+  next();
+}
+
+// 定期的に古いバケットを掃除（メモリリーク防止）。
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, bucket] of rateLimitBuckets) {
+    if (now > bucket.resetAt) rateLimitBuckets.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS).unref();
+
+function checkAppSecret(req, res, next) {
+  if (!APP_SHARED_SECRET) return next(); // 未設定なら従来通り素通り
+  const provided = req.get("X-App-Secret");
+  if (provided !== APP_SHARED_SECRET) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  next();
+}
 
 // アプリ側 (lib/services/diary_analyzer.dart) の kAnalyzerSystemPrompt と同じ内容。
 // 変更する時は両方を揃えること。
@@ -139,14 +189,16 @@ function buildUserMessage(text, recent) {
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.post("/analyze", async (req, res) => {
+app.post("/analyze", rateLimit, checkAppSecret, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
   }
 
-  // === ここに本番の認証・ポイント検証・レート制限を入れる ===
-  // 例: App Check トークンの検証、ユーザーのポイント残高チェック、
-  //     広告報酬/課金レシートの検証など。未実装だと誰でも叩けるので注意。
+  // === ここに本番のポイント検証を入れる ===
+  // 例: ユーザーのポイント残高チェック、広告報酬/課金レシートの検証など。
+  // 現状はアプリ側でポイントを管理しているため未実装（改ざん耐性は無い）。
+  // 上の rateLimit / checkAppSecret は「誰でも無制限に叩ける」状態への
+  // 暫定対策であり、本格的な不正対策にはPlay Integrity/App Checkが必要。
 
   const { text, recent } = req.body || {};
   if (typeof text !== "string" || text.trim() === "") {

@@ -114,6 +114,11 @@ class BackendUrlNotifier extends _PrefStringNotifier {
   }
 }
 
+/// バックエンドの `APP_SHARED_SECRET` と同じ値をビルド時に焼き込む
+/// （`--dart-define=APP_SHARED_SECRET=...`）。無認証よりはマシという
+/// 暫定策であり、Play Integrity/App Checkの代替にはならない点に注意。
+const _kAppSharedSecret = String.fromEnvironment('APP_SHARED_SECRET');
+
 /// 解析器の選択。優先順位:
 /// 1. バックエンドURLが設定されていればサーバー経由（本番・ポイント制）
 /// 2. ユーザーが自分のAPIキーを入れていればそのAPI（開発・上級者向け）
@@ -121,7 +126,10 @@ class BackendUrlNotifier extends _PrefStringNotifier {
 final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
   final backendUrl = ref.watch(backendUrlProvider).valueOrNull ?? '';
   if (backendUrl.isNotEmpty) {
-    return BackendDiaryAnalyzer(baseUrl: backendUrl);
+    return BackendDiaryAnalyzer(
+      baseUrl: backendUrl,
+      appSecret: _kAppSharedSecret,
+    );
   }
 
   final provider =

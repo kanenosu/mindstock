@@ -47,11 +47,10 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>日記を音声で入力するためにマイクを使用します。</string>
-	<!-- AdMob アプリID（現在はGoogle公式のテストID。リリース前に
-	     lib/config/monetization.dart と同じ本番IDへ差し替えること。
+	<!-- AdMob アプリID（本番、lib/config/monetization.dart と同じ値。
 	     この値が無いとアプリが起動時に落ちる）。 -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-6090469963212290~4824200815</string>
 	<!-- iOS14+ の広告計測用。AdMob推奨の全IDは公式ドキュメント参照
 	     （ここではGoogleの主要IDのみ。必要に応じて追記）。 -->
 	<key>SKAdNetworkItems</key>

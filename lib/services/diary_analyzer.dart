@@ -170,10 +170,14 @@ class OfflineScoring {
 /// 受け取り、Claude等を叩いて {events:[...]} を返す（backend/ を参照）。
 class BackendDiaryAnalyzer implements DiaryAnalyzer {
   final String baseUrl;
+  final String appSecret;
   final http.Client _client;
 
-  BackendDiaryAnalyzer({required this.baseUrl, http.Client? client})
-    : _client = client ?? http.Client();
+  BackendDiaryAnalyzer({
+    required this.baseUrl,
+    this.appSecret = '',
+    http.Client? client,
+  }) : _client = client ?? http.Client();
 
   @override
   Future<List<LifeEvent>> analyze(
@@ -183,7 +187,10 @@ class BackendDiaryAnalyzer implements DiaryAnalyzer {
     final uri = Uri.parse('${baseUrl.replaceAll(RegExp(r'/+$'), '')}/analyze');
     final response = await _client.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (appSecret.isNotEmpty) 'X-App-Secret': appSecret,
+      },
       body: jsonEncode({
         'text': text,
         'recent': [

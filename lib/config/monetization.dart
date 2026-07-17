@@ -21,19 +21,20 @@ class Monetization {
   static const int rewardPerAd = 1;
 
   // ── AdMob ────────────────────────────────────────────────
-  // 既定は Google 公式の「テスト用ID」。これなら審査・課金なしで動作確認でき、
-  // 誤クリックでもポリシー違反にならない。リリース前に必ず本番IDへ差し替える。
-  // 本番IDは https://apps.admob.com でアプリと広告ユニットを作って取得する。
+  // 本番ID設定済み（2026-07-17、apps.admob.com の「MindStock」アプリ）。
+  // AndroidManifest.xml / ios/Runner/Info.plist にも同じ値を入れてある。
+  // 注意: AdMobアカウントの支払いプロファイルが未設定のため、アプリの審査は
+  // まだ開始されていない（審査完了までは広告配信が制限される）。
 
   /// AdMob アプリID（AndroidManifest / Info.plist にも同じ値を入れること）。
   static String get admobAppId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544~3347511713' // Android テスト用
-      : 'ca-app-pub-3940256099942544~1458002511'; // iOS テスト用
+      ? 'ca-app-pub-6090469963212290~6476073694' // Android 本番
+      : 'ca-app-pub-6090469963212290~4824200815'; // iOS 本番
 
   /// リワード広告ユニットID。
   static String get rewardedAdUnitId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/5224354917' // Android テスト用
-      : 'ca-app-pub-3940256099942544/1712485313'; // iOS テスト用
+      ? 'ca-app-pub-6090469963212290/6284502008' // Android 本番
+      : 'ca-app-pub-6090469963212290/8527521967'; // iOS 本番
 
   /// 本番IDを設定済みか（テストIDのままならバナー等で警告表示に使える）。
   static bool get usingTestAdIds => admobAppId.contains('3940256099942544');

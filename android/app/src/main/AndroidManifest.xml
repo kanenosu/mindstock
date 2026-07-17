@@ -10,12 +10,11 @@
         android:label="mindstock"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- AdMob アプリID（現在はGoogle公式のテストID。リリース前に
-             lib/config/monetization.dart と同じ本番IDへ差し替えること。
+        <!-- AdMob アプリID（本番、lib/config/monetization.dart と同じ値。
              この値が無いとMobileAds初期化時にアプリが落ちる）。 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-6090469963212290~6476073694"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
