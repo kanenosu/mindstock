@@ -41,25 +41,41 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
    ```
    （開発中は設定画面から一時的に差し替えることも可能）
 
-> ⚠️ 現状の `backend/index.js` は認証なしで誰でも叩ける。本番前に必ず、
-> アプリ認証（Play Integrity / App Check / DeviceCheck）の検証、ポイント残高の
-> サーバー管理、広告報酬・課金レシートの検証、レート制限を足すこと。
+### デプロイ済み（Render）
+
+- サービス名: `mindstock-backend`（Render Free プラン、GitHub連携: `kanenosu/mindstock`、Root Directory: `backend`）
+- 公開URL: `https://mindstock-backend.onrender.com`
+- `/health` で疎通確認済み（2026-07-17）
+- Free プランは無通信が続くとスピンダウンし、次のリクエストで起動まで50秒程度かかる点に注意
+- ビルド時は `--dart-define=BACKEND_URL=https://mindstock-backend.onrender.com` を渡す
+
+> ⚠️ `backend/index.js` には現在、IPごとのレート制限（1分20回）と
+> アプリ・サーバー間の共有シークレット（`APP_SHARED_SECRET` / ヘッダー
+> `X-App-Secret`）による簡易認証を実装済み。ただし共有シークレットは
+> APKを解析すれば抜き出せるため、Play Integrity / App Check のような
+> 端末の正当性検証の代替にはならない（暫定策）。本番運用では、
+> ポイント残高のサーバー管理・広告報酬/課金レシートの検証・
+> Play Integrity/App Checkの導入を追加で検討すること。
 > フックを入れる場所は `analyze` ハンドラ内にコメントで示してある。
+>
+> `APP_SHARED_SECRET` を使う場合、アプリのビルド時に同じ値を
+> `--dart-define=APP_SHARED_SECRET=...` で渡す必要がある
+> （`backend/.env.example` 参照）。
 
 ## 広告（AdMob）
 
 - 実装: `lib/services/rewarded_ad_service.dart`（リワード広告）
-- 現在のID（`lib/config/monetization.dart`・AndroidManifest・Info.plist）は
-  **Google公式のテストID**。審査前でも安全に動作確認できる。
-- リリース前の手順:
-  1. https://apps.admob.com でアプリを登録し、**アプリID**と
-     **リワード広告ユニットID**を取得
-  2. 次の3か所を本番IDに差し替える:
-     - `lib/config/monetization.dart`（`admobAppId` / `rewardedAdUnitId`）
-     - `android/app/src/main/AndroidManifest.xml`（`com.google.android.gms.ads.APPLICATION_ID`）
-     - `ios/Runner/Info.plist`（`GADApplicationIdentifier`）
-  3. iOS は `SKAdNetworkItems` にAdMob推奨のIDを追記（計測精度向上）
-  4. app-ads.txt の設定（任意だが推奨）
+- 本番ID設定済み（2026-07-17、apps.admob.com の「MindStock」アプリ、
+  Android/iOS両方、リワード広告ユニット名 `Rewarded_Diary_Point`）:
+  - `lib/config/monetization.dart`（`admobAppId` / `rewardedAdUnitId`）
+  - `android/app/src/main/AndroidManifest.xml`（`com.google.android.gms.ads.APPLICATION_ID`）
+  - `ios/Runner/Info.plist`（`GADApplicationIdentifier`）
+- ⚠️ AdMobアカウントの**お支払いプロファイルが未設定**。追加するまで
+  アプリの審査が開始されない（＝広告配信も始まらない）。AdMobの
+  「お支払い」から設定すること（銀行口座情報の入力が必要）。
+- 残りの手順:
+  1. iOS は `SKAdNetworkItems` にAdMob推奨のIDを追記（計測精度向上、未対応）
+  2. app-ads.txt の設定（任意だが推奨、未対応）
 
 ## 課金（IAP: ポイントパック）
 
@@ -76,9 +92,9 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 
 ## リリース前チェックリスト
 
-- [ ] バックエンドをデプロイし `BACKEND_URL` を dart-define で焼き込んだ
-- [ ] バックエンドに認証・ポイント検証・レート制限を実装した
-- [ ] AdMob 本番ID（3か所）に差し替えた
+- [x] バックエンドをデプロイし `BACKEND_URL` を dart-define で焼き込んだ（`https://mindstock-backend.onrender.com`、要: 実際のリリースビルド時に dart-define を渡すこと）
+- [x] バックエンドにレート制限（IP毎1分20回）と共有シークレット認証（`APP_SHARED_SECRET`）を実装した（暫定策。Play Integrity/App Check・ポイント残高のサーバー管理・課金レシート検証は未実装）
+- [x] AdMob 本番ID（3か所）に差し替えた（2026-07-17。ただし支払いプロファイル未設定でアプリ審査は未開始）
 - [ ] IAP 商品を各ストアに登録した
 - [ ] Android: リリース署名（`android/app/build.gradle.kts` の signingConfig）
 - [ ] iOS: Appleデベロッパー登録 → 証明書・プロビジョニング（未登録なら保留）
