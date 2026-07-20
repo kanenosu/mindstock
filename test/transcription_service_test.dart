@@ -62,4 +62,58 @@ void main() {
       );
     });
   });
+
+  group('BackendTranscriptionService', () {
+    late File audio;
+
+    setUp(() async {
+      audio = File('${Directory.systemTemp.path}/mindstock_test_audio2.m4a');
+      await audio.writeAsBytes([0, 1, 2, 3]);
+    });
+
+    tearDown(() async {
+      if (await audio.exists()) await audio.delete();
+    });
+
+    test('/transcribe に送り、text を trim して返す（末尾スラッシュも吸収）', () async {
+      final client = MockClient((req) async {
+        expect(req.url.path, endsWith('/transcribe'));
+        expect(req.headers['X-App-Secret'], 'sekret');
+        expect(req.bodyBytes, [0, 1, 2, 3]);
+        return http.Response(
+          jsonEncode({'text': '  今日は良い一日だった  '}),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+      final service = BackendTranscriptionService(
+        baseUrl: 'https://api.example.com/',
+        appSecret: 'sekret',
+        client: client,
+      );
+      expect(await service.transcribe(audio.path), '今日は良い一日だった');
+    });
+
+    test('baseUrl 未設定は TranscriptionException を投げる', () async {
+      final service = BackendTranscriptionService(
+        baseUrl: '',
+        client: MockClient((_) async => http.Response('{}', 200)),
+      );
+      expect(
+        () => service.transcribe(audio.path),
+        throwsA(isA<TranscriptionException>()),
+      );
+    });
+
+    test('非200応答は TranscriptionException を投げる', () async {
+      final service = BackendTranscriptionService(
+        baseUrl: 'https://api.example.com',
+        client: MockClient((_) async => http.Response('upstream error', 502)),
+      );
+      expect(
+        () => service.transcribe(audio.path),
+        throwsA(isA<TranscriptionException>()),
+      );
+    });
+  });
 }

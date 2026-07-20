@@ -60,10 +60,10 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
   Future<void> _start({required bool byHold}) async {
     if (_state != _RecordState.idle) return;
 
-    // 先にAPIキーを確認して、録音してから失敗させない
-    final apiKey = ref.read(openAiApiKeyProvider).valueOrNull ?? '';
-    if (apiKey.isEmpty) {
-      setState(() => _error = '音声入力を使うには設定画面でOpenAI APIキーを登録してください');
+    // 先にバックエンドの利用可否を確認して、録音してから失敗させない。
+    // （文字起こしは開発者のキーを持つサーバー経由で行う）。
+    if (!ref.read(voiceInputAvailableProvider)) {
+      setState(() => _error = '音声入力は現在利用できません（サーバー未設定）');
       return;
     }
     if (!await _recorder.hasPermission()) {

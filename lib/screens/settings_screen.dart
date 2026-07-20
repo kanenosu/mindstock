@@ -27,8 +27,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _openAiController = TextEditingController();
-
   GoogleSignInAccount? _account;
   bool _busy = false;
 
@@ -48,12 +46,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // 復元に失敗しても未ログイン状態として扱うだけ。ユーザーには
           // 何も表示しない（明示的にログインボタンを押した時だけエラーを見せる）。
         });
-  }
-
-  @override
-  void dispose() {
-    _openAiController.dispose();
-    super.dispose();
   }
 
   void _toast(String message) {
@@ -76,8 +68,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final openAiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
-
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: ListView(
@@ -87,7 +77,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 40, child: _accountSection(context)),
           const SizedBox(height: 20),
-          FadeSlideIn(delayMs: 120, child: _voiceSection(context, openAiKey)),
+          FadeSlideIn(delayMs: 120, child: _voiceSection(context)),
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 180, child: _dataSection(context)),
           const SizedBox(height: 40),
@@ -362,37 +352,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _keyField({
-    required TextEditingController controller,
-    required String label,
-    required bool isSet,
-    required String hint,
-    required Future<void> Function(String) onSave,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: true,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: isSet ? '設定済み（変更する場合のみ入力）' : hint,
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.save_outlined, size: 20),
-          tooltip: '保存',
-          onPressed: () async {
-            if (controller.text.trim().isEmpty) return;
-            await onSave(controller.text);
-            controller.clear();
-            HapticFeedback.selectionClick();
-            _toast('保存しました');
-          },
-        ),
-      ),
-    );
-  }
-
   // ── 音声入力 ─────────────────────────────────────────
 
-  Widget _voiceSection(BuildContext context, String openAiKey) {
+  Widget _voiceSection(BuildContext context) {
+    final available = ref.watch(voiceInputAvailableProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -400,34 +363,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    _statusDot(openAiKey.isNotEmpty),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        openAiKey.isNotEmpty
-                            ? '使えます。日記のマイクをタップ（または長押し）して話すと、文字起こしされて本文に追記されます。'
-                            : 'OpenAI APIキーを設定すると、日記のマイクから話して書けるようになります（任意）。',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.inkSoft,
-                          height: 1.6,
-                        ),
-                      ),
+                _statusDot(available),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    available
+                        ? '日記のマイクをタップ（または長押し）して話すと、文字起こしされて本文に追記されます。'
+                        : '音声入力はサーバー（バックエンド）経由で動作します。サーバー設定後に使えるようになります。',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.inkSoft,
+                      height: 1.6,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _keyField(
-                  controller: _openAiController,
-                  label: 'OpenAI API キー（音声入力用）',
-                  isSet: openAiKey.isNotEmpty,
-                  hint: 'sk-...',
-                  onSave: (v) =>
-                      ref.read(openAiApiKeyProvider.notifier).save(v),
+                  ),
                 ),
               ],
             ),

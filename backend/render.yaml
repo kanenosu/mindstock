@@ -10,5 +10,8 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
+      # 音声入力（Whisper）を使う場合のみ設定する。
+      - key: OPENAI_API_KEY
+        sync: false
       - key: MODEL
         value: claude-haiku-4-5

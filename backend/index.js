@@ -33,6 +33,9 @@ app.use(express.json({ limit: "256kb" }));
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = process.env.MODEL || "claude-haiku-4-5";
 
+// 音声入力（Whisper）用のOpenAIキー。/transcribe を使う場合のみ必要。
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 // アプリ・サーバー間の共有シークレット。設定した場合、アプリ側は
 // リクエストヘッダー `X-App-Secret` に同じ値を付けて送る必要がある。
 // 未設定の場合はこのチェックをスキップする（後方互換・開発用）。
@@ -243,6 +246,52 @@ app.post("/analyze", rateLimit, checkAppSecret, async (req, res) => {
     return res.status(500).json({ error: "internal error" });
   }
 });
+
+// 音声文字起こし（Whisper）の代理実行。
+// アプリは録音ファイルのバイト列をそのまま body に入れて POST する
+// （Content-Type: application/octet-stream）。OpenAIキーはサーバー側にのみ置く。
+// multipart はここで組み立てて OpenAI に転送する（Node18+ の FormData/Blob を使用）。
+app.post(
+  "/transcribe",
+  rateLimit,
+  checkAppSecret,
+  express.raw({ type: "*/*", limit: "25mb" }),
+  async (req, res) => {
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ error: "OPENAI_API_KEY is not set" });
+    }
+    const audio = req.body;
+    if (!audio || !audio.length) {
+      return res.status(400).json({ error: "empty audio" });
+    }
+    try {
+      const form = new FormData();
+      form.append(
+        "file",
+        new Blob([audio], { type: "audio/m4a" }),
+        "voice.m4a"
+      );
+      form.append("model", "whisper-1");
+      form.append("language", "ja");
+
+      const r = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+        body: form,
+      });
+      if (!r.ok) {
+        const body = await r.text();
+        console.error("OpenAI transcribe error", r.status, body);
+        return res.status(502).json({ error: "upstream error" });
+      }
+      const data = await r.json();
+      return res.json({ text: (data.text || "").trim() });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ error: "internal error" });
+    }
+  }
+);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`mindstock-backend listening on :${port}`));
