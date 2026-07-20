@@ -11,8 +11,8 @@ import 'dart:io';
 class Monetization {
   Monetization._();
 
-  /// 初回付与ポイント（ユーザー指定: 最初は3ポイントのみ）。
-  static const int initialPoints = 3;
+  /// 初回付与ポイント（ユーザー指定: 最初は7ポイント）。
+  static const int initialPoints = 7;
 
   /// AI解析1回あたりのコスト。
   static const int analysisCost = 1;

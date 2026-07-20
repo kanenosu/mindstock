@@ -14,7 +14,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
     ポイント補充 = 広告を見る(+1) / ポイントを買う(課金)
 ```
 
-- 初回付与: **3ポイント**（`Monetization.initialPoints`）
+- 初回付与: **7ポイント**（`Monetization.initialPoints`）
 - AI解析1回: **1ポイント消費**（`Monetization.analysisCost`）
 - 広告1本: **+1ポイント**（`Monetization.rewardPerAd`）
 - 気分の絵文字だけの記録は無料（AIを叩かないため）
