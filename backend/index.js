@@ -1,16 +1,17 @@
 // MindStock 解析バックエンド。
 //
-// 役割: 開発者のAIキー（ANTHROPIC_API_KEY）をサーバー側に保持し、
+// 役割: 開発者のAIキー（OPENAI_API_KEY）をサーバー側に保持し、
 // アプリからの「日記本文 → 出来事の採点」リクエストを代理実行する。
 // これにより、アプリにキーを埋め込まずに開発者のキーで解析できる
 // （キー流出を防ぐ）。収益は広告・課金でまかなう想定。
+// AIはOpenAI（Chat Completions）のみを使用する。
 //
 // アプリは POST /analyze に {text, recent:[{date, summary}]} を送り、
 // {events:[...]} を受け取る。
 //
 // デプロイ: Render / Railway / Fly.io / Cloud Run など Node が動く所ならどこでも。
 //   1. このディレクトリで `npm install`
-//   2. 環境変数 ANTHROPIC_API_KEY を設定
+//   2. 環境変数 OPENAI_API_KEY を設定（音声入力(/transcribe)も同じキーを使う）
 //   3. `npm start`（デフォルト3000番ポート）
 //   4. 公開URLを、アプリのビルド時に --dart-define=BACKEND_URL=https://... で渡す
 //
@@ -30,11 +31,10 @@ const app = express();
 app.set("trust proxy", true); // Render等リバースプロキシ配下でreq.ipを正しく取るため
 app.use(express.json({ limit: "256kb" }));
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = process.env.MODEL || "claude-haiku-4-5";
-
-// 音声入力（Whisper）用のOpenAIキー。/transcribe を使う場合のみ必要。
+// OpenAI APIキー。解析(/analyze)・音声入力(/transcribe)の両方で使う。
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// 解析に使うOpenAIモデル（任意。既定は gpt-5.1）。
+const MODEL = process.env.MODEL || "gpt-5.1";
 
 // アプリ・サーバー間の共有シークレット。設定した場合、アプリ側は
 // リクエストヘッダー `X-App-Secret` に同じ値を付けて送る必要がある。
@@ -193,8 +193,8 @@ function buildUserMessage(text, recent) {
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.post("/analyze", rateLimit, checkAppSecret, async (req, res) => {
-  if (!ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: "OPENAI_API_KEY is not set" });
   }
 
   // === ここに本番のポイント検証を入れる ===
@@ -209,37 +209,41 @@ app.post("/analyze", rateLimit, checkAppSecret, async (req, res) => {
   }
 
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
+    // OpenAI Structured Outputs（json_schema）で {events:[...]} を強制する。
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        output_config: { format: { type: "json_schema", schema: OUTPUT_SCHEMA } },
-        messages: [{ role: "user", content: buildUserMessage(text, recent) }],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "diary_events", schema: OUTPUT_SCHEMA, strict: true },
+        },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: buildUserMessage(text, recent) },
+        ],
       }),
     });
 
     if (!r.ok) {
       const body = await r.text();
-      console.error("Anthropic error", r.status, body);
+      console.error("OpenAI error", r.status, body);
       return res.status(502).json({ error: "upstream error" });
     }
 
     const data = await r.json();
-    if (data.stop_reason === "refusal") {
+    const content = data.choices?.[0]?.message?.content;
+    // 安全上の理由で拒否された場合など、内容が空ならイベント無しとして扱う。
+    if (data.choices?.[0]?.message?.refusal || !content) {
       return res.json({ events: [] });
     }
-    const textBlock = (data.content || []).find((b) => b.type === "text");
-    if (!textBlock) return res.json({ events: [] });
 
     // アプリ側は {events:[...]} をそのままパースするので、そのまま返す。
-    const parsed = JSON.parse(textBlock.text);
+    const parsed = JSON.parse(content);
     return res.json({ events: parsed.events || [] });
   } catch (e) {
     console.error(e);

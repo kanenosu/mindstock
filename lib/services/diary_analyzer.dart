@@ -167,7 +167,7 @@ class OfflineScoring {
 /// 採点結果だけ受け取る。ポイント制で解析回数を制御する。
 ///
 /// サーバーは POST {baseUrl}/analyze に {text, recent:[{date, summary}]} を
-/// 受け取り、Claude等を叩いて {events:[...]} を返す（backend/ を参照）。
+/// 受け取り、OpenAI を叩いて {events:[...]} を返す（backend/ を参照）。
 class BackendDiaryAnalyzer implements DiaryAnalyzer {
   final String baseUrl;
   final String appSecret;
@@ -208,110 +208,8 @@ class BackendDiaryAnalyzer implements DiaryAnalyzer {
   }
 }
 
-/// Claude API による解析（仕様書 §4 プロンプト設計の核）。
-///
-/// スコアリング自体に以下を織り込む:
-/// 1. 出来事の客観的重要度
-/// 2. 快楽順応 — 直近の日記を渡し、似た出来事が続けば点数を下げる
-/// 3. 損失回避 — ネガティブは 1.3〜1.5 倍重く採点する
-class ClaudeDiaryAnalyzer implements DiaryAnalyzer {
-  static const _endpoint = 'https://api.anthropic.com/v1/messages';
-  static const _model = 'claude-sonnet-5';
-
-  final String apiKey;
-  final http.Client _client;
-
-  ClaudeDiaryAnalyzer({required this.apiKey, http.Client? client})
-    : _client = client ?? http.Client();
-
-  static const _outputSchema = {
-    'type': 'object',
-    'properties': {
-      'events': {
-        'type': 'array',
-        'items': {
-          'type': 'object',
-          'properties': {
-            'name': {'type': 'string'},
-            'kind': {
-              'type': 'string',
-              'enum': ['daily', 'mood', 'milestone'],
-            },
-            'isPositive': {'type': 'boolean'},
-            'baseImportance': {'type': 'number'},
-            'durationMultiplier': {'type': 'number'},
-            'moodMultiplier': {'type': 'number'},
-            'change': {'type': 'number'},
-          },
-          'required': [
-            'name',
-            'kind',
-            'isPositive',
-            'baseImportance',
-            'durationMultiplier',
-            'moodMultiplier',
-            'change',
-          ],
-          'additionalProperties': false,
-        },
-      },
-    },
-    'required': ['events'],
-    'additionalProperties': false,
-  };
-
-  @override
-  Future<List<LifeEvent>> analyze(
-    String text,
-    List<DiaryEntry> recentEntries,
-  ) async {
-    final response = await _client.post(
-      Uri.parse(_endpoint),
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: jsonEncode({
-        'model': _model,
-        'max_tokens': 2048,
-        'system': kAnalyzerSystemPrompt,
-        'output_config': {
-          'format': {'type': 'json_schema', 'schema': _outputSchema},
-        },
-        'messages': [
-          {
-            'role': 'user',
-            'content': buildAnalyzerUserMessage(text, recentEntries),
-          },
-        ],
-      }),
-    );
-
-    if (response.statusCode != 200) {
-      throw AnalyzerException(
-        'Claude API error ${response.statusCode}: ${response.body}',
-      );
-    }
-
-    final body = jsonDecode(utf8.decode(response.bodyBytes));
-    if (body['stop_reason'] == 'refusal') {
-      // 安全上の理由で解析できなかった日はイベント無しとして扱う。
-      return const [];
-    }
-
-    final textBlock = (body['content'] as List).firstWhere(
-      (b) => b['type'] == 'text',
-      orElse: () => null,
-    );
-    if (textBlock == null) return const [];
-
-    return parseAnalyzerEvents(jsonDecode(textBlock['text'] as String));
-  }
-}
-
 /// OpenAI Chat Completions (ChatGPT) による解析。
-/// プロンプトはClaude版と共通で、JSONモードで構造化出力を受け取る。
+/// プロンプトはバックエンドと共通で、JSONモードで構造化出力を受け取る。
 class OpenAiDiaryAnalyzer implements DiaryAnalyzer {
   static const _endpoint = 'https://api.openai.com/v1/chat/completions';
   static const _model = 'gpt-5.1';

@@ -189,7 +189,7 @@
 - **Flutter**（Windows環境で開発、Android優先リリース、後にiOS）
 - ローカルDB：`sqflite` か `hive`
 - 状態管理：`Provider` か `Riverpod`
-- AI解析：Claude API 等で「日記文章 → 出来事の構造化データ」を抽出
+- AI解析：OpenAI API で「日記文章 → 出来事の構造化データ」を抽出
 
 ### データモデルの骨子
 
