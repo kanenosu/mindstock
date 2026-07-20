@@ -7,7 +7,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 そのキーは**バックエンド（サーバー）に置く**（アプリには埋め込まない）。
 
 ```
-アプリ ──(日記本文)──▶ バックエンド ──(開発者のキー)──▶ Claude
+アプリ ──(日記本文)──▶ バックエンド ──(開発者のキー)──▶ OpenAI
       ◀──(採点結果)──          ◀──(採点結果)──
   ▲
   └ ポイントが1以上ある時だけ解析できる。
@@ -32,8 +32,8 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 `backend/` に最小構成のNode.jsサーバーがある。
 
 1. Node が動くホスティングを用意（Render / Railway / Fly.io / Cloud Run 等、無料枠可）
-2. `backend/` を配置し、環境変数 `ANTHROPIC_API_KEY` を設定
-   （音声入力を使うなら `OPENAI_API_KEY` も設定。`/transcribe` がWhisperを代理実行する）
+2. `backend/` を配置し、環境変数 `OPENAI_API_KEY` を設定
+   （解析(/analyze)と音声入力(/transcribe)の両方で同じOpenAIキーを使う）
 3. 起動（`npm install && npm start`）
 4. 公開URL（例 `https://mindstock.onrender.com`）を控える
 5. アプリをそのURL付きでビルド:

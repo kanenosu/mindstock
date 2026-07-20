@@ -8,10 +8,8 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      # 音声入力（Whisper）を使う場合のみ設定する。
+      # 解析・音声入力の両方で使う（必須）。
       - key: OPENAI_API_KEY
         sync: false
       - key: MODEL
-        value: claude-haiku-4-5
+        value: gpt-5.1

@@ -37,7 +37,7 @@
 - **Flutter** (Android優先、後にiOS)
 - 状態管理: **Riverpod**
 - ローカルDB: **sqflite**
-- AI解析: **Claude API**（バックエンド経由・ポイント制）— 構造化出力で「日記文章 → 出来事リスト」を抽出。バックエンド未設定の開発ビルドではキーワードベースの簡易解析にフォールバック
+- AI解析: **OpenAI API**（バックエンド経由・ポイント制）— 構造化出力で「日記文章 → 出来事リスト」を抽出。バックエンド未設定の開発ビルドではキーワードベースの簡易解析にフォールバック
 - 音声入力: **OpenAI Whisper API** (`whisper-1`) — `record`パッケージで録音し、文字起こし結果を本文に追記
 
 ## 開発
@@ -52,7 +52,7 @@ flutter run       # Android端末/エミュレータ
 主要ソース:
 
 - `lib/logic/chart_calculator.dart` — 足し算モデル・OHLC算出・週足/月足集約・移動平均
-- `lib/services/diary_analyzer.dart` — Claude API解析（快楽順応・損失回避のプロンプト）+ フォールバック
+- `lib/services/diary_analyzer.dart` — OpenAI解析（バックエンド経由。快楽順応・損失回避のプロンプト）+ フォールバック
 - `lib/services/transcription_service.dart` — Whisper音声文字起こし
 - `lib/widgets/candlestick_chart.dart` — CustomPainterによるローソク足描画
 - `lib/widgets/voice_input_button.dart` — 長押し録音→文字起こしのマイクボタン
