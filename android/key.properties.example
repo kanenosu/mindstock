@@ -1,0 +1,4 @@
+storePassword=あなたのキーストアパスワード
+keyPassword=あなたのキーのパスワード
+keyAlias=mindstock
+storeFile=C:/Users/あなたのユーザー名/mindstock-release-key.jks
