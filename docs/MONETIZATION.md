@@ -97,7 +97,12 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 - [x] バックエンドにレート制限（IP毎1分20回）と共有シークレット認証（`APP_SHARED_SECRET`）を実装した（暫定策。Play Integrity/App Check・ポイント残高のサーバー管理・課金レシート検証は未実装）
 - [x] AdMob 本番ID（3か所）に差し替えた（2026-07-17。ただし支払いプロファイル未設定でアプリ審査は未開始）
 - [ ] IAP 商品を各ストアに登録した
-- [ ] Android: リリース署名（`android/app/build.gradle.kts` の signingConfig）
+- [ ] Android: リリース署名。`android/app/build.gradle.kts` は `android/key.properties`
+      （`key.properties.example` を参考に作成。gitignore済み・非公開）があれば自動でそれを使う。
+      無ければdebug鍵にフォールバックし、Play Storeが「デバッグモードで署名されています」と
+      エラーを出す。キーストアの作り方は `keytool -genkey -v -keystore <path>.jks
+      -keyalg RSA -keysize 2048 -validity 10000 -alias mindstock`
+      （キーストアは紛失・流出させないこと。紛失すると同じ署名でのアップデート配信ができなくなる）
 - [ ] iOS: Appleデベロッパー登録 → 証明書・プロビジョニング（未登録なら保留）
 - [ ] プライバシーポリシー（広告・課金があるため各ストアで必須）
 
