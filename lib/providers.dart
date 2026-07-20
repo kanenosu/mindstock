@@ -7,7 +7,6 @@ import 'logic/weekly_summary.dart';
 import 'models/models.dart';
 import 'services/backup_service.dart';
 import 'services/database_service.dart';
-import 'services/demo_data.dart';
 import 'services/diary_analyzer.dart';
 import 'services/iap_service.dart';
 import 'services/rewarded_ad_service.dart';
@@ -32,17 +31,7 @@ abstract class _PrefStringNotifier extends AsyncNotifier<String> {
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
-/// Claude APIキー（設定画面から保存）。
-final apiKeyProvider = AsyncNotifierProvider<ApiKeyNotifier, String>(
-  ApiKeyNotifier.new,
-);
-
-class ApiKeyNotifier extends _PrefStringNotifier {
-  @override
-  String get prefKey => 'claude_api_key';
-}
-
-/// OpenAI APIキー（ChatGPT解析 / Whisper音声入力で共用）。
+/// OpenAI APIキー（音声入力Whisper用）。
 final openAiApiKeyProvider =
     AsyncNotifierProvider<OpenAiApiKeyNotifier, String>(
       OpenAiApiKeyNotifier.new,
@@ -51,42 +40,6 @@ final openAiApiKeyProvider =
 class OpenAiApiKeyNotifier extends _PrefStringNotifier {
   @override
   String get prefKey => 'openai_api_key';
-}
-
-/// AI解析のプロバイダー選択（Claude / ChatGPT）。
-enum AiProvider {
-  claude,
-  openai;
-
-  String get label => switch (this) {
-    AiProvider.claude => 'Claude',
-    AiProvider.openai => 'ChatGPT',
-  };
-}
-
-final aiProviderProvider =
-    AsyncNotifierProvider<AiProviderNotifier, AiProvider>(
-      AiProviderNotifier.new,
-    );
-
-class AiProviderNotifier extends AsyncNotifier<AiProvider> {
-  static const _prefKey = 'ai_provider';
-
-  @override
-  Future<AiProvider> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString(_prefKey);
-    return AiProvider.values.firstWhere(
-      (p) => p.name == name,
-      orElse: () => AiProvider.claude,
-    );
-  }
-
-  Future<void> setProvider(AiProvider provider) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey, provider.name);
-    state = AsyncData(provider);
-  }
 }
 
 /// 解析バックエンドのURL（マネタイズ本番構成）。設定されていれば、
@@ -119,10 +72,12 @@ class BackendUrlNotifier extends _PrefStringNotifier {
 /// 暫定策であり、Play Integrity/App Checkの代替にはならない点に注意。
 const _kAppSharedSecret = String.fromEnvironment('APP_SHARED_SECRET');
 
-/// 解析器の選択。優先順位:
-/// 1. バックエンドURLが設定されていればサーバー経由（本番・ポイント制）
-/// 2. ユーザーが自分のAPIキーを入れていればそのAPI（開発・上級者向け）
-/// 3. どちらも無ければ端末内の簡易解析（オフライン）
+/// 解析器の選択。
+/// - バックエンドURLが設定されていれば、開発者のキーを持つサーバー経由で
+///   解析する（本番・ポイント制）。リリースビルドでは
+///   `--dart-define=BACKEND_URL=https://...` で焼き込む。
+///   AI解析キーはアプリに埋め込まず、必ずサーバー側に置く。
+/// - 未設定（主に開発ビルド）は端末内の簡易解析にフォールバックする。
 final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
   final backendUrl = ref.watch(backendUrlProvider).valueOrNull ?? '';
   if (backendUrl.isNotEmpty) {
@@ -131,18 +86,7 @@ final analyzerProvider = Provider<DiaryAnalyzer>((ref) {
       appSecret: _kAppSharedSecret,
     );
   }
-
-  final provider =
-      ref.watch(aiProviderProvider).valueOrNull ?? AiProvider.claude;
-  final claudeKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
-  final openAiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
-
-  switch (provider) {
-    case AiProvider.claude:
-      if (claudeKey.isNotEmpty) return ClaudeDiaryAnalyzer(apiKey: claudeKey);
-    case AiProvider.openai:
-      if (openAiKey.isNotEmpty) return OpenAiDiaryAnalyzer(apiKey: openAiKey);
-  }
+  // バックエンド未設定時（開発ビルド等）は端末内の簡易解析。
   return DemoDiaryAnalyzer();
 });
 
@@ -348,18 +292,7 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
   /// 削除の取り消し（スナックバーの「元に戻す」から呼ぶ）。
   Future<void> restoreEntry(DiaryEntry entry) => _save(entry);
 
-  /// デモデータ投入（谷→回復の軌跡入り・約4ヶ月分）。同日の既存データは上書き。
-  Future<void> seedDemoData() async {
-    final db = ref.read(databaseProvider);
-    final map = Map<String, DiaryEntry>.from(state.valueOrNull ?? {});
-    for (final entry in DemoDataGenerator.generate()) {
-      await db.upsert(entry);
-      map[entry.date] = entry;
-    }
-    state = AsyncData(map);
-  }
-
-  /// 全データ削除（デモのやり直し用）。
+  /// 全データ削除。
   Future<void> clearAll() async {
     await ref.read(databaseProvider).deleteAll();
     state = const AsyncData({});
