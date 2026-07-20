@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- アプリ内課金（in_app_purchase）用 -->
     <uses-permission android:name="com.android.vending.BILLING"/>
+    <!-- AdMob（広告ID）用。Android 13(API 33)以降でAD_IDを扱うには明示宣言が必要
+         （Play Consoleの「広告IDの申告」警告に対応）。 -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <application
         android:label="mindstock"
         android:name="${applicationName}"
