@@ -33,6 +33,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 
 1. Node が動くホスティングを用意（Render / Railway / Fly.io / Cloud Run 等、無料枠可）
 2. `backend/` を配置し、環境変数 `ANTHROPIC_API_KEY` を設定
+   （音声入力を使うなら `OPENAI_API_KEY` も設定。`/transcribe` がWhisperを代理実行する）
 3. 起動（`npm install && npm start`）
 4. 公開URL（例 `https://mindstock.onrender.com`）を控える
 5. アプリをそのURL付きでビルド:

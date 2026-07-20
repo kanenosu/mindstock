@@ -31,17 +31,6 @@ abstract class _PrefStringNotifier extends AsyncNotifier<String> {
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
-/// OpenAI APIキー（音声入力Whisper用）。
-final openAiApiKeyProvider =
-    AsyncNotifierProvider<OpenAiApiKeyNotifier, String>(
-      OpenAiApiKeyNotifier.new,
-    );
-
-class OpenAiApiKeyNotifier extends _PrefStringNotifier {
-  @override
-  String get prefKey => 'openai_api_key';
-}
-
 /// 解析バックエンドのURL（マネタイズ本番構成）。設定されていれば、
 /// 開発者のキーを持つサーバー経由で解析する（アプリにキーを埋め込まない）。
 ///
@@ -218,9 +207,20 @@ class OnboardingNotifier extends AsyncNotifier<bool> {
 }
 
 /// 音声入力（Whisper）の文字起こしサービス。
+/// OpenAIキーはバックエンド側に置くため、アプリはバックエンド経由で呼ぶ
+/// （BACKEND_URL 未設定の開発ビルドでは音声入力は使えない）。
 final transcriptionServiceProvider = Provider<TranscriptionService>((ref) {
-  final apiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
-  return WhisperTranscriptionService(apiKey: apiKey);
+  final backendUrl = ref.watch(backendUrlProvider).valueOrNull ?? '';
+  return BackendTranscriptionService(
+    baseUrl: backendUrl,
+    appSecret: _kAppSharedSecret,
+  );
+});
+
+/// 音声入力が使えるか（バックエンドURLが設定済みか）。
+final voiceInputAvailableProvider = Provider<bool>((ref) {
+  final backendUrl = ref.watch(backendUrlProvider).valueOrNull ?? '';
+  return backendUrl.trim().isNotEmpty;
 });
 
 /// 全エントリー。date('yyyy-MM-dd') → DiaryEntry。

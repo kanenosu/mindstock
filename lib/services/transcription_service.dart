@@ -50,6 +50,54 @@ class WhisperTranscriptionService implements TranscriptionService {
   }
 }
 
+/// バックエンド経由の文字起こし（本番構成）。
+///
+/// 開発者のOpenAIキーはサーバー側（`backend/`）にのみ置き、アプリには
+/// 埋め込まない。アプリは録音ファイルのバイト列をそのまま
+/// `POST {baseUrl}/transcribe` に送り、`{text}` を受け取る。
+class BackendTranscriptionService implements TranscriptionService {
+  final String baseUrl;
+  final String appSecret;
+  final http.Client _client;
+
+  BackendTranscriptionService({
+    required this.baseUrl,
+    this.appSecret = '',
+    http.Client? client,
+  }) : _client = client ?? http.Client();
+
+  @override
+  Future<String> transcribe(String audioPath) async {
+    if (baseUrl.trim().isEmpty) {
+      throw TranscriptionException('音声入力は現在利用できません（サーバー未設定）');
+    }
+    final file = File(audioPath);
+    if (!await file.exists()) {
+      throw TranscriptionException('録音ファイルが見つかりません');
+    }
+
+    final base = baseUrl.replaceAll(RegExp(r'/+$'), '');
+    final bytes = await file.readAsBytes();
+    final response = await _client.post(
+      Uri.parse('$base/transcribe'),
+      headers: {
+        'content-type': 'application/octet-stream',
+        if (appSecret.isNotEmpty) 'X-App-Secret': appSecret,
+      },
+      body: bytes,
+    );
+
+    if (response.statusCode != 200) {
+      throw TranscriptionException(
+        'transcribe error ${response.statusCode}: ${response.body}',
+      );
+    }
+
+    final body = jsonDecode(utf8.decode(response.bodyBytes));
+    return (body['text'] as String? ?? '').trim();
+  }
+}
+
 class TranscriptionException implements Exception {
   final String message;
   TranscriptionException(this.message);
