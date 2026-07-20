@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mindstock/models/models.dart';
-import 'package:mindstock/services/demo_data.dart';
 import 'package:mindstock/services/diary_analyzer.dart';
 
 void main() {
@@ -44,30 +43,6 @@ void main() {
       final events = await analyzer.analyze('今日はごはんを食べた', []);
       expect(events, hasLength(1));
       expect(events.first.weight, lessThanOrEqualTo(1));
-    });
-  });
-
-  group('DemoDataGenerator', () {
-    test('シード固定で決定的に生成される', () {
-      final today = DateTime(2026, 7, 4);
-      final a = DemoDataGenerator.generate(today: today);
-      final b = DemoDataGenerator.generate(today: today);
-      expect(a.length, b.length);
-      expect(a.first.date, b.first.date);
-      expect(a.first.text, b.first.text);
-    });
-
-    test('約4ヶ月分・空白日込みで生成され、谷のシナリオを含む', () {
-      final entries = DemoDataGenerator.generate(today: DateTime(2026, 7, 4));
-      // 空白日があるので日数より少ない
-      expect(entries.length, lessThan(DemoDataGenerator.days));
-      expect(entries.length, greaterThan(DemoDataGenerator.days ~/ 2));
-      // 谷のシナリオ（節目のネガティブ）が含まれる
-      final milestones = entries
-          .expand((e) => e.events)
-          .where((e) => e.kind == EventKind.milestone);
-      expect(milestones.any((e) => !e.isPositive), isTrue);
-      expect(milestones.any((e) => e.isPositive), isTrue);
     });
   });
 }

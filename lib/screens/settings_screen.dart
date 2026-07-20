@@ -8,15 +8,17 @@ import '../config/monetization.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
-import '../widgets/pill_selector.dart';
 import '../widgets/points_sheet.dart';
 
 /// 設定画面。iOS風のグループセクションで構成する。
 ///
+/// - ポイント: 残高と補充（広告 / 課金）
 /// - アカウント: Googleログイン、Driveへのバックアップ/復元
-/// - AI解析: プロバイダー選択（Claude / ChatGPT）+ 各APIキー
-/// - 音声入力: Whisper（OpenAIキーを共用）
-/// - データ: サンプル投入・全削除
+/// - 音声入力: Whisper（OpenAI APIキー・任意）
+/// - データ: 全削除
+///
+/// AI解析は開発者のキーを持つサーバー経由（ポイント制）で行うため、
+/// ユーザーがAI解析キーを入力する項目は無い。
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -25,7 +27,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _claudeController = TextEditingController();
   final _openAiController = TextEditingController();
 
   GoogleSignInAccount? _account;
@@ -51,7 +52,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   void dispose() {
-    _claudeController.dispose();
     _openAiController.dispose();
     super.dispose();
   }
@@ -76,10 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final claudeKey = ref.watch(apiKeyProvider).valueOrNull ?? '';
     final openAiKey = ref.watch(openAiApiKeyProvider).valueOrNull ?? '';
-    final provider =
-        ref.watch(aiProviderProvider).valueOrNull ?? AiProvider.claude;
 
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
@@ -89,11 +86,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           FadeSlideIn(child: _pointsSection(context)),
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 40, child: _accountSection(context)),
-          const SizedBox(height: 20),
-          FadeSlideIn(
-            delayMs: 80,
-            child: _aiSection(context, provider, claudeKey, openAiKey),
-          ),
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 120, child: _voiceSection(context, openAiKey)),
           const SizedBox(height: 20),
@@ -370,77 +362,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // ── AI解析 ───────────────────────────────────────────
-
-  Widget _aiSection(
-    BuildContext context,
-    AiProvider provider,
-    String claudeKey,
-    String openAiKey,
-  ) {
-    final activeKeySet = switch (provider) {
-      AiProvider.claude => claudeKey.isNotEmpty,
-      AiProvider.openai => openAiKey.isNotEmpty,
-    };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(context, Icons.auto_awesome_outlined, 'AI解析'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PillSelector<AiProvider>(
-                  items: AiProvider.values,
-                  selected: provider,
-                  labelOf: (p) => p.label,
-                  onChanged: (p) =>
-                      ref.read(aiProviderProvider.notifier).setProvider(p),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _statusDot(activeKeySet),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        activeKeySet
-                            ? '${provider.label} で解析中。文脈を読んだ採点になります。'
-                            : 'キー未設定のため、端末内の簡易解析で動作中です。',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _keyField(
-                  controller: _claudeController,
-                  label: 'Claude API キー',
-                  isSet: claudeKey.isNotEmpty,
-                  hint: 'sk-ant-...',
-                  onSave: (v) => ref.read(apiKeyProvider.notifier).save(v),
-                ),
-                const SizedBox(height: 10),
-                _keyField(
-                  controller: _openAiController,
-                  label: 'OpenAI API キー（ChatGPT / 音声入力 共用）',
-                  isSet: openAiKey.isNotEmpty,
-                  hint: 'sk-...',
-                  onSave: (v) =>
-                      ref.read(openAiApiKeyProvider.notifier).save(v),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _keyField({
     required TextEditingController controller,
     required String label,
@@ -479,20 +400,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _statusDot(openAiKey.isNotEmpty),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    openAiKey.isNotEmpty
-                        ? '使えます。日記のマイクをタップ（または長押し）して話すと、文字起こしされて本文に追記されます。'
-                        : '上のOpenAI APIキーを設定すると、日記のマイクから話して書けるようになります。',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.inkSoft,
-                      height: 1.6,
+                Row(
+                  children: [
+                    _statusDot(openAiKey.isNotEmpty),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        openAiKey.isNotEmpty
+                            ? '使えます。日記のマイクをタップ（または長押し）して話すと、文字起こしされて本文に追記されます。'
+                            : 'OpenAI APIキーを設定すると、日記のマイクから話して書けるようになります（任意）。',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.inkSoft,
+                          height: 1.6,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _keyField(
+                  controller: _openAiController,
+                  label: 'OpenAI API キー（音声入力用）',
+                  isSet: openAiKey.isNotEmpty,
+                  hint: 'sk-...',
+                  onSave: (v) =>
+                      ref.read(openAiApiKeyProvider.notifier).save(v),
                 ),
               ],
             ),
@@ -511,69 +446,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _sectionHeader(context, Icons.storage_rounded, 'データ'),
         Card(
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.auto_graph, color: AppColors.ink),
-                title: const Text(
-                  'サンプルデータを投入',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                subtitle: const Text(
-                  '谷と回復の軌跡入り・約4ヶ月分',
-                  style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
-                ),
-                trailing: const Icon(Icons.chevron_right, size: 18),
-                onTap: () => _confirmSeed(context),
+          child: ListTile(
+            leading: const Icon(Icons.delete_outline, color: AppColors.bear),
+            title: const Text(
+              '全データを削除',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.bear,
               ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              ListTile(
-                leading: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.bear,
-                ),
-                title: const Text(
-                  '全データを削除',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.bear,
-                  ),
-                ),
-                trailing: const Icon(Icons.chevron_right, size: 18),
-                onTap: () => _confirmClear(context),
-              ),
-            ],
+            ),
+            trailing: const Icon(Icons.chevron_right, size: 18),
+            onTap: () => _confirmClear(context),
           ),
         ),
       ],
     );
-  }
-
-  Future<void> _confirmSeed(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('サンプルデータを投入しますか？'),
-        content: const Text(
-          '過去約4ヶ月分のサンプル日記を追加します。'
-          '同じ日付の既存データは上書きされます。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('投入'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    await ref.read(entriesProvider.notifier).seedDemoData();
-    _toast('サンプルデータを投入しました。チャートを見てみてください');
   }
 
   Future<void> _confirmClear(BuildContext context) async {

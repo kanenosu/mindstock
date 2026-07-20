@@ -299,19 +299,6 @@ class _EmptyChart extends ConsumerWidget {
             '最初の日記を書くと、\nここに人生のチャートが生まれます。',
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.auto_graph),
-            label: const Text('サンプルデータで試してみる'),
-            onPressed: () async {
-              await ref.read(entriesProvider.notifier).seedDemoData();
-              if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('サンプルデータを投入しました')));
-              }
-            },
-          ),
         ],
       ),
     );
