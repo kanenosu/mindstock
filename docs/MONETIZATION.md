@@ -45,10 +45,11 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 ### デプロイ済み（Render）
 
 - サービス名: `mindstock-backend`（Render Free プラン、GitHub連携: `kanenosu/mindstock`、Root Directory: `backend`）
-- 公開URL: `https://mindstock-backend.onrender.com`
+  ※ 公開URLのサブドメインはRenderが自動採番したもの（`mindstock-backend`は既に使われていたため）
+- 公開URL: `https://mindstock-zfwv.onrender.com`
 - `/health` で疎通確認済み（2026-07-17）
 - Free プランは無通信が続くとスピンダウンし、次のリクエストで起動まで50秒程度かかる点に注意
-- ビルド時は `--dart-define=BACKEND_URL=https://mindstock-backend.onrender.com` を渡す
+- ビルド時は `--dart-define=BACKEND_URL=https://mindstock-zfwv.onrender.com` を渡す
 
 > ⚠️ `backend/index.js` には現在、IPごとのレート制限（1分20回）と
 > アプリ・サーバー間の共有シークレット（`APP_SHARED_SECRET` / ヘッダー
@@ -93,7 +94,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 
 ## リリース前チェックリスト
 
-- [x] バックエンドをデプロイし `BACKEND_URL` を dart-define で焼き込んだ（`https://mindstock-backend.onrender.com`、要: 実際のリリースビルド時に dart-define を渡すこと）
+- [x] バックエンドをデプロイし `BACKEND_URL` を dart-define で焼き込んだ（`https://mindstock-zfwv.onrender.com`、要: 実際のリリースビルド時に dart-define を渡すこと）
 - [x] バックエンドにレート制限（IP毎1分20回）と共有シークレット認証（`APP_SHARED_SECRET`）を実装した（暫定策。Play Integrity/App Check・ポイント残高のサーバー管理・課金レシート検証は未実装）
 - [x] AdMob 本番ID（3か所）に差し替えた（2026-07-17。ただし支払いプロファイル未設定でアプリ審査は未開始）
 - [ ] IAP 商品を各ストアに登録した
@@ -105,7 +106,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
       （キーストアは紛失・流出させないこと。紛失すると同じ署名でのアップデート配信ができなくなる）
 - [ ] iOS: Appleデベロッパー登録 → 証明書・プロビジョニング（未登録なら保留）
 - [x] プライバシーポリシー（`backend/public/privacy.html`、公開URL: `{BACKEND_URL}/privacy`
-      例: `https://mindstock-backend.onrender.com/privacy`。Play Console →
+      例: `https://mindstock-zfwv.onrender.com/privacy`。Play Console →
       アプリのコンテンツ → プライバシーポリシー にこのURLを登録する）
 
 ## Apple について
