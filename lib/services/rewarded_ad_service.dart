@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/monetization.dart';
@@ -36,6 +38,11 @@ class RewardedAdService {
 
   /// 広告を表示し、報酬を得られたら true を返す。
   /// 未準備・失敗時は false（呼び出し側でポイントは付与しない）。
+  ///
+  /// 注意: `ad.show()` の返すFutureは「表示を開始した」時点で完了してしまい、
+  /// ユーザーが見終わる（`onUserEarnedReward` が呼ばれる）のを待たない。
+  /// そのため「広告が閉じられた」(`onAdDismissedFullScreenContent`) まで
+  /// Completerで待ってから結果を確定させる。
   Future<bool> showAndEarn() async {
     final ad = _ad;
     if (ad == null) {
@@ -44,15 +51,19 @@ class RewardedAdService {
     }
     _ad = null; // 1回で使い切る
 
+    final completer = Completer<bool>();
     var earned = false;
+
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         preload(); // 次の広告を仕込む
+        if (!completer.isCompleted) completer.complete(earned);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
         preload();
+        if (!completer.isCompleted) completer.complete(false);
       },
     );
 
@@ -61,7 +72,7 @@ class RewardedAdService {
         earned = true;
       },
     );
-    return earned;
+    return completer.future;
   }
 
   void dispose() {
