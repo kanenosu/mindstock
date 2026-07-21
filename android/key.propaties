@@ -1,0 +1,4 @@
+storePassword=123@nosuke
+keyPassword=123@nosuke
+keyAlias=mindstock
+storeFile=C:/Users/kanen/mindstock-release-key.jks
