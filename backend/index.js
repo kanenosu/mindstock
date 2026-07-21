@@ -26,10 +26,20 @@
 // 検証してから解析する設計にする場合のフックは analyze ハンドラ内にコメントで示す。
 
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.set("trust proxy", true); // Render等リバースプロキシ配下でreq.ipを正しく取るため
 app.use(express.json({ limit: "256kb" }));
+
+// Play Store / App Store のストア掲載情報に登録するプライバシーポリシー。
+// 公開URL: {BACKEND_URL}/privacy
+app.get("/privacy", (_req, res) => {
+  res.sendFile(path.join(__dirname, "public", "privacy.html"));
+});
 
 // OpenAI APIキー。解析(/analyze)・音声入力(/transcribe)の両方で使う。
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
