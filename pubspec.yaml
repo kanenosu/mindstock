@@ -1,7 +1,7 @@
 name: mindstock
 description: "人生チャート日記アプリ — 日記を書くだけで人生がローソク足チャートになる"
 publish_to: 'none'
-version: 0.1.0
+version: 0.1.0+2
 
 environment:
   sdk: ^3.8.1
