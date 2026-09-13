@@ -99,9 +99,11 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 - [x] AdMob 本番ID（3か所）に差し替えた（2026-07-17。ただし支払いプロファイル未設定でアプリ審査は未開始）
 - [ ] IAP 商品を各ストアに登録した
 - [ ] Android: リリース署名。`android/app/build.gradle.kts` は `android/key.properties`
-      （`key.properties.example` を参考に作成。gitignore済み・非公開）があれば自動でそれを使う。
-      無ければdebug鍵にフォールバックし、Play Storeが「デバッグモードで署名されています」と
-      エラーを出す。キーストアの作り方は `keytool -genkey -v -keystore <path>.jks
+      （`key.properties.example` を参考に作成。gitignore済み・非公開）または
+      `MINDSTOCK_KEY_ALIAS` / `MINDSTOCK_KEY_PASSWORD` / `MINDSTOCK_KEY_STORE_PASSWORD`
+      / `MINDSTOCK_KEY_STORE_FILE` 環境変数があれば自動で適用されます。
+      どちらも未設定で `--release` 系ビルドを実行すると、リリースビルドを停止します。
+      キーストアの作り方は `keytool -genkey -v -keystore <path>.jks
       -keyalg RSA -keysize 2048 -validity 10000 -alias mindstock`
       （キーストアは紛失・流出させないこと。紛失すると同じ署名でのアップデート配信ができなくなる）
 - [ ] iOS: Appleデベロッパー登録 → 証明書・プロビジョニング（未登録なら保留）

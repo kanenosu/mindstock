@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../logic/chart_calculator.dart';
 import '../models/models.dart';
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 
 /// 日記用カレンダー。
@@ -91,11 +91,16 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
   }
 
   Widget _headerRow(BuildContext context) {
+    final i18n = context.i18n;
     return Row(
       children: [
         const SizedBox(width: 4),
         Text(
-          DateFormat('yyyy年M月', 'ja').format(_anchor),
+          i18n.date(
+            _anchor,
+            jaPattern: 'yyyy年M月',
+            enPattern: 'MMMM yyyy',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -114,7 +119,10 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
               setState(() => _anchor = _today);
               widget.onSelect(_today);
             },
-            child: const Text('今日', style: TextStyle(fontSize: 12)),
+            child: Text(
+              i18n.tr('today'),
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
         const Spacer(),
         _navButton(Icons.chevron_left, () => _shift(-1)),
@@ -126,7 +134,9 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
             duration: const Duration(milliseconds: 200),
             child: const Icon(Icons.expand_more, size: 20),
           ),
-          tooltip: _expanded ? '週表示にする' : '月表示にする',
+          tooltip: i18n.tr(
+            _expanded ? 'calendar_week_mode' : 'calendar_month_mode',
+          ),
           onPressed: () {
             HapticFeedback.selectionClick();
             setState(() => _expanded = !_expanded);
@@ -143,7 +153,15 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
   );
 
   Widget _weekdayRow(BuildContext context) {
-    const labels = ['月', '火', '水', '木', '金', '土', '日'];
+    final i18n = context.i18n;
+    final labels = [
+      for (var i = DateTime.monday; i <= DateTime.sunday; i++)
+        i18n.date(
+          DateTime(2024, 1, 1 + (i - DateTime.monday)),
+          jaPattern: 'E',
+          enPattern: 'EEE',
+        ),
+    ];
     return Row(
       children: [
         for (final label in labels)

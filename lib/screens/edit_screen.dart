@@ -2,9 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../models/models.dart';
+import '../l10n.dart';
 import '../providers.dart';
 import '../theme.dart';
 
@@ -43,24 +43,25 @@ class _EditScreenState extends ConsumerState<EditScreen> {
   }
 
   void _addManual() async {
+    final i18n = context.i18n;
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('出来事を追加'),
+        title: Text(i18n.tr('add_event')),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: '例: 友人と再会した'),
+          decoration: InputDecoration(hintText: i18n.tr('event_example')),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
+            child: Text(i18n.tr('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('追加'),
+            child: Text(i18n.tr('edit_add')),
           ),
         ],
       ),
@@ -80,16 +81,23 @@ class _EditScreenState extends ConsumerState<EditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final date = DateFormat(
-      'M月d日 (E)',
-      'ja',
-    ).format(DateTime.parse(widget.dateKey));
+    final i18n = context.i18n;
+    final parsed = DateTime.parse(widget.dateKey);
+    final date = i18n.date(
+      parsed,
+      jaPattern: 'M月d日 (E)',
+      enPattern: 'MMM d (EEE)',
+    );
     final total = _events.fold<double>(0, (sum, e) => sum + e.delta);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$date の出来事'),
-        actions: [TextButton(onPressed: _save, child: const Text('保存'))],
+        title: Text(
+          i18n.tr('edit_title', args: {'date': date}),
+        ),
+        actions: [
+          TextButton(onPressed: _save, child: Text(i18n.tr('edit_save'))),
+        ],
       ),
       body: Column(
         children: [
@@ -99,7 +107,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'この日の変動合計: ',
+                  i18n.tr('edit_total'),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 Text(
@@ -114,7 +122,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
           ),
           Expanded(
             child: _events.isEmpty
-                ? const Center(child: Text('出来事がありません。\n「＋」から手動で追加できます。'))
+                ? Center(child: Text(i18n.tr('edit_empty')))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: _events.length,
@@ -129,7 +137,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addManual,
-        tooltip: '手動追加',
+        tooltip: i18n.tr('edit_add'),
         child: const Icon(Icons.add),
       ),
     );
@@ -150,6 +158,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     final color = event.isPositive ? AppColors.bull : AppColors.bear;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -192,7 +201,7 @@ class _EventCard extends StatelessWidget {
                         : Icons.remove_circle_outline,
                     color: color,
                   ),
-                  tooltip: '方向を反転',
+                  tooltip: i18n.tr('edit_flip'),
                   onPressed: () =>
                       onChanged(event.copyWith(isPositive: !event.isPositive)),
                 ),
@@ -222,6 +231,7 @@ class _EventCard extends StatelessWidget {
   }
 
   Widget _kindBadge(BuildContext context) {
+    final i18n = context.i18n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -229,7 +239,7 @@ class _EventCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        event.kind.label,
+        i18n.eventKindLabel(event.kind),
         style: Theme.of(context).textTheme.labelSmall,
       ),
     );

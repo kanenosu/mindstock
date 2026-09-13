@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 
 /// 音声入力ボタン（Whisper）。
@@ -60,14 +61,14 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
   Future<void> _start({required bool byHold}) async {
     if (_state != _RecordState.idle) return;
 
-    // 先にバックエンドの利用可否を確認して、録音してから失敗させない。
-    // （文字起こしは開発者のキーを持つサーバー経由で行う）。
+      // 先にバックエンドの利用可否を確認して、録音してから失敗させない。
+      // （文字起こしは開発者のキーを持つサーバー経由で行う）。
     if (!ref.read(voiceInputAvailableProvider)) {
-      setState(() => _error = '音声入力は現在利用できません（サーバー未設定）');
+      setState(() => _error = context.i18n.tr('voice_input_unavailable'));
       return;
     }
     if (!await _recorder.hasPermission()) {
-      if (mounted) setState(() => _error = 'マイクの権限が必要です');
+      if (mounted) setState(() => _error = context.i18n.tr('voice_permission_required'));
       return;
     }
 
@@ -114,7 +115,7 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
       final service = ref.read(transcriptionServiceProvider);
       final text = await service.transcribe(path);
       if (text.isEmpty) {
-        throw StateError('音声を認識できませんでした。もう一度試してください');
+        throw StateError(context.i18n.tr('voice_unrecognized'));
       }
       widget.onTranscribed(text);
       HapticFeedback.mediumImpact();
@@ -268,8 +269,8 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
             ),
           ),
           const SizedBox(width: 6),
-          const Text(
-            'タップで完了',
+          Text(
+            context.i18n.tr('voice_tap_to_finish'),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../logic/chart_calculator.dart';
 import '../models/models.dart';
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
 import 'entry_screen.dart';
@@ -73,10 +74,11 @@ class _Header extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = ref.watch(unreadNotificationsProvider);
     final hour = DateTime.now().hour;
+    final i18n = context.i18n;
     final (greeting, emoji) = switch (hour) {
-      >= 5 && < 11 => ('おはよう。今日もゆっくり積み上げる', '🌅'),
-      >= 11 && < 17 => ('こんにちは。今日もゆっくり積み上げる', '☀️'),
-      _ => ('こんばんは。今日もおつかれさま', '🌙'),
+      >= 5 && < 11 => (i18n.tr('greeting_morning'), '🌅'),
+      >= 11 && < 17 => (i18n.tr('greeting_afternoon'), '☀️'),
+      _ => (i18n.tr('greeting_evening'), '🌙'),
     };
     return Row(
       children: [
@@ -93,7 +95,7 @@ class _Header extends ConsumerWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'ダッシュボード',
+                i18n.tr('dashboard'),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -178,6 +180,7 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
   @override
   Widget build(BuildContext context) {
     final daily = widget.daily;
+    final i18n = context.i18n;
     final current = daily.isNotEmpty ? daily.last.close : null;
     final diffYesterday = ChartCalculator.changeSince(daily, 1);
     final pct =
@@ -225,11 +228,11 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 InkWell(
-                  onTap: widget.onOpenChart,
+              onTap: widget.onOpenChart,
                   child: Row(
                     children: [
                       Text(
-                        'Life Index',
+                        i18n.tr('life_index_title'),
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: AppColors.inkSoft,
                           fontWeight: FontWeight.w700,
@@ -250,7 +253,7 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
                 const SizedBox(height: 6),
                 if (current == null)
                   Text(
-                    'まだ記録がありません',
+                    i18n.tr('no_records'),
                     style: Theme.of(context).textTheme.titleMedium,
                   )
                 else
@@ -291,7 +294,7 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
                   ),
                 const SizedBox(height: 10),
                 Text(
-                  _message(daily),
+                  _message(daily, i18n),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.inkSoft,
                     height: 1.6,
@@ -345,6 +348,7 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
                       SizedBox(
                         width: 150,
                         child: _TimeframePills(
+                          i18n: i18n,
                           selected: _tf,
                           onChanged: (tf) => setState(() {
                             _tf = tf;
@@ -354,7 +358,7 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
                       ),
                       const Spacer(),
                       Text(
-                        _rangeLabel(window),
+                        _rangeLabel(window, i18n),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColors.inkSoft,
                           fontFeatures: const [FontFeature.tabularFigures()],
@@ -371,19 +375,19 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
     );
   }
 
-  String _rangeLabel(List<Candle> window) {
+  String _rangeLabel(List<Candle> window, AppI18n i18n) {
     if (window.isEmpty) return '';
-    final fmt = DateFormat('M/d');
-    final fmtMonth = DateFormat('yyyy/M');
     return _tf == Timeframe.monthly
-        ? '${fmtMonth.format(window.first.date)}〜${fmtMonth.format(window.last.date)}'
-        : '${fmt.format(window.first.date)}〜${fmt.format(window.last.date)}';
+        ? '${i18n.date(window.first.date, jaPattern: 'yyyy/M', enPattern: 'MMM yyyy')}〜'
+            '${i18n.date(window.last.date, jaPattern: 'yyyy/M', enPattern: 'MMM yyyy')}'
+        : '${i18n.date(window.first.date, jaPattern: 'M/d', enPattern: 'M/d')}〜'
+            '${i18n.date(window.last.date, jaPattern: 'M/d', enPattern: 'M/d')}';
   }
 
   /// 状態に応じた一言。成長を押し付けず、事実に寄り添う（仕様書 §6）。
-  String _message(List<Candle> daily) {
+  String _message(List<Candle> daily, AppI18n i18n) {
     if (daily.isEmpty) {
-      return '最初の日記を書くと、ここに人生のチャートが生まれる。';
+      return i18n.tr('life_message_start');
     }
     final y = ChartCalculator.changeSince(daily, 1) ?? 0;
     final long =
@@ -391,21 +395,26 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
         ChartCalculator.changeSince(daily, 30);
 
     if (y < 0 && long != null && long > 0) {
-      return '昨日より少し揺れても、以前の谷からはちゃんと離れてる。今日は悪くない。';
+      return i18n.tr('life_message_mild_fall');
     }
     if (y >= 0 && (long == null || long >= 0)) {
-      return '静かに積み上がってる。今日も、ただ書くだけでいい。';
+      return i18n.tr('life_message_growing');
     }
-    return 'いまは谷の途中かもしれない。谷も人生の一部。記録はちゃんと残ってる。';
+    return i18n.tr('life_message_valley');
   }
 }
 
 /// 日/週/月のミニピル（カード内用の小型版）。
 class _TimeframePills extends StatelessWidget {
   final Timeframe selected;
+  final AppI18n i18n;
   final ValueChanged<Timeframe> onChanged;
 
-  const _TimeframePills({required this.selected, required this.onChanged});
+  const _TimeframePills({
+    required this.selected,
+    required this.i18n,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -444,7 +453,7 @@ class _TimeframePills extends StatelessWidget {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    tf.label,
+                    i18n.timeframeLabelShort(tf),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: tf == selected
@@ -470,11 +479,12 @@ class _TrendBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final diffWeek = ChartCalculator.changeSince(daily, 7);
+    final i18n = context.i18n;
     final (label, icon, color) = switch (diffWeek) {
-      null => ('はじまり', Icons.spa_outlined, AppColors.inkSoft),
-      final d when d > 1 => ('上向き', Icons.north_east, AppColors.bull),
-      final d when d < -1 => ('谷の途中', Icons.south_east, AppColors.bear),
-      _ => ('横ばい', Icons.trending_flat, AppColors.accent),
+      null => (i18n.tr('trend_start'), Icons.spa_outlined, AppColors.inkSoft),
+      final d when d > 1 => (i18n.tr('trend_up'), Icons.north_east, AppColors.bull),
+      final d when d < -1 => (i18n.tr('trend_valley'), Icons.south_east, AppColors.bear),
+      _ => (i18n.tr('trend_flat'), Icons.trending_flat, AppColors.accent),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -513,17 +523,18 @@ class _StatRow extends StatelessWidget {
     final halfYear = ChartCalculator.changeSince(daily, 182);
     final recent = daily.length > 30 ? daily.sublist(daily.length - 30) : daily;
     final calmDays = recent.where((c) => !c.hasEntry).length;
+    final i18n = context.i18n;
 
     return Row(
       children: [
-        Expanded(child: _diffCard(context, '1ヶ月前', month)),
+        Expanded(child: _diffCard(context, i18n.tr('compare_one_month'), month)),
         const SizedBox(width: 10),
-        Expanded(child: _diffCard(context, '半年前', halfYear)),
+        Expanded(child: _diffCard(context, i18n.tr('compare_half_year'), halfYear)),
         const SizedBox(width: 10),
         Expanded(
           child: _statCard(
             context,
-            label: '平穏日',
+            label: i18n.tr('calm_days'),
             child: Text(
               '$calmDays日',
               style: Theme.of(
@@ -609,6 +620,7 @@ class _TodayCardState extends State<_TodayCard>
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     final entry = widget.entry;
     final written =
         entry != null && (entry.text.isNotEmpty || entry.moodScore != null);
@@ -624,18 +636,18 @@ class _TodayCardState extends State<_TodayCard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: [
-                  Text(
-                    '今日の記録',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+              children: [
+                Text(
+                  i18n.tr('today_record'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
-                  const Spacer(),
-                  Text(
-                    written
+                ),
+                const Spacer(),
+                Text(
+                  written
                         ? '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}'
-                        : '30秒でOK',
+                        : i18n.tr('seconds_ok'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: written
                           ? (total >= 0 ? AppColors.bull : AppColors.bear)
@@ -655,6 +667,7 @@ class _TodayCardState extends State<_TodayCard>
   }
 
   Widget _writtenBody(DiaryEntry entry) {
+    final i18n = context.i18n;
     return Row(
       children: [
         Expanded(
@@ -663,7 +676,7 @@ class _TodayCardState extends State<_TodayCard>
             children: [
               Text(
                 entry.text.isEmpty
-                    ? '気分だけ記録した日'
+                    ? i18n.tr('today_no_entry')
                     : entry.text.replaceAll('\n', ' '),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -673,7 +686,7 @@ class _TodayCardState extends State<_TodayCard>
               ),
               const SizedBox(height: 4),
               Text(
-                'タップで続きを書ける。微調整もここから。',
+                i18n.tr('tap_to_continue'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.inkSoft,
                   height: 1.5,
@@ -691,6 +704,7 @@ class _TodayCardState extends State<_TodayCard>
   /// 空欄プレースホルダー: 破線の枠 + ノートの罫線みたいなゴースト行。
   /// ゆっくり明滅して「ここが空いている」ことをやさしく主張する。
   Widget _emptyBody() {
+    final i18n = context.i18n;
     return AnimatedBuilder(
       animation: _breath,
       builder: (context, child) {
@@ -710,7 +724,7 @@ class _TodayCardState extends State<_TodayCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ここに、今日のこと。',
+                      i18n.tr('empty_now'),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.inkSoft,
@@ -722,7 +736,7 @@ class _TodayCardState extends State<_TodayCard>
                     _ghostLine(widthFactor: 0.6),
                     const SizedBox(height: 12),
                     Text(
-                      '一行でも、絵文字ひとつでも。空白でも罰しない。',
+                      i18n.tr('empty_note'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.inkSoft.withValues(alpha: 0.8),
                         fontSize: 11,
@@ -819,6 +833,7 @@ class _RecentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     final recent = entries.values.toList()
       ..sort((a, b) => b.date.compareTo(a.date));
     if (recent.isEmpty) return const SizedBox.shrink();
@@ -827,7 +842,7 @@ class _RecentSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '最近の記録',
+          i18n.tr('recent_records'),
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -848,12 +863,17 @@ class _RecentSection extends StatelessWidget {
   }
 
   Widget _tile(BuildContext context, DiaryEntry entry) {
+    final i18n = context.i18n;
     final total = entry.events.fold<double>(0, (sum, e) => sum + e.delta);
     final preview = entry.text.replaceAll('\n', ' ');
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       title: Text(
-        DateFormat('M月d日 (E)', 'ja').format(entry.dateTime),
+        i18n.date(
+          entry.dateTime,
+          jaPattern: 'M月d日 (E)',
+          enPattern: 'MMM d (E)',
+        ),
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
       ),
       subtitle: preview.isEmpty

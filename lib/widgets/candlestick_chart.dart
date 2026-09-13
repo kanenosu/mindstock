@@ -3,9 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../models/models.dart';
+import '../l10n.dart';
 import '../theme.dart';
 
 /// チャートの描画スタイル。
@@ -28,11 +28,13 @@ class CandlestickChart extends StatefulWidget {
   final List<Candle> candles;
   final List<double?> movingAverage;
   final ChartStyle style;
+  final AppI18n i18n;
   final void Function(Candle candle)? onSelect;
 
   const CandlestickChart({
     super.key,
     required this.candles,
+    this.i18n = const AppI18n('ja'),
     this.movingAverage = const [],
     this.style = ChartStyle.candle,
     this.onSelect,
@@ -94,7 +96,7 @@ class _CandlestickChartState extends State<CandlestickChart>
   @override
   Widget build(BuildContext context) {
     if (widget.candles.isEmpty) {
-      return const Center(child: Text('まだ記録がありません'));
+      return Center(child: Text(widget.i18n.tr('no_records')));
     }
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -153,6 +155,7 @@ class _CandlestickChartState extends State<CandlestickChart>
             painter: _CandlePainter(
               candles: widget.candles,
               movingAverage: widget.movingAverage,
+              i18n: widget.i18n,
               candleWidth: _candleWidth,
               firstVisible: visible.$1,
               lastVisible: visible.$2,
@@ -198,6 +201,7 @@ class _CandlePainter extends CustomPainter {
   final int? selectedIndex;
   final ChartStyle style;
   final ThemeData theme;
+  final AppI18n i18n;
 
   // 感情の文脈では 緑=良い / 赤=悪い が直感的（仕様書 §5 色のルール）
   static const bullColor = AppColors.bull;
@@ -211,6 +215,7 @@ class _CandlePainter extends CustomPainter {
     required this.lastVisible,
     required this.selectedIndex,
     required this.style,
+    required this.i18n,
     required this.theme,
   });
 
@@ -440,11 +445,15 @@ class _CandlePainter extends CustomPainter {
       color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
     );
     final step = max(1, (80 / candleWidth).ceil());
-    final fmt = DateFormat('M/d');
     for (var i = 0; i < visible.length; i += step) {
       final cx = startX + i * candleWidth + candleWidth / 2;
+      final text = i18n.date(
+        visible[i].date,
+        jaPattern: 'M/d',
+        enPattern: 'M/d',
+      );
       final tp = TextPainter(
-        text: TextSpan(text: fmt.format(visible[i].date), style: labelStyle),
+        text: TextSpan(text: text, style: labelStyle),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(cx - tp.width / 2, size.height - tp.height - 4));

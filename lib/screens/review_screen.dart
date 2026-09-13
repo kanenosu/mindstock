@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../logic/chart_calculator.dart';
 import '../logic/weekly_summary.dart';
 import '../models/models.dart';
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/candlestick_chart.dart';
 import '../widgets/weekly_summary_card.dart';
@@ -28,6 +28,7 @@ class ReviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final entries = ref.watch(entriesProvider).valueOrNull ?? {};
     final daily = ref.watch(dailyCandlesProvider);
+    final i18n = context.i18n;
 
     final days = weekly
         ? List.generate(7, (i) => date.add(Duration(days: i)))
@@ -40,19 +41,37 @@ class ReviewScreen extends ConsumerWidget {
     final candle = daily.where((c) => !c.date.isBefore(date)).firstOrNull;
     final current = daily.isNotEmpty ? daily.last.close : null;
 
-    final fmt = DateFormat('yyyy年M月d日 (E)', 'ja');
+    final title = weekly
+        ? i18n.tr(
+            'review_title_week',
+            args: {
+              'date': i18n.date(
+                date,
+                jaPattern: 'M/d',
+                enPattern: 'MMM d',
+              ),
+            },
+          )
+        : i18n.tr(
+            'review_title_day',
+            args: {
+              'date': i18n.date(
+                date,
+                jaPattern: 'yyyy年M月d日 (E)',
+                enPattern: 'MMM d, yyyy (E)',
+              ),
+            },
+          );
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          weekly ? '${DateFormat('M/d').format(date)} の週' : fmt.format(date),
-        ),
+        title: Text(title),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // 週の振り返りには自動生成の「週のまとめ」を先頭に置く
           if (weekly) ...[
-            WeeklySummaryCard(summary: WeeklySummary.compute(date, entries)),
+            WeeklySummaryCard(summary: WeeklySummary.compute(date, entries, i18n: i18n)),
             const SizedBox(height: 12),
             _weekChartCard(context, daily),
             const SizedBox(height: 12),
@@ -60,9 +79,9 @@ class ReviewScreen extends ConsumerWidget {
           if (candle != null) _positionCard(context, candle, current),
           const SizedBox(height: 16),
           if (dayEntries.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 32),
-              child: Center(child: Text('この期間の記録はありません。\n（平穏な日、だったのかもしれません）')),
+              child: Center(child: Text(i18n.tr('review_empty'))),
             )
           else
             for (final entry in dayEntries) ...[
@@ -95,7 +114,7 @@ class ReviewScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'この週のチャート',
+              context.i18n.tr('review_week_chart'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: AppColors.inkSoft,
                 fontWeight: FontWeight.w700,
@@ -105,8 +124,9 @@ class ReviewScreen extends ConsumerWidget {
             SizedBox(
               height: 160,
               // 日足なので点＋ラインで表示（週内の1日1本）
-              child: CandlestickChart(
+            child: CandlestickChart(
                 candles: weekCandles,
+                i18n: context.i18n,
                 style: ChartStyle.line,
               ),
             ),
@@ -125,11 +145,11 @@ class ReviewScreen extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _metric(context, '当時の値', candle.close.toStringAsFixed(1)),
+            _metric(context, context.i18n.tr('value_at_time'), candle.close.toStringAsFixed(1)),
             if (diff != null)
               _metric(
                 context,
-                '今との差',
+                context.i18n.tr('diff_from_now'),
                 '${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}',
                 color: diff >= 0 ? AppColors.bull : AppColors.bear,
               ),
@@ -170,13 +190,17 @@ class ReviewScreen extends ConsumerWidget {
             Row(
               children: [
                 Text(
-                  DateFormat('M月d日 (E)', 'ja').format(entry.dateTime),
+                  context.i18n.date(
+                    entry.dateTime,
+                    jaPattern: 'M月d日 (E)',
+                    enPattern: 'MMM d (E)',
+                  ),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.tune, size: 20),
-                  tooltip: '出来事を微調整',
+                  tooltip: context.i18n.tr('edit_events'),
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => EditScreen(dateKey: entry.date),

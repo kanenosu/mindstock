@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import '../l10n.dart';
 import 'chart_calculator.dart';
 
 /// 1週間のまとめ。週足のローソクをタップした時や振り返り画面で表示する。
@@ -56,6 +57,9 @@ class WeeklySummary {
   static WeeklySummary compute(
     DateTime anyDayInWeek,
     Map<String, DiaryEntry> entries,
+    {
+    AppI18n? i18n,
+    }
   ) {
     final weekStart = DateTime(
       anyDayInWeek.year,
@@ -115,6 +119,7 @@ class WeeklySummary {
         best: best,
         worst: worst,
         hasMilestone: hasMilestone,
+        i18n: i18n ?? const AppI18n('ja'),
       ),
     );
   }
@@ -125,26 +130,29 @@ class WeeklySummary {
     required LifeEvent? best,
     required LifeEvent? worst,
     required bool hasMilestone,
+    required AppI18n i18n,
   }) {
     if (entryDays == 0) {
-      return '記録のない、静かな週。それも人生の一部。';
+      return i18n.tr('summary_no_records');
     }
     if (hasMilestone) {
       final milestone = (best != null && best.kind == EventKind.milestone)
           ? best
           : worst;
       if (milestone != null) {
-        return '節目のあった週。「${milestone.name}」が刻まれた。';
+        return i18n.tr('summary_milestone', args: {'name': milestone.name});
       }
     }
     if (total >= 3) {
-      return best != null ? '上向きの週。「${best.name}」が効いた。' : '静かに積み上がった週。';
+      return best != null
+          ? i18n.tr('summary_up_with_name', args: {'name': best.name})
+          : i18n.tr('summary_up_plain');
     }
     if (total <= -3) {
-      return best != null
-          ? '沈んだ週。それでも「${best.name}」みたいな瞬間はあった。'
-          : '沈んだ週。ちゃんと記録に残っている。';
+      return worst != null
+          ? i18n.tr('summary_down_with_name', args: {'name': worst.name})
+          : i18n.tr('summary_down_plain');
     }
-    return '小さな揺れの、おだやかな週。';
+    return i18n.tr('summary_flat');
   }
 }

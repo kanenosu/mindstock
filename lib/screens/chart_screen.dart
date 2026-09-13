@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../logic/chart_calculator.dart';
 import '../logic/weekly_summary.dart';
 import '../models/models.dart';
+import '../l10n.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/candlestick_chart.dart';
@@ -35,9 +36,10 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
     final daily = ref.watch(dailyCandlesProvider);
     final candles = ChartCalculator.forTimeframe(daily, _tf);
     final ma = ChartCalculator.movingAverage(candles, _tf.maPeriod);
+    final i18n = context.i18n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('推移')),
+      appBar: AppBar(title: Text(i18n.tr('chart_title'))),
       body: daily.isEmpty
           ? const _EmptyChart()
           : Column(
@@ -53,7 +55,7 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                   child: PillSelector<Timeframe>(
                     items: Timeframe.values,
                     selected: _tf,
-                    labelOf: (tf) => tf.longLabel,
+                    labelOf: (tf) => i18n.timeframeLabel(tf),
                     onChanged: (tf) => setState(() {
                       _tf = tf;
                       _selected = null;
@@ -67,6 +69,7 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                     child: CandlestickChart(
                       candles: candles,
                       movingAverage: ma,
+                      i18n: i18n,
                       // 日足はただの点、週足・月足でローソク足になる
                       style: _tf == Timeframe.daily
                           ? ChartStyle.line
@@ -79,8 +82,8 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                   padding: const EdgeInsets.all(8),
                   child: Text(
                     _tf == Timeframe.daily
-                        ? 'ピンチで拡大縮小・ドラッグでスクロール・タップで選択'
-                        : 'ヒゲはその期間の最高/最低到達点。タップで選択・ダブルタップでリセット',
+                        ? i18n.tr('chart_tip_daily')
+                        : i18n.tr('chart_tip_multi'),
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppColors.inkSoft),
@@ -115,7 +118,11 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
 
   void _showWeeklySummarySheet(Candle candle) {
     final entries = ref.read(entriesProvider).valueOrNull ?? {};
-    final summary = WeeklySummary.compute(candle.date, entries);
+    final summary = WeeklySummary.compute(
+      candle.date,
+      entries,
+      i18n: context.i18n,
+    );
 
     showModalBottomSheet<void>(
       context: context,
@@ -145,7 +152,7 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
               const SizedBox(height: 12),
               FilledButton.icon(
                 icon: const Icon(Icons.menu_book_outlined, size: 18),
-                label: const Text('この週の日記を読む'),
+                label: Text(context.i18n.tr('chart_week_button')),
                 onPressed: () {
                   Navigator.of(sheetContext).pop();
                   Navigator.of(context).push(
@@ -182,6 +189,7 @@ class _CurrentValueHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     final candle = selected;
     final value = candle?.close ?? daily.last.close;
     final diff = candle != null
@@ -193,14 +201,28 @@ class _CurrentValueHeader extends StatelessWidget {
     final color = (diff ?? 0) >= 0 ? AppColors.bull : AppColors.bear;
 
     final periodLabel = candle == null
-        ? '今日'
+        ? i18n.tr('today')
         : switch (tf) {
-            Timeframe.daily => DateFormat('M/d (E)', 'ja').format(candle.date),
-            Timeframe.weekly => '${DateFormat('M/d').format(candle.date)}の週',
-            Timeframe.monthly => DateFormat(
-              'yyyy年M月',
-              'ja',
-            ).format(candle.date),
+            Timeframe.daily => i18n.date(
+              candle.date,
+              jaPattern: 'M/d (E)',
+              enPattern: 'MMM d (E)',
+            ),
+            Timeframe.weekly => i18n.tr(
+              'review_title_week',
+              args: {
+                'date': i18n.date(
+                  candle.date,
+                  jaPattern: 'M/d',
+                  enPattern: 'MMM d',
+                ),
+              },
+            ),
+            Timeframe.monthly => i18n.date(
+              candle.date,
+              jaPattern: 'yyyy年M月',
+              enPattern: 'MMM yyyy',
+            ),
           };
 
     return Padding(
@@ -260,10 +282,10 @@ class _CurrentValueHeader extends StatelessWidget {
                 ),
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Text(
-                      '振り返る',
-                      style: TextStyle(
+                      i18n.tr('open_review'),
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                       ),
@@ -295,8 +317,8 @@ class _EmptyChart extends ConsumerWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          const Text(
-            '最初の日記を書くと、\nここに人生のチャートが生まれます。',
+          Text(
+            context.i18n.tr('chart_empty'),
             textAlign: TextAlign.center,
           ),
         ],
@@ -316,12 +338,13 @@ class _ComparisonCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     final comparisons = <(String, double?)>[
-      ('昨日比', ChartCalculator.changeSince(daily, 1)),
-      ('1週間前', ChartCalculator.changeSince(daily, 7)),
-      ('1ヶ月前', ChartCalculator.changeSince(daily, 30)),
-      ('半年前', ChartCalculator.changeSince(daily, 182)),
-      ('1年前', ChartCalculator.changeSince(daily, 365)),
+      (i18n.tr('yesterday'), ChartCalculator.changeSince(daily, 1)),
+      (i18n.tr('week_ago'), ChartCalculator.changeSince(daily, 7)),
+      (i18n.tr('month_ago'), ChartCalculator.changeSince(daily, 30)),
+      (i18n.tr('half_year_ago'), ChartCalculator.changeSince(daily, 182)),
+      (i18n.tr('year_ago'), ChartCalculator.changeSince(daily, 365)),
     ];
 
     return SizedBox(

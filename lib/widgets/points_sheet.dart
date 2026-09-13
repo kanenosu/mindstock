@@ -5,6 +5,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../config/monetization.dart';
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 
 /// ポイント補充シートを開く。
@@ -89,9 +90,14 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
       if (earned) {
         await ref.read(pointsProvider.notifier).add(Monetization.rewardPerAd);
         HapticFeedback.mediumImpact();
-        _toast('${Monetization.rewardPerAd}ポイント獲得しました');
+        _toast(
+          context.i18n.tr(
+            'points_earned',
+            args: {'reward': Monetization.rewardPerAd.toString()},
+          ),
+        );
       } else {
-        _toast('広告の準備中です。少し待ってからもう一度お試しください');
+        _toast(context.i18n.tr('ad_not_ready'));
       }
     } finally {
       if (mounted) setState(() => _watchingAd = false);
@@ -103,7 +109,7 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
       await ref.read(iapServiceProvider).buy(product);
       // 付与は購入ストリーム側で自動処理される。
     } catch (e) {
-      _toast('購入を開始できませんでした');
+      _toast(context.i18n.tr('purchase_failed'));
     }
   }
 
@@ -111,6 +117,7 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
   Widget build(BuildContext context) {
     final points = ref.watch(pointsProvider).valueOrNull ?? 0;
     final iap = ref.watch(iapServiceProvider);
+    final i18n = context.i18n;
 
     return SafeArea(
       child: Padding(
@@ -133,7 +140,7 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
             Row(
               children: [
                 Text(
-                  'ポイント',
+                  i18n.tr('points_sheet_title'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -151,8 +158,10 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'AI解析は1回 ${Monetization.analysisCost} ポイント。'
-              '広告を見るか、まとめて購入して補充できます。',
+              i18n.tr(
+                'points_description',
+                args: {'cost': Monetization.analysisCost.toString()},
+              ),
               style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
             ),
             const SizedBox(height: 20),
@@ -169,8 +178,11 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
                   : const Icon(Icons.play_circle_outline),
               label: Text(
                 _watchingAd
-                    ? '読み込み中…'
-                    : '広告を見て +${Monetization.rewardPerAd} ポイント',
+                    ? i18n.tr('watch_ad_loading')
+                    : i18n.tr(
+                        'watch_ad_button',
+                        args: {'reward': Monetization.rewardPerAd.toString()},
+                      ),
               ),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -180,7 +192,7 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
 
             // 課金（ポイントパック）
             Text(
-              'まとめて購入',
+              i18n.tr('buy_pack_title'),
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: AppColors.inkSoft,
                 fontWeight: FontWeight.w800,
@@ -188,13 +200,13 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
             ),
             const SizedBox(height: 8),
             if (!iap.available)
-              const Text(
-                'ストアに接続できません（商品登録前・非対応端末の可能性）',
+              Text(
+                i18n.tr('buy_empty_store'),
                 style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
               )
             else if (iap.products.isEmpty)
-              const Text(
-                '購入できる商品がありません。ストアで商品を登録してください。',
+              Text(
+                i18n.tr('buy_empty_product'),
                 style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
               )
             else
@@ -210,7 +222,7 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
             if (Monetization.usingTestAdIds) ...[
               const SizedBox(height: 12),
               Text(
-                '※ 現在は広告テストIDです。リリース前に本番IDへ差し替えてください。',
+                i18n.tr('ad_test_notice'),
                 style: TextStyle(
                   fontSize: 10,
                   color: AppColors.inkSoft.withValues(alpha: 0.8),
@@ -249,9 +261,15 @@ class _ProductTile extends StatelessWidget {
             children: [
               const Text('◆', style: TextStyle(color: AppColors.accent)),
               const SizedBox(width: 8),
-              Text(
-                '$points ポイント',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+              Row(
+                children: [
+                  Text('$points', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(width: 2),
+                  Text(
+                    context.i18n.tr('points_chip'),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ],
               ),
               const Spacer(),
               Text(

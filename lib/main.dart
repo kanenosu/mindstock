@@ -8,6 +8,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'providers.dart';
+import 'l10n.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/chart_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -19,16 +20,19 @@ import 'theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ja');
+  await initializeDateFormatting('en_US');
   // AdMob初期化（失敗してもアプリは起動させる）。
   unawaited(MobileAds.instance.initialize());
   runApp(const ProviderScope(child: MindStockApp()));
 }
 
-class MindStockApp extends StatelessWidget {
+class MindStockApp extends ConsumerWidget {
   const MindStockApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localeCode = ref.watch(appLocaleCodeProvider).valueOrNull ?? 'ja';
+
     return MaterialApp(
       title: 'MindStock',
       theme: buildAppTheme(),
@@ -37,7 +41,7 @@ class MindStockApp extends StatelessWidget {
       // 端末のダーク設定に引きずられて中途半端に暗転しないよう明示する。
       themeMode: ThemeMode.light,
       scrollBehavior: const _BouncyScrollBehavior(),
-      locale: const Locale('ja'),
+      locale: Locale(localeCode),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -133,31 +137,31 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _goTo,
-        destinations: const [
+      destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
-            label: 'ホーム',
+            label: context.i18n.tr('nav_home'),
           ),
           NavigationDestination(
             icon: Icon(Icons.edit_outlined),
             selectedIcon: Icon(Icons.edit),
-            label: '日記',
+            label: context.i18n.tr('nav_entry'),
           ),
           NavigationDestination(
             icon: Icon(Icons.candlestick_chart_outlined),
             selectedIcon: Icon(Icons.candlestick_chart),
-            label: '推移',
+            label: context.i18n.tr('nav_chart'),
           ),
           NavigationDestination(
             icon: Icon(Icons.article_outlined),
             selectedIcon: Icon(Icons.article),
-            label: '記録',
+            label: context.i18n.tr('records_title'),
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
-            label: '設定',
+            label: context.i18n.tr('nav_settings'),
           ),
         ],
       ),

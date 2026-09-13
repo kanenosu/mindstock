@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:intl/intl.dart';
 
 import '../config/monetization.dart';
+import '../l10n.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
@@ -68,8 +68,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(title: Text(i18n.tr('settings'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
@@ -85,7 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             delayMs: 240,
             child: Center(
               child: Text(
-                'MindStock v0.1.0\nあなたの毎日は、記録するだけで資産になる。',
+                i18n.tr('app_tagline'),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.outline,
@@ -132,12 +133,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// 最終バックアップ日時の表示（自動・手動共通）。
   /// 7日以上経つと自動でバックアップされる旨も添える。
   Widget _lastBackupLine(BuildContext context) {
+    final i18n = context.i18n;
     final iso = ref.watch(lastBackupAtProvider).valueOrNull ?? '';
     final at = DateTime.tryParse(iso);
     final text = at == null
-        ? 'まだバックアップしていません（ログイン中は7日ごとに自動保存されます）'
-        : '最終バックアップ: ${DateFormat('M/d HH:mm', 'ja').format(at)}'
-              '（7日ごとに自動保存）';
+        ? i18n.tr('empty_point')
+        : i18n.tr(
+            'last_backup',
+            args: {
+              'time': i18n.date(
+                at,
+                jaPattern: 'M/d HH:mm',
+                enPattern: 'MMM d, HH:mm',
+              ),
+            },
+          );
     return Row(
       children: [
         Icon(Icons.schedule_rounded, size: 13, color: AppColors.inkSoft),
@@ -155,11 +165,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ── ポイント ─────────────────────────────────────────
 
   Widget _pointsSection(BuildContext context) {
+    final i18n = context.i18n;
     final points = ref.watch(pointsProvider).valueOrNull ?? 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(context, Icons.stars_rounded, 'ポイント'),
+        _sectionHeader(context, Icons.stars_rounded, i18n.tr('points')),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -177,7 +188,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                     Text(
-                      'AI解析1回 ${Monetization.analysisCost}ポイント',
+                      i18n.tr(
+                        'analysis_cost',
+                        args: {'cost': Monetization.analysisCost.toString()},
+                      ),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.inkSoft,
@@ -189,7 +203,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 FilledButton.icon(
                   onPressed: () => showPointsSheet(context),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('補充する'),
+                  label: Text(i18n.tr('add_points')),
                 ),
               ],
             ),
@@ -202,11 +216,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ── アカウント ────────────────────────────────────────
 
   Widget _accountSection(BuildContext context) {
+    final i18n = context.i18n;
     final account = _account;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(context, Icons.person_outline_rounded, 'アカウント'),
+        _sectionHeader(context, Icons.person_outline_rounded, i18n.tr('account')),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -215,9 +230,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 if (account == null) ...[
                   Text(
-                    'Googleでログインすると、日記データをGoogle Drive'
-                    '（このアプリ専用の領域）にバックアップできます。'
-                    '機種変更やアンインストール後の復元に。',
+                    i18n.tr('google_login_help'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.inkSoft,
                       height: 1.6,
@@ -226,7 +239,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     icon: const Icon(Icons.login_rounded, size: 18),
-                    label: const Text('Googleでログイン'),
+                    label: Text(i18n.tr('google_login')),
                     onPressed: _busy
                         ? null
                         : () => _run(() async {
@@ -234,7 +247,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 .read(backupServiceProvider)
                                 .signIn();
                             setState(() => _account = result);
-                            if (result != null) _toast('ログインしました');
+                            if (result != null) _toast(i18n.tr('no_login_toast'));
                           }),
                   ),
                 ] else ...[
@@ -256,7 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              account.displayName ?? 'Googleアカウント',
+                              account.displayName ?? i18n.tr('google_account'),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                               ),
@@ -278,7 +291,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 await ref.read(backupServiceProvider).signOut();
                                 setState(() => _account = null);
                               }),
-                        child: const Text('ログアウト'),
+                        child: Text(i18n.tr('logout')),
                       ),
                     ],
                   ),
@@ -291,7 +304,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Icons.cloud_upload_outlined,
                             size: 18,
                           ),
-                          label: const Text('バックアップ'),
+                          label: Text(i18n.tr('backup')),
                           onPressed: _busy
                               ? null
                               : () => _run(() async {
@@ -309,7 +322,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       .read(lastBackupAtProvider.notifier)
                                       .save(DateTime.now().toIso8601String());
                                   HapticFeedback.mediumImpact();
-                                  _toast('Driveにバックアップしました');
+                                  _toast(i18n.tr('backed_up'));
                                 }),
                         ),
                       ),
@@ -320,7 +333,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Icons.cloud_download_outlined,
                             size: 18,
                           ),
-                          label: const Text('復元'),
+                          label: Text(i18n.tr('restore')),
                           onPressed: _busy
                               ? null
                               : () => _run(() async {
@@ -331,7 +344,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       .read(entriesProvider.notifier)
                                       .importEntries(restored);
                                   HapticFeedback.mediumImpact();
-                                  _toast('$count件の記録を復元しました');
+                                  _toast(
+                                    i18n.tr('restored_count', args: {
+                                      'count': count.toString(),
+                                    }),
+                                  );
                                 }),
                         ),
                       ),
@@ -356,10 +373,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _voiceSection(BuildContext context) {
     final available = ref.watch(voiceInputAvailableProvider);
+    final i18n = context.i18n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(context, Icons.mic_none_rounded, '音声入力（Whisper）'),
+        _sectionHeader(context, Icons.mic_none_rounded, i18n.tr('voice')),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -370,8 +388,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Expanded(
                   child: Text(
                     available
-                        ? '日記のマイクをタップ（または長押し）して話すと、文字起こしされて本文に追記されます。'
-                        : '音声入力はサーバー（バックエンド）経由で動作します。サーバー設定後に使えるようになります。',
+                        ? i18n.tr('voice_help_on')
+                        : i18n.tr('voice_help_off'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.inkSoft,
                       height: 1.6,
@@ -389,16 +407,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ── データ ───────────────────────────────────────────
 
   Widget _dataSection(BuildContext context) {
+    final i18n = context.i18n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(context, Icons.storage_rounded, 'データ'),
+        _sectionHeader(context, Icons.storage_rounded, i18n.tr('data')),
         Card(
           clipBehavior: Clip.antiAlias,
           child: ListTile(
             leading: const Icon(Icons.delete_outline, color: AppColors.bear),
-            title: const Text(
-              '全データを削除',
+            title: Text(
+              context.i18n.tr('delete_all'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -414,26 +433,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _confirmClear(BuildContext context) async {
+    final i18n = context.i18n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('全データを削除しますか？'),
-        content: const Text('すべての日記と出来事が消えます。この操作は元に戻せません。'),
+        title: Text(i18n.tr('delete_all_confirm_title')),
+        content: Text(i18n.tr('delete_all_confirm_body')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
+            child: Text(i18n.tr('cancel')),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.bear),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除'),
+            child: Text(i18n.tr('delete')),
           ),
         ],
       ),
     );
     if (ok != true) return;
     await ref.read(entriesProvider.notifier).clearAll();
-    _toast('全データを削除しました');
+    _toast(i18n.tr('delete_done'));
   }
 }

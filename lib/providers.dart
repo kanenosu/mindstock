@@ -29,6 +29,32 @@ abstract class _PrefStringNotifier extends AsyncNotifier<String> {
   }
 }
 
+/// アプリの表示言語。未設定時は日本語。
+final appLocaleCodeProvider = AsyncNotifierProvider<_AppLocaleCodeNotifier, String>(
+  _AppLocaleCodeNotifier.new,
+);
+
+class _AppLocaleCodeNotifier extends AsyncNotifier<String> {
+  static const _prefKey = 'app_locale_code';
+
+  @override
+  Future<String> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_prefKey) ?? 'ja';
+    return _normalize(stored);
+  }
+
+  Future<void> setLocale(String code) async {
+    final normalized = _normalize(code);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, normalized);
+    state = AsyncData(normalized);
+  }
+
+  static String _normalize(String code) =>
+      code.toLowerCase() == 'en' ? 'en' : 'ja';
+}
+
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
 
 /// 解析バックエンドのURL（マネタイズ本番構成）。設定されていれば、

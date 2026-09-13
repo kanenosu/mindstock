@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../logic/chart_calculator.dart';
 import '../logic/weekly_summary.dart';
 import '../models/models.dart';
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/diary_calendar.dart';
 import '../widgets/motion.dart';
@@ -77,9 +77,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final entries = ref.watch(entriesProvider).valueOrNull ?? {};
     final sorted = entries.values.toList()
       ..sort((a, b) => b.date.compareTo(a.date));
+    final i18n = context.i18n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('記録')),
+      appBar: AppBar(title: Text(i18n.tr('records_title'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
@@ -93,15 +94,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: PillSelector<_RecordsView>(
               items: _RecordsView.values,
               selected: _view,
-              labelOf: (v) => v == _RecordsView.monthly ? '月ごと' : '週ごと',
+              labelOf: (v) =>
+                  v == _RecordsView.monthly ? i18n.tr('records_by_month') : i18n.tr('records_by_week'),
               onChanged: (v) => setState(() => _view = v),
             ),
           ),
           const SizedBox(height: 16),
           if (sorted.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 48),
-              child: Center(child: Text('まだ記録がありません')),
+            Padding(
+              padding: const EdgeInsets.only(top: 48),
+              child: Center(child: Text(i18n.tr('no_records'))),
             )
           else if (_view == _RecordsView.monthly)
             ..._monthlyContent(sorted)
@@ -132,11 +134,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   List<Widget> _weeklyContent(Map<String, DiaryEntry> entries) {
     final summaries = _weeklySummaries(entries);
+    final i18n = context.i18n;
     if (summaries.isEmpty) {
-      return const [
+      return [
         Padding(
-          padding: EdgeInsets.only(top: 48),
-          child: Center(child: Text('まだ週のまとめがありません')),
+          padding: const EdgeInsets.only(top: 48),
+          child: Center(child: Text(i18n.tr('no_weekly_records'))),
         ),
       ];
     }
@@ -172,6 +175,7 @@ class _MonthSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final month = DateTime.parse('$monthKey-01');
+    final i18n = context.i18n;
     final monthTotal = entries.fold<double>(
       0,
       (sum, e) => sum + e.events.fold<double>(0, (s, ev) => s + ev.delta),
@@ -186,14 +190,20 @@ class _MonthSection extends ConsumerWidget {
           child: Row(
             children: [
               Text(
-                DateFormat('yyyy年M月', 'ja').format(month),
+                i18n.date(
+                  month,
+                  jaPattern: 'yyyy年M月',
+                  enPattern: 'MMM yyyy',
+                ),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               Text(
-                '${entries.length}件',
+                i18n.isEn
+                    ? '${entries.length} entries'
+                    : '${entries.length}件',
                 style: Theme.of(
                   context,
                 ).textTheme.labelSmall?.copyWith(color: AppColors.inkSoft),
@@ -233,6 +243,7 @@ class _EntryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final i18n = context.i18n;
     final total = entry.events.fold<double>(0, (sum, e) => sum + e.delta);
     final color = total >= 0 ? AppColors.bull : AppColors.bear;
     final preview = entry.text.replaceAll('\n', ' ');
@@ -263,7 +274,7 @@ class _EntryTile extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                DateFormat('E', 'ja').format(day),
+                i18n.date(day, jaPattern: 'E', enPattern: 'EEE'),
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -283,7 +294,7 @@ class _EntryTile extends ConsumerWidget {
           ),
         ),
         title: Text(
-          preview.isEmpty ? '気分だけ記録した日' : preview,
+          preview.isEmpty ? i18n.tr('today_no_entry') : preview,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
@@ -310,22 +321,29 @@ class _EntryTile extends ConsumerWidget {
 
   /// 削除確認。削除を実行したら true を返す（Dismissible の判定にも使う）。
   Future<bool> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final i18n = context.i18n;
     // 非同期の前にメッセンジャーを掴んでおく（ダイアログ/行の消滅で
     // contextが無効になっても安全にスナックバーを出せるように）。
     final messenger = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('この記録を削除しますか？'),
-        content: Text(DateFormat('yyyy年M月d日', 'ja').format(entry.dateTime)),
+        title: Text(i18n.tr('delete_this_record')),
+        content: Text(
+          i18n.date(
+            entry.dateTime,
+            jaPattern: 'yyyy年M月d日',
+            enPattern: 'MMM d, yyyy',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
+            child: Text(i18n.tr('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除'),
+            child: Text(i18n.tr('delete')),
           ),
         ],
       ),
@@ -338,9 +356,9 @@ class _EntryTile extends ConsumerWidget {
         messenger.clearSnackBars();
         messenger.showSnackBar(
           SnackBar(
-            content: const Text('記録を削除しました'),
+            content: Text(i18n.tr('delete_recorded')),
             action: SnackBarAction(
-              label: '元に戻す',
+              label: i18n.tr('undo'),
               onPressed: () =>
                   ref.read(entriesProvider.notifier).restoreEntry(removed),
             ),

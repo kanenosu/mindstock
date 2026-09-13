@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
 
@@ -19,25 +20,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _pages = [
-    (
-      emoji: '✍️',
-      title: 'ただ、書くだけ。',
-      body: '日記を書くと、AIが出来事を読み取って\nその日の重要度を採点します。\n面倒な入力や確認は、なにもありません。',
-    ),
-    (
-      emoji: '📈',
-      title: '人生が、チャートになる。',
-      body: '毎日の記録が株価のようなチャートに。\nいい日は上がり、悪い日は下がる。\n書けない日は「平穏な日」。罰しません。',
-    ),
-    (
-      emoji: '🌱',
-      title: '谷も、人生の一部。',
-      body: '辛い時期はちゃんと谷として刻まれる。\nでも、そこからどれだけ離れたかも見える。\n谷があるから、成長がわかる。',
-    ),
-  ];
-
   bool get _isLast => _page == _pages.length - 1;
+
+  List<({String emoji, String title, String body})> get _pages {
+    final i18n = context.i18n;
+    return [
+      (
+        emoji: '✍️',
+        title: i18n.tr('onboarding_title_1'),
+        body: i18n.tr('onboarding_body_1'),
+      ),
+      (
+        emoji: '📈',
+        title: i18n.tr('onboarding_title_2'),
+        body: i18n.tr('onboarding_body_2'),
+      ),
+      (
+        emoji: '🌱',
+        title: i18n.tr('onboarding_title_3'),
+        body: i18n.tr('onboarding_body_3'),
+      ),
+    ];
+  }
+
+  void _changeLocale(String code) {
+    ref.read(appLocaleCodeProvider.notifier).setLocale(code);
+  }
 
   Future<void> _finish() async {
     HapticFeedback.mediumImpact();
@@ -52,21 +60,43 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
+    final selected = ref.watch(appLocaleCodeProvider).valueOrNull ?? 'ja';
+
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: TextButton(
-                  onPressed: _finish,
-                  child: const Text(
-                    'スキップ',
-                    style: TextStyle(color: AppColors.inkSoft),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  Text(
+                    i18n.tr('language_select_label'),
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  _LanguageToggle(
+                    value: selected,
+                    onChanged: _changeLocale,
+                    labels: (
+                      i18n.tr('lang_ja'),
+                      i18n.tr('lang_en'),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _finish,
+                    child: Text(
+                      i18n.tr('skip'),
+                      style: const TextStyle(color: AppColors.inkSoft),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -81,7 +111,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   emoji: _pages[i].emoji,
                   title: _pages[i].title,
                   body: _pages[i].body,
-                  // ページごとに演出をやり直す
                   key: ValueKey(i),
                 ),
               ),
@@ -125,7 +154,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     }
                   },
                   child: Text(
-                    _isLast ? 'はじめる' : 'つぎへ',
+                    _isLast ? i18n.tr('start') : i18n.tr('next'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -135,6 +164,71 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageToggle extends StatelessWidget {
+  final String value;
+  final void Function(String) onChanged;
+  final (String, String) labels;
+
+  const _LanguageToggle({
+    required this.value,
+    required this.onChanged,
+    required this.labels,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.ink.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _pill(
+            label: labels.$1,
+            isSelected: value == 'ja',
+            onTap: () => onChanged('ja'),
+          ),
+          _pill(
+            label: labels.$2,
+            isSelected: value == 'en',
+            onTap: () => onChanged('en'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pill({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.inkButton : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.cream : AppColors.ink,
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+          ),
         ),
       ),
     );

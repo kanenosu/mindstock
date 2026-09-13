@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../config/monetization.dart';
 import '../logic/chart_calculator.dart';
+import '../l10n.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/diary_calendar.dart';
@@ -120,9 +120,10 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       FocusManager.instance.primaryFocus?.unfocus();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('記録しました。チャートに反映済みです')));
+      final i18n = context.i18n;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(i18n.tr('recorded_msg'))),
+      );
       Navigator.of(context).maybePop();
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -131,11 +132,16 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     final today = DateTime.now();
     final isToday = DateUtils.isSameDay(_date, today);
     final label = isToday
-        ? '今日の日記'
-        : DateFormat('M月d日 (E) の日記', 'ja').format(_date);
+        ? i18n.tr('today_diary')
+        : i18n.date(
+          _date,
+          jaPattern: 'M月d日 (E) の日記',
+          enPattern: 'MMM d, yyyy (EEE) diary',
+        );
     return Scaffold(
       appBar: AppBar(
         title: AnimatedSwitcher(
@@ -175,8 +181,8 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         onChanged: (_) => setState(() {}),
                         onTapOutside: (_) =>
                             FocusManager.instance.primaryFocus?.unfocus(),
-                        decoration: const InputDecoration(
-                          hintText: '今日のことを、ただ書くだけ。\n（マイクをタップして話しても書ける）',
+                        decoration: InputDecoration(
+                          hintText: i18n.tr('diary_hint'),
                           border: InputBorder.none,
                           filled: false,
                           contentPadding: EdgeInsets.only(bottom: 64, right: 8),
@@ -202,7 +208,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         key: const ValueKey('note'),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          '文章を書いた日は、採点はAIにおまかせ。',
+                          i18n.tr('mood_or_analysis_message'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.inkSoft),
@@ -224,7 +230,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: Text(_submitting ? '解析中…' : '記録する'),
+                label: Text(_submitting ? i18n.tr('analyzing') : i18n.tr('record')),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -259,11 +265,12 @@ class MoodEmojiPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.i18n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '書かない日は、気分をひとつだけ。',
+          i18n.tr('write_only_mood'),
           style: Theme.of(
             context,
           ).textTheme.labelMedium?.copyWith(color: AppColors.inkSoft),

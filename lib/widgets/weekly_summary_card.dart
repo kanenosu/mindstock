@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../logic/weekly_summary.dart';
+import '../l10n.dart';
 import '../theme.dart';
 
 /// 週のまとめカード。
@@ -20,9 +20,9 @@ class WeeklySummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('M/d');
+    final i18n = context.i18n;
     final range =
-        '${fmt.format(summary.weekStart)}〜${fmt.format(summary.weekEnd)}';
+        '${i18n.date(summary.weekStart, jaPattern: 'M/d', enPattern: 'M/d')}〜${i18n.date(summary.weekEnd, jaPattern: 'M/d', enPattern: 'M/d')}';
     final totalColor = summary.totalDelta >= 0
         ? AppColors.bull
         : AppColors.bear;
@@ -44,7 +44,7 @@ class WeeklySummaryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '週のまとめ',
+                  i18n.tr('weekly_summary'),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -82,21 +82,21 @@ class WeeklySummaryCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              _stat(context, '記録', '${summary.entryDays}日'),
+              _stat(context, i18n.tr('weekly_summary_count_records'), '${summary.entryDays}'),
               _dividerDot(),
-              _stat(context, '平穏', '${summary.calmDays}日'),
+              _stat(context, i18n.tr('weekly_summary_count_calm'), '${summary.calmDays}'),
               _dividerDot(),
               _stat(
                 context,
-                'プラスの日',
-                '${summary.upDays}日',
+                i18n.tr('weekly_summary_count_up'),
+                '${summary.upDays}',
                 color: AppColors.bull,
               ),
               _dividerDot(),
               _stat(
                 context,
-                'マイナスの日',
-                '${summary.downDays}日',
+                i18n.tr('weekly_summary_count_down'),
+                '${summary.downDays}',
                 color: AppColors.bear,
               ),
             ],

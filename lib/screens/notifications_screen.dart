@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../logic/chart_calculator.dart';
 import '../logic/weekly_summary.dart';
 import '../providers.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/motion.dart';
 import 'review_screen.dart';
@@ -37,9 +37,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) {
     final reports = ref.watch(weeklyReportsProvider);
     final lastSeen = ref.watch(notificationsLastSeenProvider).valueOrNull ?? '';
+    final i18n = context.i18n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('お知らせ')),
+      appBar: AppBar(title: Text(i18n.tr('notifications'))),
       body: reports.isEmpty
           ? Center(
               child: Column(
@@ -51,8 +52,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     color: Theme.of(context).colorScheme.outline,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    '週が終わると、ここに週次レポートが届きます。',
+                  Text(
+                    i18n.tr('notifications_empty'),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -89,7 +90,7 @@ class _ReportTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('M/d');
+    final i18n = context.i18n;
     final up = report.totalDelta >= 0;
     final color = up ? AppColors.bull : AppColors.bear;
 
@@ -126,8 +127,21 @@ class _ReportTile extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '週次レポート '
-                          '${fmt.format(report.weekStart)}〜${fmt.format(report.weekEnd)}',
+                          i18n.tr(
+                            'weekly_report',
+                            args: {
+                              'from': i18n.date(
+                                report.weekStart,
+                                jaPattern: 'M/d',
+                                enPattern: 'MMM d',
+                              ),
+                              'to': i18n.date(
+                                report.weekEnd,
+                                jaPattern: 'M/d',
+                                enPattern: 'MMM d',
+                              ),
+                            },
+                          ),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
