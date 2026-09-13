@@ -49,6 +49,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// 記録のある週のまとめ（今週を含む）を新しい順に返す。
   List<WeeklySummary> _weeklySummaries(Map<String, DiaryEntry> entries) {
     if (entries.isEmpty) return const [];
+    final summaryStyle =
+        ref.watch(appSummaryStyleProvider).valueOrNull ??
+        AiSummaryStyle.balanced;
     final now = DateTime.now();
     final thisMonday = DateTime(
       now.year,
@@ -65,8 +68,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final list = <WeeklySummary>[];
     var weekStart = thisMonday;
     while (!weekStart.isBefore(firstMonday)) {
-      final summary = WeeklySummary.compute(weekStart, entries);
-      if (summary.entryDays > 0) list.add(summary);
+      final styleSummary = WeeklySummary.compute(
+        weekStart,
+        entries,
+        style: summaryStyle,
+      );
+      if (styleSummary.entryDays > 0) list.add(styleSummary);
       weekStart = weekStart.subtract(const Duration(days: 7));
     }
     return list;
@@ -94,8 +101,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: PillSelector<_RecordsView>(
               items: _RecordsView.values,
               selected: _view,
-              labelOf: (v) =>
-                  v == _RecordsView.monthly ? i18n.tr('records_by_month') : i18n.tr('records_by_week'),
+              labelOf: (v) => v == _RecordsView.monthly
+                  ? i18n.tr('records_by_month')
+                  : i18n.tr('records_by_week'),
               onChanged: (v) => setState(() => _view = v),
             ),
           ),
@@ -190,20 +198,14 @@ class _MonthSection extends ConsumerWidget {
           child: Row(
             children: [
               Text(
-                i18n.date(
-                  month,
-                  jaPattern: 'yyyy年M月',
-                  enPattern: 'MMM yyyy',
-                ),
+                i18n.date(month, jaPattern: 'yyyy年M月', enPattern: 'MMM yyyy'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               Text(
-                i18n.isEn
-                    ? '${entries.length} entries'
-                    : '${entries.length}件',
+                i18n.isEn ? '${entries.length} entries' : '${entries.length}件',
                 style: Theme.of(
                   context,
                 ).textTheme.labelSmall?.copyWith(color: AppColors.inkSoft),

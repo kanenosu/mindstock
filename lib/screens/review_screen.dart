@@ -29,6 +29,9 @@ class ReviewScreen extends ConsumerWidget {
     final entries = ref.watch(entriesProvider).valueOrNull ?? {};
     final daily = ref.watch(dailyCandlesProvider);
     final i18n = context.i18n;
+    final summaryStyle =
+        ref.watch(appSummaryStyleProvider).valueOrNull ??
+        AiSummaryStyle.balanced;
 
     final days = weekly
         ? List.generate(7, (i) => date.add(Duration(days: i)))
@@ -45,11 +48,7 @@ class ReviewScreen extends ConsumerWidget {
         ? i18n.tr(
             'review_title_week',
             args: {
-              'date': i18n.date(
-                date,
-                jaPattern: 'M/d',
-                enPattern: 'MMM d',
-              ),
+              'date': i18n.date(date, jaPattern: 'M/d', enPattern: 'MMM d'),
             },
           )
         : i18n.tr(
@@ -63,15 +62,20 @@ class ReviewScreen extends ConsumerWidget {
             },
           );
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // 週の振り返りには自動生成の「週のまとめ」を先頭に置く
           if (weekly) ...[
-            WeeklySummaryCard(summary: WeeklySummary.compute(date, entries, i18n: i18n)),
+            WeeklySummaryCard(
+              summary: WeeklySummary.compute(
+                date,
+                entries,
+                i18n: i18n,
+                style: summaryStyle,
+              ),
+            ),
             const SizedBox(height: 12),
             _weekChartCard(context, daily),
             const SizedBox(height: 12),
@@ -124,7 +128,7 @@ class ReviewScreen extends ConsumerWidget {
             SizedBox(
               height: 160,
               // 日足なので点＋ラインで表示（週内の1日1本）
-            child: CandlestickChart(
+              child: CandlestickChart(
                 candles: weekCandles,
                 i18n: context.i18n,
                 style: ChartStyle.line,
@@ -145,7 +149,11 @@ class ReviewScreen extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _metric(context, context.i18n.tr('value_at_time'), candle.close.toStringAsFixed(1)),
+            _metric(
+              context,
+              context.i18n.tr('value_at_time'),
+              candle.close.toStringAsFixed(1),
+            ),
             if (diff != null)
               _metric(
                 context,

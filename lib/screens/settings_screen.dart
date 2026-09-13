@@ -7,6 +7,7 @@ import '../config/monetization.dart';
 import '../l10n.dart';
 import '../providers.dart';
 import '../theme.dart';
+import '../logic/weekly_summary.dart';
 import '../widgets/motion.dart';
 import '../widgets/points_sheet.dart';
 
@@ -75,6 +76,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           FadeSlideIn(child: _pointsSection(context)),
+          const SizedBox(height: 20),
+          FadeSlideIn(delayMs: 20, child: _languageSection(context)),
+          const SizedBox(height: 20),
+          FadeSlideIn(delayMs: 60, child: _themeSection(context)),
+          const SizedBox(height: 20),
+          FadeSlideIn(delayMs: 80, child: _summaryStyleSection(context)),
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 40, child: _accountSection(context)),
           const SizedBox(height: 20),
@@ -213,6 +220,229 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _languageSection(BuildContext context) {
+    final i18n = context.i18n;
+    final selected = ref.watch(appLocaleCodeProvider).valueOrNull ?? 'ja';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          context,
+          Icons.translate_rounded,
+          i18n.tr('app_settings_language'),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                _settingRadioChip(
+                  label: i18n.tr('lang_ja'),
+                  selected: selected == 'ja',
+                  onPressed: () =>
+                      ref.read(appLocaleCodeProvider.notifier).setLocale('ja'),
+                ),
+                const SizedBox(width: 8),
+                _settingRadioChip(
+                  label: i18n.tr('lang_en'),
+                  selected: selected == 'en',
+                  onPressed: () =>
+                      ref.read(appLocaleCodeProvider.notifier).setLocale('en'),
+                ),
+                const Spacer(),
+                Text(
+                  selected == 'en' ? 'EN' : 'JP',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _themeSection(BuildContext context) {
+    final i18n = context.i18n;
+    final preset =
+        ref.watch(appThemePresetProvider).valueOrNull ?? ThemePreset.warm;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          context,
+          Icons.color_lens_rounded,
+          i18n.tr('app_settings_theme'),
+        ),
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _themeOption(
+                context,
+                ThemePreset.warm,
+                preset,
+                i18n.tr('theme_preset_warm'),
+              ),
+              const Divider(height: 1),
+              _themeOption(
+                context,
+                ThemePreset.sky,
+                preset,
+                i18n.tr('theme_preset_sky'),
+              ),
+              const Divider(height: 1),
+              _themeOption(
+                context,
+                ThemePreset.mint,
+                preset,
+                i18n.tr('theme_preset_mint'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _summaryStyleSection(BuildContext context) {
+    final i18n = context.i18n;
+    final style =
+        ref.watch(appSummaryStyleProvider).valueOrNull ??
+        AiSummaryStyle.balanced;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          context,
+          Icons.format_quote_rounded,
+          i18n.tr('app_settings_summary_style'),
+        ),
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _summaryStyleOption(
+                context,
+                AiSummaryStyle.balanced,
+                style,
+                i18n.tr('summary_style_balanced'),
+              ),
+              const Divider(height: 1),
+              _summaryStyleOption(
+                context,
+                AiSummaryStyle.compact,
+                style,
+                i18n.tr('summary_style_compact'),
+              ),
+              const Divider(height: 1),
+              _summaryStyleOption(
+                context,
+                AiSummaryStyle.encouraging,
+                style,
+                i18n.tr('summary_style_encouraging'),
+              ),
+              const Divider(height: 1),
+              _summaryStyleOption(
+                context,
+                AiSummaryStyle.neutral,
+                style,
+                i18n.tr('summary_style_neutral'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _themeOption(
+    BuildContext context,
+    ThemePreset option,
+    ThemePreset selected,
+    String label,
+  ) {
+    final palette = ThemePalette.of(option);
+    final active = option == selected;
+    return ListTile(
+      onTap: () => ref.read(appThemePresetProvider.notifier).setPreset(option),
+      leading: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.black26),
+          color: palette.cream,
+        ),
+        child: Container(
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: palette.bull,
+          ),
+        ),
+      ),
+      title: Text(label),
+      trailing: active
+          ? const Icon(Icons.check_circle, size: 18, color: Colors.green)
+          : null,
+      selected: active,
+    );
+  }
+
+  Widget _summaryStyleOption(
+    BuildContext context,
+    AiSummaryStyle option,
+    AiSummaryStyle selected,
+    String label,
+  ) {
+    return ListTile(
+      onTap: () => ref.read(appSummaryStyleProvider.notifier).setStyle(option),
+      title: Text(label),
+      trailing: Radio<AiSummaryStyle>(
+        value: option,
+        groupValue: selected,
+        onChanged: (value) {
+          if (value == null) return;
+          ref.read(appSummaryStyleProvider.notifier).setStyle(value);
+        },
+      ),
+    );
+  }
+
+  Widget _settingRadioChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onPressed,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── アカウント ────────────────────────────────────────
 
   Widget _accountSection(BuildContext context) {
@@ -221,7 +451,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(context, Icons.person_outline_rounded, i18n.tr('account')),
+        _sectionHeader(
+          context,
+          Icons.person_outline_rounded,
+          i18n.tr('account'),
+        ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -247,7 +481,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 .read(backupServiceProvider)
                                 .signIn();
                             setState(() => _account = result);
-                            if (result != null) _toast(i18n.tr('no_login_toast'));
+                            if (result != null) {
+                              _toast(i18n.tr('no_login_toast'));
+                            }
                           }),
                   ),
                 ] else ...[
@@ -345,9 +581,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       .importEntries(restored);
                                   HapticFeedback.mediumImpact();
                                   _toast(
-                                    i18n.tr('restored_count', args: {
-                                      'count': count.toString(),
-                                    }),
+                                    i18n.tr(
+                                      'restored_count',
+                                      args: {'count': count.toString()},
+                                    ),
                                   );
                                 }),
                         ),

@@ -2,6 +2,27 @@ import '../models/models.dart';
 import '../l10n.dart';
 import 'chart_calculator.dart';
 
+enum AiSummaryStyle {
+  balanced,
+  compact,
+  encouraging,
+  neutral;
+
+  String get key => switch (this) {
+    AiSummaryStyle.balanced => 'balanced',
+    AiSummaryStyle.compact => 'compact',
+    AiSummaryStyle.encouraging => 'encouraging',
+    AiSummaryStyle.neutral => 'neutral',
+  };
+
+  static AiSummaryStyle parse(String value) => switch (value) {
+    'compact' => AiSummaryStyle.compact,
+    'encouraging' => AiSummaryStyle.encouraging,
+    'neutral' => AiSummaryStyle.neutral,
+    _ => AiSummaryStyle.balanced,
+  };
+}
+
 /// 1週間のまとめ。週足のローソクをタップした時や振り返り画面で表示する。
 ///
 /// AIを使わずローカル集計だけで毎週自動生成される。
@@ -56,11 +77,10 @@ class WeeklySummary {
   /// [anyDayInWeek] を含む週（月曜始まり）のまとめを計算する。
   static WeeklySummary compute(
     DateTime anyDayInWeek,
-    Map<String, DiaryEntry> entries,
-    {
+    Map<String, DiaryEntry> entries, {
     AppI18n? i18n,
-    }
-  ) {
+    AiSummaryStyle style = AiSummaryStyle.balanced,
+  }) {
     final weekStart = DateTime(
       anyDayInWeek.year,
       anyDayInWeek.month,
@@ -119,6 +139,7 @@ class WeeklySummary {
         best: best,
         worst: worst,
         hasMilestone: hasMilestone,
+        style: style,
         i18n: i18n ?? const AppI18n('ja'),
       ),
     );
@@ -130,29 +151,106 @@ class WeeklySummary {
     required LifeEvent? best,
     required LifeEvent? worst,
     required bool hasMilestone,
+    required AiSummaryStyle style,
     required AppI18n i18n,
   }) {
     if (entryDays == 0) {
-      return i18n.tr('summary_no_records');
+      return style == AiSummaryStyle.compact
+          ? i18n.tr('summary_no_records_compact')
+          : style == AiSummaryStyle.encouraging
+          ? i18n.tr('summary_no_records_encouraging')
+          : style == AiSummaryStyle.neutral
+          ? i18n.tr('summary_no_records_neutral')
+          : i18n.tr('summary_no_records');
     }
     if (hasMilestone) {
       final milestone = (best != null && best.kind == EventKind.milestone)
           ? best
           : worst;
       if (milestone != null) {
-        return i18n.tr('summary_milestone', args: {'name': milestone.name});
+        return switch (style) {
+          AiSummaryStyle.compact => i18n.tr(
+            'summary_milestone_compact',
+            args: {'name': milestone.name},
+          ),
+          AiSummaryStyle.encouraging => i18n.tr(
+            'summary_milestone_encouraging',
+            args: {'name': milestone.name},
+          ),
+          AiSummaryStyle.neutral => i18n.tr(
+            'summary_milestone_neutral',
+            args: {'name': milestone.name},
+          ),
+          AiSummaryStyle.balanced => i18n.tr(
+            'summary_milestone',
+            args: {'name': milestone.name},
+          ),
+        };
       }
     }
     if (total >= 3) {
       return best != null
-          ? i18n.tr('summary_up_with_name', args: {'name': best.name})
-          : i18n.tr('summary_up_plain');
+          ? switch (style) {
+              AiSummaryStyle.compact => i18n.tr(
+                'summary_up_with_name_compact',
+                args: {'name': best.name},
+              ),
+              AiSummaryStyle.encouraging => i18n.tr(
+                'summary_up_with_name_encouraging',
+                args: {'name': best.name},
+              ),
+              AiSummaryStyle.neutral => i18n.tr(
+                'summary_up_with_name_neutral',
+                args: {'name': best.name},
+              ),
+              AiSummaryStyle.balanced => i18n.tr(
+                'summary_up_with_name',
+                args: {'name': best.name},
+              ),
+            }
+          : switch (style) {
+              AiSummaryStyle.compact => i18n.tr('summary_up_plain_compact'),
+              AiSummaryStyle.encouraging => i18n.tr(
+                'summary_up_plain_encouraging',
+              ),
+              AiSummaryStyle.neutral => i18n.tr('summary_up_plain_neutral'),
+              AiSummaryStyle.balanced => i18n.tr('summary_up_plain'),
+            };
     }
     if (total <= -3) {
-      return worst != null
-          ? i18n.tr('summary_down_with_name', args: {'name': worst.name})
-          : i18n.tr('summary_down_plain');
+      return best != null
+          ? switch (style) {
+              AiSummaryStyle.compact => i18n.tr(
+                'summary_down_with_name_compact',
+                args: {'name': best.name},
+              ),
+              AiSummaryStyle.encouraging => i18n.tr(
+                'summary_down_with_name_encouraging',
+                args: {'name': best.name},
+              ),
+              AiSummaryStyle.neutral => i18n.tr(
+                'summary_down_with_name_neutral',
+                args: {'name': best.name},
+              ),
+              AiSummaryStyle.balanced => i18n.tr(
+                'summary_down_with_name',
+                args: {'name': best.name},
+              ),
+            }
+          : switch (style) {
+              AiSummaryStyle.compact => i18n.tr('summary_down_plain_compact'),
+              AiSummaryStyle.encouraging => i18n.tr(
+                'summary_down_plain_encouraging',
+              ),
+              AiSummaryStyle.neutral => i18n.tr('summary_down_plain_neutral'),
+              AiSummaryStyle.balanced => i18n.tr('summary_down_plain'),
+            };
     }
-    return i18n.tr('summary_flat');
+    return switch (style) {
+      AiSummaryStyle.compact => i18n.tr('summary_flat_compact'),
+      AiSummaryStyle.encouraging => i18n.tr('summary_flat_encouraging'),
+      AiSummaryStyle.neutral => i18n.tr('summary_flat_neutral'),
+      AiSummaryStyle.balanced => i18n.tr('summary_flat'),
+    };
   }
 }

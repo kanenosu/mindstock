@@ -118,10 +118,14 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
 
   void _showWeeklySummarySheet(Candle candle) {
     final entries = ref.read(entriesProvider).valueOrNull ?? {};
+    final style =
+        ref.read(appSummaryStyleProvider).valueOrNull ??
+        AiSummaryStyle.balanced;
     final summary = WeeklySummary.compute(
       candle.date,
       entries,
       i18n: context.i18n,
+      style: style,
     );
 
     showModalBottomSheet<void>(
@@ -317,10 +321,7 @@ class _EmptyChart extends ConsumerWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          Text(
-            context.i18n.tr('chart_empty'),
-            textAlign: TextAlign.center,
-          ),
+          Text(context.i18n.tr('chart_empty'), textAlign: TextAlign.center),
         ],
       ),
     );

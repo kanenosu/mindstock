@@ -11,6 +11,7 @@ import 'services/diary_analyzer.dart';
 import 'services/iap_service.dart';
 import 'services/rewarded_ad_service.dart';
 import 'services/transcription_service.dart';
+import 'theme.dart';
 
 /// 汎用: SharedPreferences に文字列を1つ保存するだけの Notifier。
 abstract class _PrefStringNotifier extends AsyncNotifier<String> {
@@ -30,9 +31,10 @@ abstract class _PrefStringNotifier extends AsyncNotifier<String> {
 }
 
 /// アプリの表示言語。未設定時は日本語。
-final appLocaleCodeProvider = AsyncNotifierProvider<_AppLocaleCodeNotifier, String>(
-  _AppLocaleCodeNotifier.new,
-);
+final appLocaleCodeProvider =
+    AsyncNotifierProvider<_AppLocaleCodeNotifier, String>(
+      _AppLocaleCodeNotifier.new,
+    );
 
 class _AppLocaleCodeNotifier extends AsyncNotifier<String> {
   static const _prefKey = 'app_locale_code';
@@ -53,6 +55,54 @@ class _AppLocaleCodeNotifier extends AsyncNotifier<String> {
 
   static String _normalize(String code) =>
       code.toLowerCase() == 'en' ? 'en' : 'ja';
+}
+
+/// アプリのテーマカラー。設定画面から切り替え可能。
+final appThemePresetProvider =
+    AsyncNotifierProvider<_AppThemePresetNotifier, ThemePreset>(
+      _AppThemePresetNotifier.new,
+    );
+
+class _AppThemePresetNotifier extends AsyncNotifier<ThemePreset> {
+  static const _prefKey = 'app_theme_preset';
+
+  @override
+  Future<ThemePreset> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return ThemePresetX.parse(
+      prefs.getString(_prefKey) ?? ThemePreset.warm.key,
+    );
+  }
+
+  Future<void> setPreset(ThemePreset preset) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, preset.key);
+    state = AsyncData(preset);
+  }
+}
+
+/// AIの週次サマリー文体。設定で切り替え可能。
+final appSummaryStyleProvider =
+    AsyncNotifierProvider<_AppSummaryStyleNotifier, AiSummaryStyle>(
+      _AppSummaryStyleNotifier.new,
+    );
+
+class _AppSummaryStyleNotifier extends AsyncNotifier<AiSummaryStyle> {
+  static const _prefKey = 'app_summary_style';
+
+  @override
+  Future<AiSummaryStyle> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return AiSummaryStyle.parse(
+      prefs.getString(_prefKey) ?? AiSummaryStyle.balanced.key,
+    );
+  }
+
+  Future<void> setStyle(AiSummaryStyle style) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, style.key);
+    state = AsyncData(style);
+  }
 }
 
 final databaseProvider = Provider<DatabaseService>((ref) => DatabaseService());
@@ -365,6 +415,8 @@ final weeklyCandlesProvider = Provider<List<Candle>>((ref) {
 final weeklyReportsProvider = Provider<List<WeeklySummary>>((ref) {
   final entries = ref.watch(entriesProvider).valueOrNull ?? {};
   if (entries.isEmpty) return const [];
+  final summaryStyle =
+      ref.watch(appSummaryStyleProvider).valueOrNull ?? AiSummaryStyle.balanced;
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -379,7 +431,11 @@ final weeklyReportsProvider = Provider<List<WeeklySummary>>((ref) {
   // 直近の完結した週（先週）から過去へ
   var weekStart = thisMonday.subtract(const Duration(days: 7));
   while (!weekStart.isBefore(firstMonday) && reports.length < 12) {
-    final summary = WeeklySummary.compute(weekStart, entries);
+    final summary = WeeklySummary.compute(
+      weekStart,
+      entries,
+      style: summaryStyle,
+    );
     if (summary.entryDays > 0) reports.add(summary);
     weekStart = weekStart.subtract(const Duration(days: 7));
   }

@@ -32,10 +32,12 @@ class MindStockApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final localeCode = ref.watch(appLocaleCodeProvider).valueOrNull ?? 'ja';
+    final themePreset =
+        ref.watch(appThemePresetProvider).valueOrNull ?? ThemePreset.warm;
 
     return MaterialApp(
       title: 'MindStock',
-      theme: buildAppTheme(),
+      theme: buildAppTheme(preset: themePreset),
       // 「温かいクリーム基調」がこのアプリのアイデンティティなので、
       // 端末がダークモードでも常にライトテーマで表示する（意図的な固定・改善点§4）。
       // 端末のダーク設定に引きずられて中途半端に暗転しないよう明示する。
@@ -137,7 +139,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _goTo,
-      destinations: [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
