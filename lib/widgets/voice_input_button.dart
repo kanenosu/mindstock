@@ -61,14 +61,15 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
   Future<void> _start({required bool byHold}) async {
     if (_state != _RecordState.idle) return;
 
-      // 先にバックエンドの利用可否を確認して、録音してから失敗させない。
-      // （文字起こしは開発者のキーを持つサーバー経由で行う）。
+    // 先にバックエンドの利用可否を確認して、録音してから失敗させない。
+    // （文字起こしは開発者のキーを持つサーバー経由で行う）。
     if (!ref.read(voiceInputAvailableProvider)) {
       setState(() => _error = context.i18n.tr('voice_input_unavailable'));
       return;
     }
     if (!await _recorder.hasPermission()) {
-      if (mounted) setState(() => _error = context.i18n.tr('voice_permission_required'));
+      if (mounted)
+        setState(() => _error = context.i18n.tr('voice_permission_required'));
       return;
     }
 
@@ -113,7 +114,9 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
 
     try {
       final service = ref.read(transcriptionServiceProvider);
-      final text = await service.transcribe(path);
+      final locale = ref.read(appLocaleCodeProvider).valueOrNull ?? 'ja';
+      final language = locale == 'en' ? 'en' : 'ja';
+      final text = await service.transcribe(path, language: language);
       if (text.isEmpty) {
         throw StateError(context.i18n.tr('voice_unrecognized'));
       }

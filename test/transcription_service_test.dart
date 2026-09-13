@@ -23,6 +23,9 @@ void main() {
     test('200応答の text を trim して返す', () async {
       final client = MockClient((req) async {
         expect(req.headers['Authorization'], 'Bearer test-key');
+        final bodyText = req.body;
+        expect(bodyText, contains('name="language"'));
+        expect(bodyText, contains('\r\n\r\nja\r\n'));
         return http.Response(
           jsonEncode({'text': '  今日は良い一日だった  '}),
           200,
@@ -61,6 +64,21 @@ void main() {
         throwsA(isA<TranscriptionException>()),
       );
     });
+
+    test('言語を指定できる', () async {
+      final client = MockClient((req) async {
+        final bodyText = req.body;
+        expect(bodyText, contains('name="language"'));
+        expect(bodyText, contains('\r\n\r\nen\r\n'));
+        return http.Response(jsonEncode({'text': 'Hello'}), 200);
+      });
+      final service = WhisperTranscriptionService(
+        apiKey: 'test-key',
+        client: client,
+      );
+      final result = await service.transcribe(audio.path, language: 'en');
+      expect(result, 'Hello');
+    });
   });
 
   group('BackendTranscriptionService', () {
@@ -92,6 +110,20 @@ void main() {
         client: client,
       );
       expect(await service.transcribe(audio.path), '今日は良い一日だった');
+    });
+
+    test('言語を query として渡せる', () async {
+      final client = MockClient((req) async {
+        expect(req.url.path, endsWith('/transcribe'));
+        expect(req.url.queryParameters['language'], 'en');
+        return http.Response(jsonEncode({'text': 'Hello'}), 200);
+      });
+      final service = BackendTranscriptionService(
+        baseUrl: 'https://api.example.com/',
+        appSecret: 'sekret',
+        client: client,
+      );
+      expect(await service.transcribe(audio.path, language: 'en'), 'Hello');
     });
 
     test('baseUrl 未設定は TranscriptionException を投げる', () async {

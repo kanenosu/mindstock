@@ -286,7 +286,12 @@ app.post(
         "voice.m4a"
       );
       form.append("model", "whisper-1");
-      form.append("language", "ja");
+      const language = typeof req.query.language === "string"
+        ? req.query.language.trim()
+        : "";
+      if (language) {
+        form.append("language", language);
+      }
 
       const r = await fetch("https://api.openai.com/v1/audio/transcriptions", {
         method: "POST",
