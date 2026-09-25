@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'providers.dart';
@@ -15,14 +14,16 @@ import 'screens/dashboard_screen.dart';
 import 'screens/entry_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/settings_screen.dart';
+import 'services/ad_consent_service.dart';
 import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ja');
   await initializeDateFormatting('en_US');
-  // AdMob初期化（失敗してもアプリは起動させる）。
-  unawaited(MobileAds.instance.initialize());
+  // 必要な地域では同意画面を表示し、広告を要求できる場合だけAdMobを初期化する。
+  // 失敗してもアプリ本体は起動させる。
+  unawaited(AdConsentService.instance.initialize());
   runApp(const ProviderScope(child: MindStockApp()));
 }
 

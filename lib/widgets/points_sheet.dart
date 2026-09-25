@@ -84,6 +84,7 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
   }
 
   Future<void> _watchAd() async {
+    final i18n = context.i18n;
     setState(() => _watchingAd = true);
     try {
       final earned = await ref.read(rewardedAdServiceProvider).showAndEarn();
@@ -91,13 +92,13 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
         await ref.read(pointsProvider.notifier).add(Monetization.rewardPerAd);
         HapticFeedback.mediumImpact();
         _toast(
-          context.i18n.tr(
+          i18n.tr(
             'points_earned',
             args: {'reward': Monetization.rewardPerAd.toString()},
           ),
         );
       } else {
-        _toast(context.i18n.tr('ad_not_ready'));
+        _toast(i18n.tr('ad_not_ready'));
       }
     } finally {
       if (mounted) setState(() => _watchingAd = false);
@@ -105,11 +106,12 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
   }
 
   Future<void> _buy(ProductDetails product) async {
+    final i18n = context.i18n;
     try {
       await ref.read(iapServiceProvider).buy(product);
       // 付与は購入ストリーム側で自動処理される。
     } catch (e) {
-      _toast(context.i18n.tr('purchase_failed'));
+      _toast(i18n.tr('purchase_failed'));
     }
   }
 
@@ -263,7 +265,10 @@ class _ProductTile extends StatelessWidget {
               const SizedBox(width: 8),
               Row(
                 children: [
-                  Text('$points', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text(
+                    '$points',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(width: 2),
                   Text(
                     context.i18n.tr('points_chip'),

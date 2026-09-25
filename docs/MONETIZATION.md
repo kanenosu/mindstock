@@ -36,11 +36,11 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
    （解析(/analyze)と音声入力(/transcribe)の両方で同じOpenAIキーを使う）
 3. 起動（`npm install && npm start`）
 4. 公開URL（例 `https://mindstock.onrender.com`）を控える
-5. アプリをそのURL付きでビルド:
+5. 別のバックエンドへ切り替える場合は、そのURL付きでビルド:
    ```
    flutter build appbundle --release --dart-define=BACKEND_URL=https://mindstock.onrender.com
    ```
-   （開発中は設定画面から一時的に差し替えることも可能）
+   省略時は本番URL `https://mindstock-zfwv.onrender.com` を使用する。
 
 ### デプロイ済み（Render）
 
@@ -49,7 +49,8 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 - 公開URL: `https://mindstock-zfwv.onrender.com`
 - `/health` で疎通確認済み（2026-07-17）
 - Free プランは無通信が続くとスピンダウンし、次のリクエストで起動まで50秒程度かかる点に注意
-- ビルド時は `--dart-define=BACKEND_URL=https://mindstock-zfwv.onrender.com` を渡す
+- アプリにはこの公開URLを既定値として設定済み。別環境を使う場合のみ
+  `--dart-define=BACKEND_URL=https://...` で上書きする
 
 > ⚠️ `backend/index.js` には現在、IPごとのレート制限（1分20回）と
 > アプリ・サーバー間の共有シークレット（`APP_SHARED_SECRET` / ヘッダー

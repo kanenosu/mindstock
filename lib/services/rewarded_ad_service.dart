@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/monetization.dart';
+import 'ad_consent_service.dart';
 
 /// リワード広告（AdMob）の読み込み・表示を扱うサービス。
 ///
@@ -20,6 +21,14 @@ class RewardedAdService {
   void preload() {
     if (_loading || _ad != null) return;
     _loading = true;
+    unawaited(_loadAfterConsent());
+  }
+
+  Future<void> _loadAfterConsent() async {
+    if (!await AdConsentService.instance.canRequestAds()) {
+      _loading = false;
+      return;
+    }
     RewardedAd.load(
       adUnitId: Monetization.rewardedAdUnitId,
       request: const AdRequest(),

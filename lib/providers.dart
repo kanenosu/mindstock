@@ -117,8 +117,15 @@ final backendUrlProvider = AsyncNotifierProvider<BackendUrlNotifier, String>(
 );
 
 class BackendUrlNotifier extends _PrefStringNotifier {
-  /// ビルド時に焼き込む既定のバックエンドURL。
-  static const _envDefault = String.fromEnvironment('BACKEND_URL');
+  /// 本番バックエンドの公開URL。
+  ///
+  /// URL自体は秘密情報ではないため、通常の `flutter run` や Play向けビルドでも
+  /// AI解析と音声入力が使えるよう既定値を持たせる。検証環境へ切り替える場合だけ
+  /// `--dart-define=BACKEND_URL=https://...` で上書きする。
+  static const _envDefault = String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'https://mindstock-zfwv.onrender.com',
+  );
 
   @override
   String get prefKey => 'backend_url';

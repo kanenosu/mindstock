@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../config/monetization.dart';
 import '../l10n.dart';
 import '../providers.dart';
+import '../services/ad_consent_service.dart';
 import '../theme.dart';
 import '../logic/weekly_summary.dart';
 import '../widgets/motion.dart';
@@ -30,10 +31,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   GoogleSignInAccount? _account;
   bool _busy = false;
+  bool _privacyOptionsRequired = false;
 
   @override
   void initState() {
     super.initState();
+    AdConsentService.instance.privacyOptionsRequired().then((required) {
+      if (mounted) setState(() => _privacyOptionsRequired = required);
+    });
     // 前回のGoogleログインを復元。
     // signInSilently自体が例外を投げない実装だが、念のため二重にガードし、
     // 設定画面を開いただけで（何も操作していないのに）落ちることがないようにする。
@@ -86,6 +91,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           FadeSlideIn(delayMs: 40, child: _accountSection(context)),
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 120, child: _voiceSection(context)),
+          if (_privacyOptionsRequired) ...[
+            const SizedBox(height: 20),
+            FadeSlideIn(delayMs: 150, child: _privacySection(context)),
+          ],
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 180, child: _dataSection(context)),
           const SizedBox(height: 40),
@@ -320,38 +329,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Icons.format_quote_rounded,
           i18n.tr('app_settings_summary_style'),
         ),
-        Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _summaryStyleOption(
-                context,
-                AiSummaryStyle.balanced,
-                style,
-                i18n.tr('summary_style_balanced'),
-              ),
-              const Divider(height: 1),
-              _summaryStyleOption(
-                context,
-                AiSummaryStyle.compact,
-                style,
-                i18n.tr('summary_style_compact'),
-              ),
-              const Divider(height: 1),
-              _summaryStyleOption(
-                context,
-                AiSummaryStyle.encouraging,
-                style,
-                i18n.tr('summary_style_encouraging'),
-              ),
-              const Divider(height: 1),
-              _summaryStyleOption(
-                context,
-                AiSummaryStyle.neutral,
-                style,
-                i18n.tr('summary_style_neutral'),
-              ),
-            ],
+        RadioGroup<AiSummaryStyle>(
+          groupValue: style,
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(appSummaryStyleProvider.notifier).setStyle(value);
+            }
+          },
+          child: Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _summaryStyleOption(
+                  AiSummaryStyle.balanced,
+                  i18n.tr('summary_style_balanced'),
+                ),
+                const Divider(height: 1),
+                _summaryStyleOption(
+                  AiSummaryStyle.compact,
+                  i18n.tr('summary_style_compact'),
+                ),
+                const Divider(height: 1),
+                _summaryStyleOption(
+                  AiSummaryStyle.encouraging,
+                  i18n.tr('summary_style_encouraging'),
+                ),
+                const Divider(height: 1),
+                _summaryStyleOption(
+                  AiSummaryStyle.neutral,
+                  i18n.tr('summary_style_neutral'),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -392,23 +401,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _summaryStyleOption(
-    BuildContext context,
-    AiSummaryStyle option,
-    AiSummaryStyle selected,
-    String label,
-  ) {
+  Widget _summaryStyleOption(AiSummaryStyle option, String label) {
     return ListTile(
       onTap: () => ref.read(appSummaryStyleProvider.notifier).setStyle(option),
       title: Text(label),
-      trailing: Radio<AiSummaryStyle>(
-        value: option,
-        groupValue: selected,
-        onChanged: (value) {
-          if (value == null) return;
-          ref.read(appSummaryStyleProvider.notifier).setStyle(value);
-        },
-      ),
+      trailing: Radio<AiSummaryStyle>(value: option),
     );
   }
 
@@ -635,6 +632,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── プライバシー ─────────────────────────────────────
+
+  Widget _privacySection(BuildContext context) {
+    final i18n = context.i18n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(context, Icons.privacy_tip_outlined, i18n.tr('privacy')),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            leading: const Icon(Icons.ads_click_outlined),
+            title: Text(i18n.tr('ad_privacy_options')),
+            subtitle: Text(i18n.tr('ad_privacy_options_help')),
+            trailing: const Icon(Icons.chevron_right, size: 18),
+            onTap: () async {
+              final error = await AdConsentService.instance
+                  .showPrivacyOptions();
+              if (error != null) {
+                _toast(i18n.tr('ad_privacy_options_error'));
+              }
+            },
           ),
         ),
       ],

@@ -1,47 +1,64 @@
 workflows:
-  ios-demo:
-    name: iOS デモ版ビルド (TestFlight配布)
-    max_build_duration: 60
+  ios-app-store:
+    name: iOS App Store / TestFlight
+    max_build_duration: 120
     instance_type: mac_mini_m2
     environment:
       flutter: stable
-      xcode: latest
+      # Appleの2026年提出要件を満たし、Xcode 27のCocoaPods互換問題を避ける。
+      xcode: 26.3
       cocoapods: default
       groups:
-        # Codemagic の Team settings > Environment variables で作成し、
-        # このワークフローに紐付けること。中身は App Store Connect API キー。
+        # APP_STORE_CONNECT_{ISSUER_ID,KEY_IDENTIFIER,PRIVATE_KEY} と
+        # CERTIFICATE_PRIVATE_KEY をSecretとして登録する。
         - app_store_credentials
+        # APP_SHARED_SECRETをSecretとして登録する。
+        - app_runtime_secrets
       vars:
         BUNDLE_ID: "com.kanenosu.mindstock"
+        BACKEND_URL: "https://mindstock-zfwv.onrender.com"
         XCODE_WORKSPACE: "ios/Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: "*"
-          include: true
+    # 誤って全ブランチのpushをTestFlightへ送らないよう、初回は手動実行にする。
     scripts:
-      - name: Set up code signing (App Store Connect 自動署名)
+      - name: Validate release secrets
         script: |
-          xcode-project use-profiles
+          : "${APP_SHARED_SECRET:?Set APP_SHARED_SECRET in app_runtime_secrets}"
+          : "${APP_STORE_CONNECT_ISSUER_ID:?Set App Store Connect credentials}"
+          : "${APP_STORE_CONNECT_KEY_IDENTIFIER:?Set App Store Connect credentials}"
+          : "${APP_STORE_CONNECT_PRIVATE_KEY:?Set App Store Connect credentials}"
+          : "${CERTIFICATE_PRIVATE_KEY:?Set the iOS distribution certificate private key}"
       - name: Get Flutter packages
         script: |
-          flutter packages pub get
+          flutter pub get
       - name: Install CocoaPods dependencies
         script: |
           find . -name "Podfile" -not -path "*/build/*" -execdir pod install \;
+      - name: Analyze and test
+        script: |
+          flutter analyze
+          flutter test
+      - name: Fetch and set up App Store signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
       - name: Flutter build ipa
         script: |
           flutter build ipa --release \
+            --build-number="$PROJECT_BUILD_NUMBER" \
+            --dart-define=BACKEND_URL="$BACKEND_URL" \
+            --dart-define=APP_SHARED_SECRET="$APP_SHARED_SECRET" \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
-        auth: integration
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
-        # ベータ版としてすぐ配布したい場合はテストグループ名を指定する:
-        # beta_groups:
-        #   - "デモ版テスター"

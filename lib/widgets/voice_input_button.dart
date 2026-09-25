@@ -68,8 +68,9 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
       return;
     }
     if (!await _recorder.hasPermission()) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = context.i18n.tr('voice_permission_required'));
+      }
       return;
     }
 
@@ -102,6 +103,7 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
 
   Future<void> _stopAndTranscribe() async {
     if (_state != _RecordState.recording) return;
+    final unrecognizedMessage = context.i18n.tr('voice_unrecognized');
     _elapsedTimer?.cancel();
     await _amplitudeSub?.cancel();
     final path = await _recorder.stop();
@@ -118,7 +120,7 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
       final language = locale == 'en' ? 'en' : 'ja';
       final text = await service.transcribe(path, language: language);
       if (text.isEmpty) {
-        throw StateError(context.i18n.tr('voice_unrecognized'));
+        throw StateError(unrecognizedMessage);
       }
       widget.onTranscribed(text);
       HapticFeedback.mediumImpact();
