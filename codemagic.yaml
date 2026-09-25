@@ -5,8 +5,8 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
-      # Appleの2026年提出要件を満たし、Xcode 27のCocoaPods互換問題を避ける。
-      xcode: 26.3
+      # Appleの2026年提出要件を満たし、Codemagicの現行安定版を固定する。
+      xcode: 26.6
       cocoapods: default
       groups:
         # APP_STORE_CONNECT_{ISSUER_ID,KEY_IDENTIFIER,PRIVATE_KEY} と
