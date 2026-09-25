@@ -41,6 +41,12 @@ app.get("/privacy", (_req, res) => {
   res.sendFile(path.join(__dirname, "public", "privacy.html"));
 });
 
+// App Store / Google Play のサポートURL。
+// 公開URL: {BACKEND_URL}/support
+app.get("/support", (_req, res) => {
+  res.sendFile(path.join(__dirname, "public", "support.html"));
+});
+
 // OpenAI APIキー。解析(/analyze)・音声入力(/transcribe)の両方で使う。
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 // 解析に使うOpenAIモデル（任意。既定は gpt-5.1）。
