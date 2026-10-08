@@ -33,6 +33,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Local exports may contain private journal data.
+/exports/
+
 # Symbolication related
 app.*.symbols
 
