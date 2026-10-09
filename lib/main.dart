@@ -32,6 +32,7 @@ Future<void> main() async {
 Future<void> _initializeAdvertisingAfterPrivacyGate() async {
   await WidgetsBinding.instance.endOfFrame;
   await TrackingPermissionService.instance.requestAuthorization();
+  AdConsentService.instance.openPrivacyGate();
   await AdConsentService.instance.initialize();
 }
 

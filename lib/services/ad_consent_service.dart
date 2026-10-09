@@ -12,13 +12,22 @@ class AdConsentService {
 
   static final instance = AdConsentService._();
 
+  final Completer<void> _privacyGate = Completer<void>();
   Future<bool>? _initialization;
   bool _mobileAdsInitialized = false;
+
+  /// ATTの回答（または非iOS判定）が完了するまで、どの呼び出し経路からも
+  /// UMP / Mobile Adsを起動させない。SettingsScreenなどが先に生成されても、
+  /// ここで待機するため起動順の競合が起きない。
+  void openPrivacyGate() {
+    if (!_privacyGate.isCompleted) _privacyGate.complete();
+  }
 
   Future<bool> initialize() => _initialization ??= _initialize();
 
   Future<bool> _initialize() async {
     try {
+      await _privacyGate.future;
       final completer = Completer<void>();
       ConsentInformation.instance.requestConsentInfoUpdate(
         ConsentRequestParameters(tagForUnderAgeOfConsent: false),
