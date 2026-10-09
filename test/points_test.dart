@@ -38,6 +38,14 @@ void main() {
     expect(c.read(pointsProvider).valueOrNull, Monetization.rewardPerAd);
   });
 
+  test('課金商品は30・100・300ポイントを付与する', () {
+    expect(Monetization.productToPoints, {
+      'points_30': 30,
+      'points_100': 100,
+      'points_300': 300,
+    });
+  });
+
   test('残高は0未満にならない', () async {
     final c = await containerWith({'points_balance': 0});
     // spend は失敗するので残高は0のまま

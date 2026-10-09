@@ -10,7 +10,7 @@
          （Play Consoleの「広告IDの申告」警告に対応）。 -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <application
-        android:label="mindstock"
+        android:label="ライフチャート"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- AdMob アプリID（本番、lib/config/monetization.dart と同じ値。

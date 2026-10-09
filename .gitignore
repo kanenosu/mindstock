@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/release/
 
 # Local exports may contain private journal data.
 /exports/

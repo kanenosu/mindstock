@@ -11,6 +11,7 @@ import '../theme.dart';
 import '../logic/weekly_summary.dart';
 import '../widgets/motion.dart';
 import '../widgets/points_sheet.dart';
+import 'legal_webview_screen.dart';
 
 /// 設定画面。iOS風のグループセクションで構成する。
 ///
@@ -95,6 +96,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 20),
             FadeSlideIn(delayMs: 150, child: _privacySection(context)),
           ],
+          const SizedBox(height: 20),
+          FadeSlideIn(delayMs: 170, child: _legalSection(context)),
           const SizedBox(height: 20),
           FadeSlideIn(delayMs: 180, child: _dataSection(context)),
           const SizedBox(height: 40),
@@ -663,6 +666,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _legalSection(BuildContext context) {
+    final i18n = context.i18n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          context,
+          Icons.policy_outlined,
+          i18n.tr('legal_and_support'),
+        ),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: Text(i18n.tr('privacy_policy')),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () => _openLegalPage(
+                  title: i18n.tr('privacy_policy'),
+                  path: '/privacy',
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.help_outline_rounded),
+                title: Text(i18n.tr('support')),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () =>
+                    _openLegalPage(title: i18n.tr('support'), path: '/support'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openLegalPage({required String title, required String path}) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => LegalWebViewScreen(
+          title: title,
+          uri: Uri.parse('https://mindstock-zfwv.onrender.com$path'),
+        ),
+      ),
     );
   }
 

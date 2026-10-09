@@ -1,10 +1,10 @@
-# Mind Stock — MacでApp Store公開を完了するためのプロンプト
+# ライフチャート — MacでApp Store公開を完了するためのプロンプト
 
 以下を、Mac上でこのリポジトリを開いたCodexへそのまま渡してください。
 
 ---
 
-Mind StockのiOS版を、TestFlightへのアップロードとApp Store審査提出直前まで完成させてください。安全確認、ビルド、実機またはSimulatorテスト、スクリーンショット作成、App Store Connect設定を順番に進め、各段階で結果を検証してください。
+ライフチャートのiOS版を、TestFlightへのアップロードとApp Store審査提出直前まで完成させてください。安全確認、ビルド、実機またはSimulatorテスト、スクリーンショット作成、App Store Connect設定を順番に進め、各段階で結果を検証してください。
 
 ## 重要な前提
 
@@ -13,7 +13,7 @@ Mind StockのiOS版を、TestFlightへのアップロードとApp Store審査提
 - Bundle ID: `com.kanenosu.mindstock`
 - Apple Team ID: `9U66V9DMAW`
 - App Store Connect App ID: `6816151496`
-- 現在のアプリ版: `0.2.4+6`
+- 現在のアプリ版: `0.2.4+7`
 - バックエンド: `https://mindstock-zfwv.onrender.com`
 - プライバシーポリシー: `https://mindstock-zfwv.onrender.com/privacy`
 - サポート: `https://mindstock-zfwv.onrender.com/support`
@@ -69,7 +69,7 @@ Mind StockのiOS版を、TestFlightへのアップロードとApp Store審査提
 
 ## 4. ArchiveとTestFlight
 
-1. `pubspec.yaml`の`0.2.4+6`とApp Store Connectの`0.2.4`が一致することを確認する。
+1. `pubspec.yaml`の`0.2.4+7`とApp Store Connectの`0.2.4`が一致することを確認する。
 2. 本番の`BACKEND_URL`と`APP_SHARED_SECRET`をdart-defineで渡してRelease IPAを作る。
 3. Xcode OrganizerまたはTransporterからApp Store Connectへアップロードする。
 4. ビルド処理完了後、TestFlightの内部テストへ追加する。
@@ -93,11 +93,11 @@ Macで直接Xcodeを使えるため、Codemagicは必須ではない。ローカ
 
 審査メモには以下を入力する。
 
-`Mind Stock does not require an account. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
+`ライフチャート does not require an account. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
 
 ## 6. 課金・契約・規制
 
-- 消費型IAP: `points_10`、`points_50`、`points_150`
+- 消費型IAP: `points_30`、`points_100`、`points_300`
 - 価格はユーザーに確認してから設定する。
 - 有料アプリ契約は未同意。契約、税務、銀行情報はユーザー本人と一緒に設定する。
 - EUのDSAトレーダー区分は未決定。法的意味を説明し、ユーザーに選択してもらう。

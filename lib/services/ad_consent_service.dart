@@ -43,6 +43,9 @@ class AdConsentService {
       final allowed = await ConsentInformation.instance.canRequestAds();
       if (allowed && !_mobileAdsInitialized) {
         _mobileAdsInitialized = true;
+        // アプリ間で使われる可能性があるGoogleのファーストパーティIDは無効化。
+        // ATTの回答にかかわらず、必要最小限の広告データだけを扱う。
+        await MobileAds.instance.setSameAppKeyEnabled(false);
         await MobileAds.instance.initialize();
       }
       return allowed;
@@ -71,7 +74,7 @@ class AdConsentService {
           error == null ? null : '${error.errorCode}: ${error.message}',
         );
       });
-      return completer.future;
+      return await completer.future;
     } catch (error) {
       return error.toString();
     }

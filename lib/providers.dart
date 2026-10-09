@@ -212,9 +212,8 @@ final rewardedAdServiceProvider = Provider<RewardedAdService>((ref) {
 
 /// アプリ内課金サービス（ポイントパック購入）。
 /// 購入成立時に自動でポイントを付与する。
-final iapServiceProvider = Provider<IapService>((ref) {
+final iapServiceProvider = ChangeNotifierProvider<IapService>((ref) {
   final service = IapService();
-  ref.onDispose(service.dispose);
   service.init(
     onGrant: (points) => ref.read(pointsProvider.notifier).add(points),
   );

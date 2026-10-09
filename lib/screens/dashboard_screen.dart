@@ -536,7 +536,7 @@ class _StatRow extends StatelessWidget {
             context,
             label: i18n.tr('calm_days'),
             child: Text(
-              '$calmDays日',
+              i18n.isEn ? '$calmDays days' : '$calmDays日',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),

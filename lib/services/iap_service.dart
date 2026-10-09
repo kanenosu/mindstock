@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../config/monetization.dart';
@@ -12,7 +13,7 @@ import '../config/monetization.dart';
 ///
 /// 注意: 本番では不正防止のためサーバー側でレシート検証すべき。ここでは
 /// クライアントで付与する最小構成（backend/ の検証エンドポイントに繋ぐ余地あり）。
-class IapService {
+class IapService extends ChangeNotifier {
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
@@ -22,28 +23,56 @@ class IapService {
   /// ストアが利用可能か（未登録・非対応端末では false）。
   bool available = false;
 
+  /// ストアと商品情報を読み込み中か。
+  bool loading = true;
+
+  /// ストアから「見つからない」と返された商品ID（診断用）。
+  Set<String> notFoundProductIds = const {};
+
   void Function(int points)? _onGrant;
 
   /// 初期化。購入ストリームを購読し、商品情報を取得する。
   /// [onGrant] は購入成立時にポイントを付与するコールバック。
   Future<void> init({required void Function(int points) onGrant}) async {
     _onGrant = onGrant;
+    _sub ??= _iap.purchaseStream.listen(_onPurchaseUpdate, onError: (_) {});
+    await refreshProducts();
+  }
+
+  /// ストアの利用可否と商品情報を再取得する。
+  ///
+  /// 契約・商品メタデータの反映直後や一時的な通信失敗から、アプリを
+  /// 再起動せずに回復できるようにする。
+  Future<void> refreshProducts() async {
+    loading = true;
+    notFoundProductIds = const {};
+    notifyListeners();
     try {
       available = await _iap.isAvailable();
     } catch (_) {
       available = false;
     }
-    if (!available) return;
-
-    _sub = _iap.purchaseStream.listen(_onPurchaseUpdate, onError: (_) {});
+    if (!available) {
+      loading = false;
+      notifyListeners();
+      return;
+    }
 
     try {
       final resp = await _iap.queryProductDetails(Monetization.productIds);
+      notFoundProductIds = resp.notFoundIDs.toSet();
+      debugPrint(
+        'StoreKit products: found=${resp.productDetails.map((p) => p.id).toList()}, '
+        'notFound=${resp.notFoundIDs}, error=${resp.error}',
+      );
       products = resp.productDetails
         ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
-    } catch (_) {
+    } catch (error) {
+      debugPrint('StoreKit product query failed: $error');
       products = const [];
     }
+    loading = false;
+    notifyListeners();
   }
 
   /// 商品を購入する（消費型）。
@@ -67,8 +96,10 @@ class IapService {
     }
   }
 
+  @override
   void dispose() {
     _sub?.cancel();
     _sub = null;
+    super.dispose();
   }
 }

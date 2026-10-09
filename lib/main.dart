@@ -15,20 +15,28 @@ import 'screens/entry_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ad_consent_service.dart';
+import 'services/tracking_permission_service.dart';
 import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ja');
   await initializeDateFormatting('en_US');
-  // 必要な地域では同意画面を表示し、広告を要求できる場合だけAdMobを初期化する。
-  // 失敗してもアプリ本体は起動させる。
-  unawaited(AdConsentService.instance.initialize());
-  runApp(const ProviderScope(child: MindStockApp()));
+  runApp(const ProviderScope(child: LifeChartApp()));
+
+  // 最初の画面を表示してからATTを要求する。回答が完了するまではAdMob/UMPを
+  // 初期化しないため、追跡に使われ得るデータが許可より先に収集されない。
+  unawaited(_initializeAdvertisingAfterPrivacyGate());
 }
 
-class MindStockApp extends ConsumerWidget {
-  const MindStockApp({super.key});
+Future<void> _initializeAdvertisingAfterPrivacyGate() async {
+  await WidgetsBinding.instance.endOfFrame;
+  await TrackingPermissionService.instance.requestAuthorization();
+  await AdConsentService.instance.initialize();
+}
+
+class LifeChartApp extends ConsumerWidget {
+  const LifeChartApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +45,8 @@ class MindStockApp extends ConsumerWidget {
         ref.watch(appThemePresetProvider).valueOrNull ?? ThemePreset.warm;
 
     return MaterialApp(
-      title: 'MindStock',
+      title: 'ライフチャート',
+      debugShowCheckedModeBanner: false,
       theme: buildAppTheme(preset: themePreset),
       // 「温かいクリーム基調」がこのアプリのアイデンティティなので、
       // 端末がダークモードでも常にライトテーマで表示する（意図的な固定・改善点§4）。

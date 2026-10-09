@@ -21,7 +21,7 @@ class Monetization {
   static const int rewardPerAd = 1;
 
   // ── AdMob ────────────────────────────────────────────────
-  // 本番ID設定済み（2026-07-17、apps.admob.com の「MindStock」アプリ）。
+  // 本番ID設定済み（2026-07-17、apps.admob.com の「ライフチャート」アプリ）。
   // AndroidManifest.xml / ios/Runner/Info.plist にも同じ値を入れてある。
   // 注意: AdMobアカウントの支払いプロファイルが未設定のため、アプリの審査は
   // まだ開始されていない（審査完了までは広告配信が制限される）。
@@ -45,9 +45,9 @@ class Monetization {
   // 付与ポイントは productToPoints で対応づける。
 
   static const Map<String, int> productToPoints = {
-    'points_10': 10,
-    'points_50': 50,
-    'points_150': 150,
+    'points_30': 30,
+    'points_100': 100,
+    'points_300': 300,
   };
 
   static Set<String> get productIds => productToPoints.keys.toSet();

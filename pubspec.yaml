@@ -1,7 +1,7 @@
 name: mindstock
 description: "人生チャート日記アプリ — 日記を書くだけで人生がローソク足チャートになる"
 publish_to: 'none'
-version: 0.2.4+6
+version: 0.2.4+10
 
 environment:
   sdk: ^3.8.1
@@ -23,6 +23,7 @@ dependencies:
   google_sign_in: ^6.3.0
   google_mobile_ads: ^9.1.0
   in_app_purchase: ^3.3.1
+  webview_flutter: ^4.13.1
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +36,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon/
+    - backend/public/privacy.html
+    - backend/public/support.html
 
 # アプリアイコン（`dart run flutter_launcher_icons` で iOS/Android の
 # 全サイズを生成する。ローソク足2本 + きらめき、テーマカラーそのまま）。

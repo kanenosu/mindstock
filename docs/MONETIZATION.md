@@ -68,7 +68,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 ## 広告（AdMob）
 
 - 実装: `lib/services/rewarded_ad_service.dart`（リワード広告）
-- 本番ID設定済み（2026-07-17、apps.admob.com の「MindStock」アプリ、
+- 本番ID設定済み（2026-07-17、apps.admob.com の「ライフチャート」アプリ、
   Android/iOS両方、リワード広告ユニット名 `Rewarded_Diary_Point`）:
   - `lib/config/monetization.dart`（`admobAppId` / `rewardedAdUnitId`）
   - `android/app/src/main/AndroidManifest.xml`（`com.google.android.gms.ads.APPLICATION_ID`）
@@ -84,7 +84,7 @@ AI解析は**ポイント**を消費して行う。ポイントは広告視聴�
 
 - 実装: `lib/services/iap_service.dart`（消費型アイテム）
 - 商品IDは `lib/config/monetization.dart` の `productToPoints`
-  （`points_10` / `points_50` / `points_150`）。付与ポイントもここで対応づけ。
+  （`points_30` / `points_100` / `points_300`）。付与ポイントもここで対応づけ。
 - リリース前の手順:
   1. **Google Play Console**: アプリ内アイテム →「管理対象アイテム/消費型」で
      同じ商品IDを登録

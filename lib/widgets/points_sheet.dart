@@ -201,15 +201,34 @@ class _PointsSheetState extends ConsumerState<_PointsSheet> {
               ),
             ),
             const SizedBox(height: 8),
-            if (!iap.available)
+            if (iap.loading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else if (!iap.available)
               Text(
                 i18n.tr('buy_empty_store'),
                 style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
               )
             else if (iap.products.isEmpty)
-              Text(
-                i18n.tr('buy_empty_product'),
-                style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      i18n.tr('buy_empty_product'),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: iap.refreshProducts,
+                    child: Text(i18n.tr('buy_retry')),
+                  ),
+                ],
               )
             else
               for (final product in iap.products) ...[

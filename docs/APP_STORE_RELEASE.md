@@ -1,4 +1,4 @@
-# Mind Stock — App Store公開準備
+# ライフチャート — App Store公開準備
 
 更新日: 2026-09-24
 
@@ -16,14 +16,14 @@
 
 ## 日本語メタデータ
 
-- 名前: `Mind Stock`
+- 名前: `ライフチャート`
 - サブタイトル: `日記が人生チャートになる`
 - キーワード: `日記,ジャーナル,気分,記録,習慣,振り返り,自己分析,ライフログ,AI,チャート`
 - プロモーションテキスト:
   `書くだけで、毎日の出来事が人生のチャートに。AIが日記を整理し、変化や成長を振り返りやすくします。`
 - 説明:
 
-  `Mind Stockは、日記を「人生の値動き」として見える化するジャーナルアプリです。文章や気分を記録すると、AIが出来事を整理し、日々の変化をチャートへ反映します。`
+  `ライフチャートは、日記を「人生の値動き」として見える化するジャーナルアプリです。文章や気分を記録すると、AIが出来事を整理し、日々の変化をチャートへ反映します。`
 
   `主な機能`
 
@@ -45,14 +45,14 @@
 
 ## English metadata
 
-- Name: `Mind Stock`
+- Name: `ライフチャート`
 - Subtitle: `Your journal, visualized`
 - Keywords: `journal,diary,mood,tracker,reflection,habits,life log,AI,chart,self growth`
 - Promotional text:
   `Turn everyday journal entries into a visual life chart. AI organizes key moments so you can reflect on change and growth over time.`
 - Description:
 
-  `Mind Stock turns your journal into a visual chart of your life. Write about your day or record a mood, and AI organizes meaningful events into a timeline you can revisit.`
+  `ライフチャート turns your journal into a visual chart of your life. Write about your day or record a mood, and AI organizes meaningful events into a timeline you can revisit.`
 
   `Key features`
 
@@ -109,15 +109,15 @@ App Store Connectで次の商品IDを作り、初回アプリ版と一緒に審�
 
 | 商品ID | 参照名 | 日本語表示名 | English display name |
 |---|---|---|---|
-| `points_10` | 10 Points | 10ポイント | 10 Points |
-| `points_50` | 50 Points | 50ポイント | 50 Points |
-| `points_150` | 150 Points | 150ポイント | 150 Points |
+| `points_30` | 30 Points | 30ポイント | 30 Points |
+| `points_100` | 100 Points | 100ポイント | 100 Points |
+| `points_300` | 300 Points | 300ポイント | 300 Points |
 
-価格はApp Store Connectで決定する。各商品に審査用スクリーンショットを1枚添付する。
+価格はそれぞれ300円、900円、2,000円。各商品に審査用スクリーンショットを1枚添付する。
 
 ## App Reviewメモ案
 
-`Mind Stock does not require an account. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
+`ライフチャート does not require an account. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
 
 ## 残作業
 

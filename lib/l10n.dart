@@ -139,6 +139,7 @@ class AppI18n {
     'buy_pack_title': 'まとめて購入',
     'buy_empty_store': 'ストアに接続できません（商品登録前・非対応端末の可能性）',
     'buy_empty_product': '購入できる商品がありません。ストアで商品を登録してください。',
+    'buy_retry': '再読み込み',
     'ad_test_notice': '※ 現在は広告テストIDです。リリース前に本番IDへ差し替えてください。',
     'points_chip': 'ポイント',
     'points_earned': '{reward}ポイント獲得しました',
@@ -147,6 +148,9 @@ class AppI18n {
     'ad_privacy_options': '広告のプライバシー設定',
     'ad_privacy_options_help': '広告データの使い方と同意内容を確認・変更します。',
     'ad_privacy_options_error': '広告のプライバシー設定を開けませんでした。',
+    'legal_and_support': '法的情報・サポート',
+    'privacy_policy': 'プライバシーポリシー',
+    'support': 'サポート',
     'purchase_failed': '購入を開始できませんでした',
     'life_index_title': 'Life Index',
     'life_message_start': '最初の日記を書くと、ここに人生のチャートが生まれる。',
@@ -211,7 +215,7 @@ class AppI18n {
     'event_kind_daily': '日常',
     'event_kind_mood': '気分',
     'event_kind_milestone': '節目',
-    'app_tagline': 'Mind Stock v0.2.4\nあなたの毎日は、記録するだけで資産になる。',
+    'app_tagline': 'ライフチャート v0.2.4\nあなたの毎日は、記録するだけで資産になる。',
   };
 
   static const _en = {
@@ -243,7 +247,7 @@ class AppI18n {
     'data': 'Data',
     'empty_point': 'No backup yet. If logged in, it auto-saves every 7 days.',
     'last_backup': 'Last backup: {time} (auto save every 7 days)',
-    'analysis_cost': 'AI analysis costs {cost} points.',
+    'analysis_cost': 'Each AI analysis costs {cost} point.',
     'add_points': 'Top up',
     'app_settings_language': 'Language',
     'app_settings_theme': 'Theme color',
@@ -346,6 +350,7 @@ class AppI18n {
         'Unable to connect to store (or product not configured).',
     'buy_empty_product':
         'No purchasable products found. Please register products in store.',
+    'buy_retry': 'Try again',
     'ad_test_notice':
         'This is test ad IDs. Replace with production IDs before release.',
     'points_chip': 'Points',
@@ -355,6 +360,9 @@ class AppI18n {
     'ad_privacy_options': 'Ad privacy options',
     'ad_privacy_options_help': 'Review or change how advertising data is used.',
     'ad_privacy_options_error': 'Could not open ad privacy options.',
+    'legal_and_support': 'Legal & Support',
+    'privacy_policy': 'Privacy Policy',
+    'support': 'Support',
     'purchase_failed': 'Failed to start purchase',
     'life_index_title': 'Life Index',
     'life_message_start':
@@ -429,7 +437,7 @@ class AppI18n {
     'event_kind_mood': 'Mood',
     'event_kind_milestone': 'Milestone',
     'app_tagline':
-        'Mind Stock v0.2.4\nYour daily life becomes an asset, just by recording.',
+        'ライフチャート v0.2.4\nYour daily life becomes an asset, just by recording.',
   };
 
   String tr(String key, {Map<String, String> args = const {}}) {
