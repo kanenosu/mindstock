@@ -93,7 +93,7 @@ Macで直接Xcodeを使えるため、Codemagicは必須ではない。ローカ
 
 審査メモには以下を入力する。
 
-`ライフチャート does not require an account. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
+`ライフチャート does not require an account. On a fresh install, the iOS ATT prompt appears immediately after the first app frame and before Google UMP or Google Mobile Ads initialization. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
 
 ## 6. 課金・契約・規制
 

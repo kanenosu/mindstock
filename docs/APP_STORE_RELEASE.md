@@ -101,7 +101,7 @@ AdMobを含むため「データを収集しない」にはできない。最終
 - ユーザーコンテンツ（日記・音声）: AI解析／文字起こしのアプリ機能。サーバーでは保存しない
 - 購入履歴: アプリ内課金の機能、不正防止
 
-ATTを要求する実装は入れていない。広告はUMP同意取得後にのみ要求し、iOSが許可していないIDFAは送られない。将来、ATTを追加して追跡を行う場合は、実装・プライバシーポリシー・App Privacy回答を同時に更新する。
+ATTは初回起動時、最初の画面を表示した直後に要求する。ATTの回答が返るまで、Google UMPとMobile Ads SDKの全初期化経路をアプリ共通のプライバシーゲートで待機させる。許可の有無にかかわらず、リワード広告は非パーソナライズで要求し、Googleのsame-app keyは無効にする。App Privacy回答とプライバシーポリシーはこの実装に合わせて更新する。
 
 ## アプリ内課金（消費型）
 
@@ -113,11 +113,11 @@ App Store Connectで次の商品IDを作り、初回アプリ版と一緒に審�
 | `points_100` | 100 Points | 100ポイント | 100 Points |
 | `points_300` | 300 Points | 300ポイント | 300 Points |
 
-価格はそれぞれ300円、900円、2,000円。各商品に審査用スクリーンショットを1枚添付する。
+各商品の価格はApp Store Connectで確定する直前にユーザーへ確認する。各商品に審査用スクリーンショットを1枚添付する。
 
 ## App Reviewメモ案
 
-`ライフチャート does not require an account. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
+`ライフチャート does not require an account. On a fresh install, the iOS ATT prompt appears immediately after the first app frame and before Google UMP or Google Mobile Ads initialization. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
 
 ## 残作業
 

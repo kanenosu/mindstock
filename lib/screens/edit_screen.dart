@@ -92,9 +92,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          i18n.tr('edit_title', args: {'date': date}),
-        ),
+        title: Text(i18n.tr('edit_title', args: {'date': date})),
         actions: [
           TextButton(onPressed: _save, child: Text(i18n.tr('edit_save'))),
         ],

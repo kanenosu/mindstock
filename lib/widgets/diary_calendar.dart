@@ -96,11 +96,7 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
       children: [
         const SizedBox(width: 4),
         Text(
-          i18n.date(
-            _anchor,
-            jaPattern: 'yyyy年M月',
-            enPattern: 'MMMM yyyy',
-          ),
+          i18n.date(_anchor, jaPattern: 'yyyy年M月', enPattern: 'MMMM yyyy'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -119,10 +115,7 @@ class _DiaryCalendarState extends ConsumerState<DiaryCalendar> {
               setState(() => _anchor = _today);
               widget.onSelect(_today);
             },
-            child: Text(
-              i18n.tr('today'),
-              style: const TextStyle(fontSize: 12),
-            ),
+            child: Text(i18n.tr('today'), style: const TextStyle(fontSize: 12)),
           ),
         const Spacer(),
         _navButton(Icons.chevron_left, () => _shift(-1)),

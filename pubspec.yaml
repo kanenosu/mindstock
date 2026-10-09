@@ -4,7 +4,8 @@ publish_to: 'none'
 version: 0.2.4+11
 
 environment:
-  sdk: ^3.8.1
+  # in_app_purchase 3.3.1 requires Dart 3.10 or newer.
+  sdk: ^3.10.0
 
 dependencies:
   flutter:

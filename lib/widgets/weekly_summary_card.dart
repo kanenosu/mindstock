@@ -82,9 +82,17 @@ class WeeklySummaryCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              _stat(context, i18n.tr('weekly_summary_count_records'), '${summary.entryDays}'),
+              _stat(
+                context,
+                i18n.tr('weekly_summary_count_records'),
+                '${summary.entryDays}',
+              ),
               _dividerDot(),
-              _stat(context, i18n.tr('weekly_summary_count_calm'), '${summary.calmDays}'),
+              _stat(
+                context,
+                i18n.tr('weekly_summary_count_calm'),
+                '${summary.calmDays}',
+              ),
               _dividerDot(),
               _stat(
                 context,

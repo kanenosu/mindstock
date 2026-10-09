@@ -121,9 +121,9 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
       HapticFeedback.mediumImpact();
       FocusManager.instance.primaryFocus?.unfocus();
       final i18n = context.i18n;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(i18n.tr('recorded_msg'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(i18n.tr('recorded_msg'))));
       Navigator.of(context).maybePop();
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -138,10 +138,10 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
     final label = isToday
         ? i18n.tr('today_diary')
         : i18n.date(
-          _date,
-          jaPattern: 'M月d日 (E) の日記',
-          enPattern: 'MMM d, yyyy (EEE) diary',
-        );
+            _date,
+            jaPattern: 'M月d日 (E) の日記',
+            enPattern: 'MMM d, yyyy (EEE) diary',
+          );
     return Scaffold(
       appBar: AppBar(
         title: AnimatedSwitcher(
@@ -230,7 +230,9 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: Text(_submitting ? i18n.tr('analyzing') : i18n.tr('record')),
+                label: Text(
+                  _submitting ? i18n.tr('analyzing') : i18n.tr('record'),
+                ),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),

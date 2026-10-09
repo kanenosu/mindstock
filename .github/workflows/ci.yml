@@ -19,7 +19,8 @@ jobs:
       - name: Flutterをセットアップ
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.32.5"
+          # Matches the toolchain used for the verified iOS release build.
+          flutter-version: "3.47.2"
           cache: true
 
       - name: パッケージ取得

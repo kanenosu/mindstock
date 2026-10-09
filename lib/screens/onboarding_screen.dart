@@ -83,10 +83,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   _LanguageToggle(
                     value: selected,
                     onChanged: _changeLocale,
-                    labels: (
-                      i18n.tr('lang_ja'),
-                      i18n.tr('lang_en'),
-                    ),
+                    labels: (i18n.tr('lang_ja'), i18n.tr('lang_en')),
                   ),
                   const Spacer(),
                   TextButton(

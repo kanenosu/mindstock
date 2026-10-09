@@ -228,7 +228,7 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 InkWell(
-              onTap: widget.onOpenChart,
+                  onTap: widget.onOpenChart,
                   child: Row(
                     children: [
                       Text(
@@ -379,9 +379,9 @@ class _LifeIndexCardState extends State<_LifeIndexCard> {
     if (window.isEmpty) return '';
     return _tf == Timeframe.monthly
         ? '${i18n.date(window.first.date, jaPattern: 'yyyy/M', enPattern: 'MMM yyyy')}〜'
-            '${i18n.date(window.last.date, jaPattern: 'yyyy/M', enPattern: 'MMM yyyy')}'
+              '${i18n.date(window.last.date, jaPattern: 'yyyy/M', enPattern: 'MMM yyyy')}'
         : '${i18n.date(window.first.date, jaPattern: 'M/d', enPattern: 'M/d')}〜'
-            '${i18n.date(window.last.date, jaPattern: 'M/d', enPattern: 'M/d')}';
+              '${i18n.date(window.last.date, jaPattern: 'M/d', enPattern: 'M/d')}';
   }
 
   /// 状態に応じた一言。成長を押し付けず、事実に寄り添う（仕様書 §6）。
@@ -482,8 +482,16 @@ class _TrendBadge extends StatelessWidget {
     final i18n = context.i18n;
     final (label, icon, color) = switch (diffWeek) {
       null => (i18n.tr('trend_start'), Icons.spa_outlined, AppColors.inkSoft),
-      final d when d > 1 => (i18n.tr('trend_up'), Icons.north_east, AppColors.bull),
-      final d when d < -1 => (i18n.tr('trend_valley'), Icons.south_east, AppColors.bear),
+      final d when d > 1 => (
+        i18n.tr('trend_up'),
+        Icons.north_east,
+        AppColors.bull,
+      ),
+      final d when d < -1 => (
+        i18n.tr('trend_valley'),
+        Icons.south_east,
+        AppColors.bear,
+      ),
       _ => (i18n.tr('trend_flat'), Icons.trending_flat, AppColors.accent),
     };
     return Container(
@@ -527,9 +535,13 @@ class _StatRow extends StatelessWidget {
 
     return Row(
       children: [
-        Expanded(child: _diffCard(context, i18n.tr('compare_one_month'), month)),
+        Expanded(
+          child: _diffCard(context, i18n.tr('compare_one_month'), month),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _diffCard(context, i18n.tr('compare_half_year'), halfYear)),
+        Expanded(
+          child: _diffCard(context, i18n.tr('compare_half_year'), halfYear),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: _statCard(
@@ -636,16 +648,16 @@ class _TodayCardState extends State<_TodayCard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-              children: [
-                Text(
-                  i18n.tr('today_record'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                children: [
+                  Text(
+                    i18n.tr('today_record'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  written
+                  const Spacer(),
+                  Text(
+                    written
                         ? '${total >= 0 ? '+' : ''}${total.toStringAsFixed(1)}'
                         : i18n.tr('seconds_ok'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
