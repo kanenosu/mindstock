@@ -31,8 +31,9 @@ void main() {
         // The plugin's channel handshake does not initialize the native ad SDK.
         if (call.method == '_init') return null;
         calls.add(call);
-        if (call.method == 'MobileAds#initialize')
+        if (call.method == 'MobileAds#initialize') {
           return InitializationStatus({});
+        }
         return null;
       });
       messenger.setMockMethodCallHandler(ump, (call) async {
