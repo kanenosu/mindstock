@@ -1,7 +1,7 @@
 name: mindstock
 description: "人生チャート日記アプリ — 日記を書くだけで人生がローソク足チャートになる"
 publish_to: 'none'
-version: 0.2.4+13
+version: 0.2.4+14
 
 environment:
   # in_app_purchase 3.3.1 requires Dart 3.10 or newer.

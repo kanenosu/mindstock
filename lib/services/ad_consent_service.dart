@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -8,15 +9,20 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 /// EEA/UK等ではAdMob側で公開したメッセージが自動表示される。規制対象外、
 /// またはメッセージ不要の場合はフォームを出さずに広告を利用できる。
 class AdConsentService {
-  AdConsentService._();
+  AdConsentService._() : _isIOS = Platform.isIOS;
+
+  @visibleForTesting
+  AdConsentService.forTesting({required bool isIOS}) : _isIOS = isIOS;
 
   static final instance = AdConsentService._();
+
+  final bool _isIOS;
 
   final Completer<void> _privacyGate = Completer<void>();
   Future<bool>? _initialization;
   bool _mobileAdsInitialized = false;
 
-  /// ATTの回答（または非iOS判定）が完了するまで、どの呼び出し経路からも
+  /// 最初の画面の表示が完了するまで、どの呼び出し経路からも
   /// UMP / Mobile Adsを起動させない。SettingsScreenなどが先に生成されても、
   /// ここで待機するため起動順の競合が起きない。
   void openPrivacyGate() {
@@ -28,9 +34,21 @@ class AdConsentService {
   Future<bool> _initialize() async {
     try {
       await _privacyGate.future;
+      // 年齢情報は収集せず、iOSの全利用者にTFUAの保護を適用する。
+      // SDKの起動前に設定し、過去の版でATTを許可済みでもIDFAを送信しない。
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(
+          maxAdContentRating: MaxAdContentRating.g,
+          // TFUA explicitly suppresses IDFA; retain until the SDK's replacement
+          // has the same documented identifier-suppression guarantee.
+          // ignore: deprecated_member_use
+          tagForUnderAgeOfConsent: _isIOS ? 1 : null,
+        ),
+      );
+      await MobileAds.instance.setSameAppKeyEnabled(false);
       final completer = Completer<void>();
       ConsentInformation.instance.requestConsentInfoUpdate(
-        ConsentRequestParameters(tagForUnderAgeOfConsent: false),
+        ConsentRequestParameters(tagForUnderAgeOfConsent: _isIOS),
         completer.complete,
         (error) {
           debugPrint(
@@ -51,11 +69,8 @@ class AdConsentService {
 
       final allowed = await ConsentInformation.instance.canRequestAds();
       if (allowed && !_mobileAdsInitialized) {
-        _mobileAdsInitialized = true;
-        // アプリ間で使われる可能性があるGoogleのファーストパーティIDは無効化。
-        // ATTの回答にかかわらず、必要最小限の広告データだけを扱う。
-        await MobileAds.instance.setSameAppKeyEnabled(false);
         await MobileAds.instance.initialize();
+        _mobileAdsInitialized = true;
       }
       return allowed;
     } catch (error, stackTrace) {

@@ -47,8 +47,6 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>日記の音声入力と文字起こしにマイクを使用します。 / Used to record and transcribe diary entries.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>許可した場合、広告の配信と効果測定のために端末識別子を使用します。許可しなくても日記・AI解析・課金機能は利用できます。 / If allowed, a device identifier is used to deliver and measure optional rewarded ads. Journaling, AI analysis, and purchases remain available without permission.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

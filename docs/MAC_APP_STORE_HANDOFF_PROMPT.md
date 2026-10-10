@@ -93,7 +93,7 @@ Macで直接Xcodeを使えるため、Codemagicは必須ではない。ローカ
 
 審査メモには以下を入力する。
 
-`ライフチャート does not require an account. On a fresh install, the iOS ATT prompt appears immediately after the first app frame and before Google UMP or Google Mobile Ads initialization. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Before each AI analysis or transcription, an in-app dialog identifies OpenAI and the data being shared and requires explicit permission. Users can save diary entries only on device without sharing data or spending points. Failed cloud analysis uses local analysis without spending points. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points.`
+`ライフチャート does not require an account. Build 14 removes ATT requests and uses a non-tracking iOS ad configuration. Before SDK initialization, TFUA protection is applied to every iOS ad request to suppress IDFA, Publisher first-party ID is disabled, and publisher personalization is disabled. Rewarded ads are non-personalized. Advertising-related collection remains disclosed in App Privacy; no diary, audio, or Google account data is shared for advertising. Seven points are granted on first launch. Google Sign-In is optional and only for private Drive backup. Before each AI analysis or transcription, a dialog identifies OpenAI and the shared data and requires explicit permission. Users can save entries only on device without sharing or spending points. Failed cloud analysis uses local analysis without spending points. Ads and point purchases are optional.`
 
 ## 6. 課金・契約・規制
 

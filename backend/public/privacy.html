@@ -55,9 +55,9 @@
     <td>日記データをお使いのGoogleドライブのアプリ専用領域（他のアプリや通常のドライブ画面からは見えない領域）へバックアップするために使用します。</td>
   </tr>
   <tr>
-    <td>広告ID（Advertising ID）</td>
-    <td>アプリ利用中</td>
-    <td>任意のリワード広告の配信・効果測定のためにGoogle AdMobが使用します。iOSでは、広告SDKの初期化より前にApp Tracking Transparencyの許可を求めます。許可しなくても、日記・AI解析・課金機能は利用できます。</td>
+    <td>広告の配信・操作・診断情報</td>
+    <td>任意のリワード広告を利用するとき</td>
+    <td>Google AdMobが広告配信、不正防止、診断のためにIPアドレス、広告の操作情報、性能・クラッシュ情報、アプリまたは開発者内に限定される識別子を扱う場合があります。iOSでは、広告SDKの初期化前に保護設定を適用し、IDFAの送信、広告の個人向け最適化、Publisher first-party IDを無効にします。日記や音声、Googleアカウント情報を広告のために送信しません。</td>
   </tr>
   <tr>
     <td>購入情報</td>
@@ -93,9 +93,12 @@ Googleアカウントとの連携を解除した場合、バックアップさ�
 <h2>5. 広告について</h2>
 <p>
 本アプリはGoogle AdMobによるリワード広告（視聴すると特典が得られる広告）を表示します。
-広告の配信・効果測定のため、許可された場合に端末の広告IDが使用されます。iOSでは、追跡に使われ得る
-データを扱う前にApp Tracking Transparencyのシステムダイアログを表示します。許可は任意であり、
-拒否しても本アプリの主要機能と課金機能は利用できます。設定は端末の「プライバシーとセキュリティ」から変更できます。
+iOSでは広告ID（IDFA）の送信とアプリをまたぐ広告の個人向け最適化を使用せず、追跡の許可を要求しません。
+年齢情報を収集せず、全利用者の広告リクエストを同意年齢未満の利用者に適した保護設定（TFUA）で扱います。
+Publisher first-party IDを無効にし、すべてのリワード広告を非パーソナライズで要求します。
+これは「広告に伴うデータを一切収集しない」という意味ではなく、広告配信、不正防止、診断のための情報は扱われる場合があります。
+広告視聴は任意で、利用しなくても日記、ローカル解析、チャート、ポイント購入を利用できます。
+AndroidではGoogle UMPで利用可能な広告の同意設定を確認し、広告は非パーソナライズで要求します。
 </p>
 
 <h2>6. お子様のプライバシー</h2>
@@ -120,7 +123,7 @@ Googleアカウントとの連携を解除した場合、バックアップさ�
   <li><strong>Journal text, mood scores, and event data:</strong> stored locally on your device. When you request AI analysis, the content is sent temporarily through our server to OpenAI and is not stored on our server.</li>
   <li><strong>Audio:</strong> when you use voice input, the recording is sent temporarily through our server to OpenAI for transcription and is not stored on our server.</li>
   <li><strong>Google account information:</strong> used only when you choose Google sign-in to back up data to your private Google Drive app-data area.</li>
-  <li><strong>Advertising identifiers and ad interaction data:</strong> may be processed by Google AdMob for optional rewarded-ad delivery, fraud prevention, and measurement. On iOS, the App Tracking Transparency request is shown before the advertising SDK is initialized. Permission is optional; journaling, AI analysis, and purchases remain available if permission is denied. You can revisit available choices from Settings and iOS Settings.</li>
+  <li><strong>Ad delivery, interaction, and diagnostic data:</strong> AdMob may process IP addresses, ad interactions, performance/crash data, and app- or developer-bounded identifiers for delivery, fraud prevention, and diagnostics. On iOS, protective settings are applied before ad SDK initialization: TFUA treatment suitable for users under the age of consent applies to all users without collecting their ages; IDFA transmission and Publisher first-party ID are disabled; all rewarded ads are requested as non-personalized. We do not request ATT permission or use cross-app advertising personalization. This does not mean that no advertising-related data is collected. Journal text, audio, and Google account information are not shared for advertising. On Android, available ad consent choices are handled by Google UMP and ads are requested as non-personalized.</li>
   <li><strong>Purchase information:</strong> payments are processed by Google Play or Apple App Store. We do not receive your card details.</li>
 </ul>
 

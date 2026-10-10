@@ -31,7 +31,7 @@ class RewardedAdService {
     }
     RewardedAd.load(
       adUnitId: Monetization.rewardedAdUnitId,
-      // 行動履歴に基づく広告は要求しない。ATTを許可した場合でも、広告は
+      // 行動履歴に基づく広告は要求しない。追跡許可は要求せず、広告は
       // 任意のリワード導線に限定し、パーソナライズ広告を必須にしない。
       request: const AdRequest(nonPersonalizedAds: true),
       rewardedAdLoadCallback: RewardedAdLoadCallback(

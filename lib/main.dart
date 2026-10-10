@@ -15,7 +15,6 @@ import 'screens/entry_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ad_consent_service.dart';
-import 'services/tracking_permission_service.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -24,14 +23,13 @@ Future<void> main() async {
   await initializeDateFormatting('en_US');
   runApp(const ProviderScope(child: LifeChartApp()));
 
-  // 最初の画面を表示してからATTを要求する。回答が完了するまではAdMob/UMPを
-  // 初期化しないため、追跡に使われ得るデータが許可より先に収集されない。
+  // 最初の画面の後に広告を準備する。iOSでは追跡許可を要求せず、
+  // 広告SDKの初期化前に識別子を送信しない保護設定を適用する。
   unawaited(_initializeAdvertisingAfterPrivacyGate());
 }
 
 Future<void> _initializeAdvertisingAfterPrivacyGate() async {
   await WidgetsBinding.instance.endOfFrame;
-  await TrackingPermissionService.instance.requestAuthorization();
   AdConsentService.instance.openPrivacyGate();
   await AdConsentService.instance.initialize();
 }
