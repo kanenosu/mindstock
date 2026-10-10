@@ -316,15 +316,16 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
   Future<Map<String, DiaryEntry>> build() =>
       ref.read(databaseProvider).loadAll();
 
-  /// コア体験: 書く → AIが即採点 → 即反映（確認画面なし、仕様書 §3）。
+  /// 明示的な送信許可がない場合は、端末内でのみ解析する。
   ///
   /// 保存は解析を待たずに行い、解析が終わったら出来事だけ差し替える。
   /// 解析に失敗してもデモ解析で必ずチャートに反映する。
   /// [date] を過去日にすれば「日付を選んでエントリー」になる。
-  Future<void> submitDiary({
+  Future<bool> submitDiary({
     required DateTime date,
     required String text,
     double? moodScore,
+    bool allowCloudAnalysis = false,
   }) async {
     final key = ChartCalculator.dateKey(date);
     final current = state.valueOrNull ?? {};
@@ -339,18 +340,25 @@ class EntriesNotifier extends AsyncNotifier<Map<String, DiaryEntry>> {
     );
     await _save(entry);
 
-    // 2. AI解析（失敗時はデモ解析にフォールバック）
+    var cloudAnalysisCompleted = false;
+    // 2. 許可された場合のみクラウド解析。失敗・拒否時は端末内で解析。
     if (text.trim().isNotEmpty) {
       final recent = _recentEntries(before: key);
       List<LifeEvent> events;
       try {
-        events = await ref.read(analyzerProvider).analyze(text, recent);
+        final analyzer = allowCloudAnalysis
+            ? ref.read(analyzerProvider)
+            : DemoDiaryAnalyzer();
+        events = await analyzer.analyze(text, recent);
+        cloudAnalysisCompleted =
+            allowCloudAnalysis && analyzer is! DemoDiaryAnalyzer;
       } catch (_) {
         events = await DemoDiaryAnalyzer().analyze(text, recent);
       }
       entry = entry.copyWith(events: events);
       await _save(entry);
     }
+    return cloudAnalysisCompleted;
   }
 
   /// 編集画面からの出来事の微調整・手動追加（仕様書 §3 オプション機能）。

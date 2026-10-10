@@ -10,6 +10,7 @@ import 'package:record/record.dart';
 import '../providers.dart';
 import '../l10n.dart';
 import '../theme.dart';
+import 'ai_data_consent_dialog.dart';
 
 /// 音声入力ボタン（Whisper）。
 ///
@@ -115,6 +116,9 @@ class _VoiceInputButtonState extends ConsumerState<VoiceInputButton>
     setState(() => _state = _RecordState.transcribing);
 
     try {
+      if (!mounted) return;
+      final choice = await showAiDataConsent(context, voice: true);
+      if (!mounted || choice != AiDataChoice.send) return;
       final service = ref.read(transcriptionServiceProvider);
       final locale = ref.read(appLocaleCodeProvider).valueOrNull ?? 'ja';
       final language = locale == 'en' ? 'en' : 'ja';

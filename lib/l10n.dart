@@ -29,7 +29,7 @@ class AppI18n {
     'next': 'つぎへ',
     'onboarding_title_1': 'ただ、書くだけ。',
     'onboarding_body_1':
-        '日記を書くと、AIが出来事を読み取って\nその日の重要度を採点します。\n面倒な入力や確認は、なにもありません。',
+        '日記を書くと、AIが出来事を読み取って\nその日の重要度を採点します。\nAIへの送信は、あなたが許可したときだけ。',
     'onboarding_title_2': '人生が、チャートになる。',
     'onboarding_body_2':
         '毎日の記録が株価のようなチャートに。\nいい日は上がり、悪い日は下がる。\n書けない日は「平穏な日」。罰しません。',
@@ -74,6 +74,13 @@ class AppI18n {
     'voice_permission_required': 'マイクの権限が必要です',
     'voice_unrecognized': '音声を認識できませんでした。もう一度試してください',
     'voice_tap_to_finish': 'タップで完了',
+    'ai_data_consent_title': 'OpenAIへの送信を許可しますか？',
+    'ai_diary_consent_body':
+        'この日記の本文と、直近最大7件の日記の日付・要約を、ライフチャートのサーバー経由でOpenAIへ送信し、出来事とチャートを解析します。日記に書いた個人情報も送信対象になります。\n\n「端末だけに保存」を選ぶと、AIへ送信せず端末内で簡易解析します。ポイントは消費しません。詳しい取扱いは設定のプライバシーポリシーで確認できます。',
+    'ai_audio_consent_body':
+        '今録音した音声と選択中の言語を、ライフチャートのサーバー経由でOpenAIへ送信し、文字起こしします。音声に含まれる個人情報も送信対象になります。\n\nキャンセルすると音声を送信せず、今回の録音ファイルを削除します。日記の本文はそのまま残ります。詳しい取扱いは設定のプライバシーポリシーで確認できます。',
+    'ai_save_locally': '端末だけに保存',
+    'ai_allow_send': 'OpenAIへの送信を許可',
     'delete_all': '全データを削除',
     'delete_all_confirm_title': '全データを削除しますか？',
     'delete_all_confirm_body': 'すべての日記と出来事が消えます。この操作は元に戻せません。',
@@ -230,7 +237,7 @@ class AppI18n {
     'next': 'Next',
     'onboarding_title_1': 'Just write.',
     'onboarding_body_1':
-        'When you write, AI reads your day and scores the day\'s importance.\nNo heavy input or extra confirmations.',
+        'When you write, AI reads your day and scores the day\'s importance.\nYour entries are sent to AI only with your permission.',
     'onboarding_title_2': 'Your life becomes a chart.',
     'onboarding_body_2':
         'Daily entries form a chart like stock movement.\nGood days rise, and hard days fall.\nA day not written is a calm day, not a penalty.',
@@ -278,6 +285,13 @@ class AppI18n {
     'voice_permission_required': 'Microphone permission is required',
     'voice_unrecognized': 'Failed to recognize the voice. Please try again.',
     'voice_tap_to_finish': 'Tap to finish',
+    'ai_data_consent_title': 'Allow sharing with OpenAI?',
+    'ai_diary_consent_body':
+        'This entry and the dates and summaries of up to seven recent entries will be sent through the Life Chart server to OpenAI to analyze events and your chart. Personal information written in your entries is included.\n\nChoose "Save only on device" to use local analysis without sending data to AI or spending points. See Settings > Privacy Policy for details.',
+    'ai_audio_consent_body':
+        'The audio you just recorded and your selected language will be sent through the Life Chart server to OpenAI for transcription. Personal information spoken in the recording is included.\n\nCancel to send nothing and delete this recording. Your diary text stays unchanged. See Settings > Privacy Policy for details.',
+    'ai_save_locally': 'Save only on device',
+    'ai_allow_send': 'Allow sending to OpenAI',
     'delete_all': 'Delete all data',
     'delete_all_confirm_title': 'Delete all data?',
     'delete_all_confirm_body':

@@ -8,13 +8,14 @@ import '../l10n.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets/diary_calendar.dart';
+import '../widgets/ai_data_consent_dialog.dart';
 import '../widgets/points_sheet.dart';
 import '../widgets/voice_input_button.dart';
 
 /// 日記入力画面（仕様書 §7-1）。
 ///
 /// コア体験: 書く → 送信 → AIが即採点 → その日のローソク足に自動反映。
-/// 確認画面は挟まない。
+/// AIへのデータ送信は、ユーザーが送信を許可した場合だけ行う。
 ///
 /// 気分は絵文字を1つ選ぶだけ（軽めの日用の入力階層、仕様書 §2）。
 /// 文章を書いた日は気分は使わず、採点はAIに任せる —
@@ -87,32 +88,34 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
   Future<void> _submit() async {
     final text = _controller.text.trim();
-    if (!_canSubmit) return;
-
-    // 文章を書いた日はAI解析が走る＝ポイントを消費する。
-    // 気分だけの日はAPIを叩かないので無料（ポイント不要）。
-    final willAnalyze = text.isNotEmpty;
-    if (willAnalyze) {
-      final balance = ref.read(pointsProvider).valueOrNull ?? 0;
-      if (balance < Monetization.analysisCost) {
-        // ポイント不足 → 補充シートを開く（広告 / 課金）。
-        await showPointsSheet(context);
-        return;
-      }
-    }
+    if (!_canSubmit || _submitting) return;
 
     setState(() => _submitting = true);
     try {
-      await ref
+      var allowCloudAnalysis = false;
+      if (text.isNotEmpty) {
+        final choice = await showAiDataConsent(context);
+        if (!mounted || choice == AiDataChoice.cancel) return;
+        allowCloudAnalysis = choice == AiDataChoice.send;
+      }
+      if (allowCloudAnalysis) {
+        final balance = ref.read(pointsProvider).valueOrNull ?? 0;
+        if (balance < Monetization.analysisCost) {
+          await showPointsSheet(context);
+          return;
+        }
+      }
+      final cloudAnalysisCompleted = await ref
           .read(entriesProvider.notifier)
           .submitDiary(
             date: _date,
             text: text,
             // 文章を書いた日は気分は使わない — 採点はAIに任せる
             moodScore: text.isNotEmpty ? null : _mood,
+            allowCloudAnalysis: allowCloudAnalysis,
           );
-      // 解析が走った時だけポイントを消費する。
-      if (willAnalyze) {
+      // オフライン保存やサーバー失敗時の簡易解析には課金しない。
+      if (cloudAnalysisCompleted) {
         await ref
             .read(pointsProvider.notifier)
             .spend(Monetization.analysisCost);

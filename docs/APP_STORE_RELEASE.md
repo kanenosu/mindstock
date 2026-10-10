@@ -117,7 +117,7 @@ App Store Connectで次の商品IDを作り、初回アプリ版と一緒に審�
 
 ## App Reviewメモ案
 
-`ライフチャート does not require an account. On a fresh install, the iOS ATT prompt appears immediately after the first app frame and before Google UMP or Google Mobile Ads initialization. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points. Voice recordings are sent for transcription only after the user holds the microphone button and grants microphone permission.`
+`ライフチャート does not require an account. On a fresh install, the iOS ATT prompt appears immediately after the first app frame and before Google UMP or Google Mobile Ads initialization. Seven points are granted on first launch, so the reviewer can test AI journal analysis without making a purchase or watching an ad. Google Sign-In is optional and is used only for backup to the user's private Google Drive app-data folder. Before every AI analysis or audio transcription, an in-app dialog identifies OpenAI and the data being shared and requires explicit permission. Diary users can choose Save only on device without sharing data or spending points. A failed cloud analysis falls back to local analysis without spending points. Rewarded ads and consumable point packs are optional ways to obtain additional AI-analysis points.`
 
 ## 残作業
 
