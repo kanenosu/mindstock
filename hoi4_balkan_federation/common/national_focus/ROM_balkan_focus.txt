@@ -1,4 +1,5 @@
 # ルーマニア：バルカン路線（イベント blkf.2 で選択した場合のみ読み込まれる）
+# 配置：協調 x0-4 / 警戒 x6-10 / 王政と政治 x12-16 / 産業 x18-22 / 軍事 x24-31
 focus_tree = {
 	id = ROM_balkan_focus
 
@@ -9,7 +10,9 @@ focus_tree = {
 	default = no
 	reset_on_civilwar = no
 
-	# ---- 協調路線 ----
+	# =====================================================================
+	#  協調路線
+	# =====================================================================
 	focus = {
 		id = rom_blk_rapprochement
 		icon = GFX_goal_generic_improve_relations
@@ -35,19 +38,7 @@ focus_tree = {
 		bypass = { NOT = { owns_state = 77 } }
 		ai_will_do = { factor = 3 }
 		completion_reward = {
-			# 南ドブロジャを連邦へ譲渡し、補償を受ける
-			remove_state_core = 77
-			77 = { add_core_of = BLK }
-			BLK = { transfer_state = 77 }
-			add_political_power = 100
-			random_owned_controlled_state = {
-				prioritize = { 46 }
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
-			}
-			if = { limit = { NOT = { has_idea = ROM_balkan_partnership } } add_ideas = ROM_balkan_partnership }
-			if = { limit = { has_idea = ROM_dobruja_vigilance } remove_ideas = ROM_dobruja_vigilance }
-			BLK = { add_opinion_modifier = { target = ROM modifier = BLK_sold_dobruja } }
+			country_event = { id = blkf.154 days = 1 }
 		}
 	}
 	focus = {
@@ -62,6 +53,7 @@ focus_tree = {
 			add_political_power = 50
 			if = { limit = { NOT = { has_idea = ROM_balkan_partnership } } add_ideas = ROM_balkan_partnership }
 			if = { limit = { has_idea = ROM_dobruja_vigilance } remove_ideas = ROM_dobruja_vigilance }
+			if = { limit = { country_exists = CZE } CZE = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } } }
 		}
 	}
 	focus = {
@@ -82,11 +74,42 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = rom_blk_danube_commission
+		icon = GFX_goal_generic_construct_infrastructure
+		prerequisite = { focus = rom_blk_join_entente }
+		x = 1
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_ideas = ROM_danube_commission
+			if = { limit = { owns_state = 46 } 46 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			if = { limit = { owns_state = 971 } 971 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			country_event = { id = blkf.156 days = 5 }
+		}
+	}
+	focus = {
+		id = rom_blk_titulescu_diplomacy
+		icon = GFX_goal_generic_improve_relations
+		prerequisite = { focus = rom_blk_join_entente }
+		x = 3
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_ideas = ROM_titulescu_diplomacy
+			if = { limit = { country_exists = FRA } FRA = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } } }
+			if = { limit = { country_exists = SOV } SOV = { add_opinion_modifier = { target = ROM modifier = BLK_trade_mission } } }
+			add_political_power = 50
+		}
+	}
+	focus = {
 		id = rom_blk_federal_republic
 		icon = GFX_goal_generic_major_alliance
-		prerequisite = { focus = rom_blk_join_entente }
-		x = 2
-		y = 3
+		prerequisite = { focus = rom_blk_danube_commission focus = rom_blk_titulescu_diplomacy }
+		mutually_exclusive = { focus = rom_blk_independent_partner }
+		x = 1
+		y = 4
 		cost = 15
 		available = {
 			NOT = { has_war = yes }
@@ -94,16 +117,34 @@ focus_tree = {
 		}
 		ai_will_do = { factor = 2 modifier = { factor = 3 threat > 0.5 } }
 		completion_reward = {
+			country_event = { id = blkf.159 days = 1 }
 			blk_admit_to_federation = yes
 			every_country = { news_event = { id = blknews.9 hours = 6 } }
 		}
 	}
+	focus = {
+		id = rom_blk_independent_partner
+		icon = GFX_goal_generic_military_sphere
+		prerequisite = { focus = rom_blk_danube_commission focus = rom_blk_titulescu_diplomacy }
+		mutually_exclusive = { focus = rom_blk_federal_republic }
+		x = 3
+		y = 4
+		cost = 15
+		ai_will_do = { factor = 4 }
+		completion_reward = {
+			add_ideas = ROM_independent_partner
+			add_political_power = 100
+			BLK = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } }
+		}
+	}
 
-	# ---- 警戒路線 ----
+	# =====================================================================
+	#  警戒路線
+	# =====================================================================
 	focus = {
 		id = rom_blk_fortress_dobruja
 		icon = GFX_goal_generic_fortify_city
-		x = 7
+		x = 8
 		y = 0
 		cost = 5
 		mutually_exclusive = { focus = rom_blk_rapprochement }
@@ -117,6 +158,7 @@ focus_tree = {
 		id = rom_blk_polish_alliance
 		icon = GFX_goal_generic_improve_relations
 		prerequisite = { focus = rom_blk_fortress_dobruja }
+		mutually_exclusive = { focus = rom_blk_axis_orientation }
 		x = 6
 		y = 1
 		cost = 10
@@ -129,10 +171,29 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = rom_blk_axis_orientation
+		icon = GFX_goal_generic_dangerous_deal
+		prerequisite = { focus = rom_blk_fortress_dobruja }
+		mutually_exclusive = { focus = rom_blk_polish_alliance }
+		x = 8
+		y = 1
+		cost = 10
+		available = {
+			GER = { has_government = fascism }
+			NOT = { has_war_with = GER }
+		}
+		ai_will_do = { factor = 3 modifier = { factor = 2 has_government = fascism } }
+		completion_reward = {
+			add_opinion_modifier = { target = GER modifier = BLK_balkan_rapprochement }
+			GER = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } }
+			add_popularity = { ideology = fascism popularity = 0.05 }
+		}
+	}
+	focus = {
 		id = rom_blk_rearm_bucharest
 		icon = GFX_goal_generic_construct_mil_factory
 		prerequisite = { focus = rom_blk_fortress_dobruja }
-		x = 8
+		x = 10
 		y = 1
 		cost = 10
 		ai_will_do = { factor = 5 }
@@ -145,10 +206,25 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = rom_blk_bessarabia_vigilance
+		icon = GFX_goal_generic_fortify_city
+		prerequisite = { focus = rom_blk_rearm_bucharest }
+		x = 10
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 4 modifier = { factor = 2 SOV = { has_opinion = { target = ROM value < 0 } } } }
+		completion_reward = {
+			if = { limit = { owns_state = 766 } 766 = { add_building_construction = { type = bunker level = 1 instant_build = yes province = { all_provinces = yes limit_to_border = yes level < 2 } } } }
+			add_war_support = 0.03
+			country_event = { id = blkf.155 days = 10 }
+		}
+	}
+	focus = {
 		id = rom_blk_southern_ambition
 		icon = GFX_goal_generic_more_territorial_claims
-		prerequisite = { focus = rom_blk_polish_alliance focus = rom_blk_rearm_bucharest }
-		x = 7
+		prerequisite = { focus = rom_blk_polish_alliance focus = rom_blk_axis_orientation }
+		prerequisite = { focus = rom_blk_rearm_bucharest }
+		x = 8
 		y = 2
 		cost = 10
 		ai_will_do = { factor = 3 }
@@ -179,12 +255,162 @@ focus_tree = {
 			create_wargoal = { type = take_state_focus target = BLK generator = { 801 211 } }
 		}
 	}
+	focus = {
+		id = rom_blk_border_vigilance
+		icon = GFX_goal_generic_defence
+		prerequisite = { focus = rom_blk_southern_ambition }
+		x = 9
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 4 }
+		completion_reward = {
+			add_ideas = ROM_southern_front
+			country_event = { id = blkf.158 days = 20 random_days = 60 }
+		}
+	}
+	focus = {
+		id = rom_blk_greater_romania_preserved
+		icon = GFX_goal_generic_national_unity
+		prerequisite = { focus = rom_blk_war_for_the_danube focus = rom_blk_border_vigilance }
+		x = 8
+		y = 4
+		cost = 15
+		ai_will_do = { factor = 4 }
+		completion_reward = {
+			add_ideas = ROM_greater_romania_preserved
+			add_war_support = 0.05
+			add_political_power = 100
+		}
+	}
 
-	# ---- 共通：産業と軍 ----
+	# =====================================================================
+	#  王政と政治
+	# =====================================================================
+	focus = {
+		id = rom_blk_carol_personal_rule
+		icon = GFX_focus_generic_monarchy_1
+		x = 14
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_political_power = 50
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			country_event = { id = blkf.151 days = 90 random_days = 120 }
+		}
+	}
+	focus = {
+		id = rom_blk_royal_dictatorship
+		icon = GFX_goal_generic_political_pressure
+		prerequisite = { focus = rom_blk_carol_personal_rule }
+		mutually_exclusive = { focus = rom_blk_parliamentary_compromise }
+		x = 13
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 5 modifier = { factor = 2 has_completed_focus = rom_blk_fortress_dobruja } }
+		completion_reward = {
+			country_event = { id = blkf.152 days = 1 }
+		}
+	}
+	focus = {
+		id = rom_blk_parliamentary_compromise
+		icon = GFX_goal_support_democracy
+		prerequisite = { focus = rom_blk_carol_personal_rule }
+		mutually_exclusive = { focus = rom_blk_royal_dictatorship }
+		x = 15
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 5 modifier = { factor = 2 has_completed_focus = rom_blk_rapprochement } }
+		completion_reward = {
+			add_popularity = { ideology = democratic popularity = 0.10 }
+			add_stability = 0.05
+			add_political_power = 25
+		}
+	}
+	focus = {
+		id = rom_blk_crush_iron_guard
+		icon = GFX_focus_generic_strike_at_democracy1
+		prerequisite = { focus = rom_blk_royal_dictatorship }
+		mutually_exclusive = { focus = rom_blk_iron_guard_coalition }
+		x = 12
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_popularity = { ideology = fascism popularity = -0.10 }
+			add_stability = -0.03
+			country_event = { id = blkf.153 days = 2 }
+		}
+	}
+	focus = {
+		id = rom_blk_iron_guard_coalition
+		icon = GFX_goal_support_fascism
+		prerequisite = { focus = rom_blk_royal_dictatorship }
+		mutually_exclusive = { focus = rom_blk_crush_iron_guard }
+		x = 14
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 3 modifier = { factor = 3 has_completed_focus = rom_blk_axis_orientation } }
+		completion_reward = {
+			add_ideas = ROM_iron_guard_coalition
+			add_popularity = { ideology = fascism popularity = 0.10 }
+			add_war_support = 0.05
+		}
+	}
+	focus = {
+		id = rom_blk_national_peasants
+		icon = GFX_goal_generic_consumer_goods
+		prerequisite = { focus = rom_blk_parliamentary_compromise }
+		x = 16
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_stability = 0.05
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			add_manpower = 15000
+			random_owned_controlled_state = {
+				prioritize = { 76 }
+				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = rom_blk_front_of_national_rebirth
+		icon = GFX_goal_generic_national_unity
+		prerequisite = { focus = rom_blk_crush_iron_guard focus = rom_blk_iron_guard_coalition focus = rom_blk_national_peasants }
+		x = 14
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_ideas = ROM_front_of_national_rebirth
+			add_political_power = 75
+		}
+	}
+	focus = {
+		id = rom_blk_minorities_statute
+		icon = GFX_goal_generic_consumer_goods
+		prerequisite = { focus = rom_blk_front_of_national_rebirth }
+		x = 14
+		y = 4
+		cost = 15
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_ideas = ROM_minorities_statute
+			add_stability = 0.05
+			if = { limit = { country_exists = HUN } HUN = { add_opinion_modifier = { target = ROM modifier = BLK_trade_mission } } }
+			country_event = { id = blkf.157 days = 3 }
+		}
+	}
+
+	# =====================================================================
+	#  産業
+	# =====================================================================
 	focus = {
 		id = rom_blk_industry
 		icon = GFX_goal_generic_construct_civ_factory
-		x = 12
+		x = 20
 		y = 0
 		cost = 10
 		ai_will_do = { factor = 8 }
@@ -200,7 +426,7 @@ focus_tree = {
 		id = rom_blk_oil
 		icon = GFX_goal_generic_oil_refinery
 		prerequisite = { focus = rom_blk_industry }
-		x = 11
+		x = 19
 		y = 1
 		cost = 10
 		ai_will_do = { factor = 8 }
@@ -213,11 +439,90 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = rom_blk_danube_shipping
+		icon = GFX_goal_generic_construct_infrastructure
+		prerequisite = { focus = rom_blk_industry }
+		x = 21
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			if = { limit = { owns_state = 46 } 46 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			if = { limit = { owns_state = 971 } 971 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } add_building_construction = { type = naval_base level = 1 instant_build = yes province = { all_provinces = yes limit_to_naval_base = yes } } } }
+		}
+	}
+	focus = {
+		id = rom_blk_resita_steel
+		icon = GFX_focus_generic_industry_1
+		prerequisite = { focus = rom_blk_oil focus = rom_blk_danube_shipping }
+		x = 19
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			random_owned_controlled_state = {
+				prioritize = { 82 }
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+			if = { limit = { owns_state = 82 } add_resource = { type = steel amount = 8 state = 82 } }
+		}
+	}
+	focus = {
+		id = rom_blk_astra_romana
+		icon = GFX_goal_generic_oil_refinery
+		prerequisite = { focus = rom_blk_oil focus = rom_blk_danube_shipping }
+		x = 21
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			if = { limit = { owns_state = 46 } add_resource = { type = oil amount = 10 state = 46 } }
+			random_owned_controlled_state = {
+				prioritize = { 46 }
+				add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = rom_blk_research
+		icon = GFX_focus_research
+		prerequisite = { focus = rom_blk_resita_steel focus = rom_blk_astra_romana }
+		x = 20
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_research_slot = 1
+		}
+	}
+	focus = {
+		id = rom_blk_transylvanian_industry
+		icon = GFX_goal_generic_construct_civ_factory
+		prerequisite = { focus = rom_blk_research }
+		x = 20
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			random_owned_controlled_state = {
+				prioritize = { 76 }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
+			}
+			add_tech_bonus = { name = rom_blk_industry_bonus bonus = 0.50 uses = 1 category = industry }
+		}
+	}
+
+	# =====================================================================
+	#  軍事
+	# =====================================================================
+	focus = {
 		id = rom_blk_army
 		icon = GFX_goal_generic_allies_build_infantry
-		prerequisite = { focus = rom_blk_industry }
-		x = 13
-		y = 1
+		x = 26
+		y = 0
 		cost = 10
 		ai_will_do = { factor = 8 }
 		completion_reward = {
@@ -226,15 +531,87 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = rom_blk_research
-		icon = GFX_focus_research
-		prerequisite = { focus = rom_blk_oil focus = rom_blk_army }
-		x = 12
+		id = rom_blk_french_mission
+		icon = GFX_goal_generic_army_doctrines
+		prerequisite = { focus = rom_blk_army }
+		x = 25
+		y = 1
+		cost = 10
+		available = { country_exists = FRA }
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_ideas = ROM_french_mission
+			add_tech_bonus = { name = rom_blk_doctrine_bonus bonus = 0.50 uses = 1 category = land_doctrine }
+			FRA = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } }
+		}
+	}
+	focus = {
+		id = rom_blk_mountain_hunters
+		icon = GFX_goal_generic_special_forces
+		prerequisite = { focus = rom_blk_army }
+		x = 27
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_tech_bonus = { name = rom_blk_mountain_bonus bonus = 0.50 uses = 1 technology = tech_mountaineers technology = tech_mountaineers2 }
+			add_ideas = ROM_mountain_hunters
+		}
+	}
+	focus = {
+		id = rom_blk_carpathian_line
+		icon = GFX_goal_generic_fortify_city
+		prerequisite = { focus = rom_blk_french_mission focus = rom_blk_mountain_hunters }
+		x = 26
 		y = 2
 		cost = 10
-		ai_will_do = { factor = 8 }
+		ai_will_do = { factor = 5 modifier = { factor = 2 HUN = { has_opinion = { target = ROM value < 0 } } } }
 		completion_reward = {
-			add_research_slot = 1
+			add_ideas = ROM_carpathian_line
+			if = { limit = { owns_state = 76 } 76 = { add_building_construction = { type = bunker level = 2 instant_build = yes province = { all_provinces = yes limit_to_border = yes level < 3 } } } }
+		}
+	}
+	focus = {
+		id = rom_blk_air_force
+		icon = GFX_goal_generic_build_airforce
+		prerequisite = { focus = rom_blk_carpathian_line }
+		x = 26
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_tech_bonus = { name = rom_blk_fighter_bonus bonus = 0.50 uses = 1 category = light_air }
+			air_experience = 20
+			if = { limit = { owns_state = 46 } 46 = { add_building_construction = { type = air_base level = 2 instant_build = yes } } }
+		}
+	}
+	focus = {
+		id = rom_blk_navy
+		icon = GFX_goal_generic_build_navy
+		x = 30
+		y = 0
+		cost = 10
+		ai_will_do = { factor = 4 }
+		completion_reward = {
+			add_tech_bonus = { name = rom_blk_naval_bonus bonus = 0.50 uses = 1 category = naval_doctrine }
+			navy_experience = 15
+			random_owned_controlled_state = {
+				prioritize = { 971 }
+				add_building_construction = { type = dockyard level = 1 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = rom_blk_danube_flotilla
+		icon = GFX_goal_generic_navy_cruiser
+		prerequisite = { focus = rom_blk_navy }
+		x = 30
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 4 }
+		completion_reward = {
+			add_ideas = ROM_danube_flotilla
+			navy_experience = 10
 		}
 	}
 }

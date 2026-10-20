@@ -1,0 +1,346 @@
+# ギリシャ：バルカン路線のイベント
+add_namespace = blkf
+add_namespace = blknews
+
+# ---------------------------------------------------------------
+# blkf.100 8月4日体制の成立（方針 gre_blk_fourth_of_august）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.100
+	title = blkf.100.t
+	desc = blkf.100.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 議会を停止し、国王の承認のもとに独裁を敷く
+		name = blkf.100.a
+		add_ideas = GRE_fourth_of_august_regime
+		add_popularity = { ideology = neutrality popularity = 0.10 }
+		add_popularity = { ideology = democratic popularity = -0.10 }
+		add_stability = -0.05
+		add_political_power = 100
+		every_country = { news_event = { id = blknews.100 hours = 6 } }
+		ai_chance = { factor = 80 }
+	}
+	option = {
+		# 非常大権にとどめる
+		name = blkf.100.b
+		add_political_power = 50
+		add_stability = 0.02
+		ai_chance = { factor = 20 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.101 KKE弾圧の結果（方針 gre_blk_suppress_kke）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.101
+	title = blkf.101.t
+	desc = blkf.101.d
+	picture = GFX_report_event_generic_riot
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 「悔悟声明」制度を導入する
+		name = blkf.101.a
+		add_popularity = { ideology = communism popularity = -0.03 }
+		add_stability = 0.02
+		if = { limit = { BLK = { has_government = communism } } BLK = { add_opinion_modifier = { target = GRE modifier = BLK_federation_threat } } }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 島流しと強制収容所
+		name = blkf.101.b
+		add_popularity = { ideology = communism popularity = -0.05 }
+		add_stability = -0.03
+		add_war_support = 0.03
+		if = { limit = { country_exists = BLK } BLK = { add_opinion_modifier = { target = GRE modifier = BLK_refused_proposal } } }
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.102 ヴェニゼロス派将校の帰還（方針 gre_blk_venizelist_reconciliation）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.102
+	title = blkf.102.t
+	desc = blkf.102.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 1935年の反乱将校を全員復職させる
+		name = blkf.102.a
+		army_experience = 20
+		add_stability = 0.03
+		add_popularity = { ideology = democratic popularity = 0.05 }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 恩赦は与えるが軍には戻さない
+		name = blkf.102.b
+		add_political_power = 50
+		add_stability = 0.01
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.103 テッサロニキ協定への反応（方針 gre_blk_salonika_agreement）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.103
+	title = blkf.103.t
+	desc = blkf.103.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 商人たちの歓迎を受け入れる
+		name = blkf.103.a
+		add_political_power = 25
+		if = { limit = { owns_state = 731 } 731 = { add_extra_state_shared_building_slots = 1 } }
+		ai_chance = { factor = 70 }
+	}
+	option = {
+		# 連邦の税関員を置かせない
+		name = blkf.103.b
+		add_stability = 0.02
+		if = { limit = { country_exists = BLK } BLK = { add_opinion_modifier = { target = GRE modifier = BLK_refused_proposal } } }
+		ai_chance = { factor = 30 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.104 イタリアの接近（方針 gre_blk_italian_understanding）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.104
+	title = blkf.104.t
+	desc = blkf.104.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# ドデカネス問題を棚上げし、反連邦で協調する
+		name = blkf.104.a
+		add_opinion_modifier = { target = ITA modifier = BLK_adriatic_detente }
+		if = { limit = { country_exists = ITA } ITA = { add_opinion_modifier = { target = GRE modifier = BLK_adriatic_detente } } }
+		add_war_support = 0.03
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# ドデカネス返還を条件にする
+		name = blkf.104.b
+		add_political_power = 25
+		add_stability = 0.02
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.105 連邦：ギリシャの北エピルス要求（方針 gre_blk_northern_epirus / BLK が受信）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.105
+	title = blkf.105.t
+	desc = blkf.105.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	option = {
+		# 断固拒否する
+		name = blkf.105.a
+		add_war_support = 0.03
+		add_opinion_modifier = { target = GRE modifier = BLK_ultimatum }
+		GRE = {
+			add_opinion_modifier = { target = BLK modifier = BLK_ultimatum }
+			country_event = { id = blkf.106 days = 1 }
+		}
+		ai_chance = { factor = 80 }
+	}
+	option = {
+		# 南アルバニアのギリシャ系住民に自治を認める
+		name = blkf.105.b
+		add_political_power = -50
+		add_stability = -0.02
+		GRE = {
+			add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+			add_political_power = 50
+		}
+		ai_chance = { factor = 20 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.106 ギリシャ：連邦の拒否
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.106
+	title = blkf.106.t
+	desc = blkf.106.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+
+	option = {
+		# 要求を取り下げない
+		name = blkf.106.a
+		add_war_support = 0.05
+		add_state_claim = 44
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.107 小アジア難民の統合（方針 gre_blk_refugee_integration）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.107
+	title = blkf.107.t
+	desc = blkf.107.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 難民定住地に工場を建てる
+		name = blkf.107.a
+		random_owned_controlled_state = {
+			prioritize = { 731 }
+			add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		}
+		ai_chance = { factor = 50 }
+	}
+	option = {
+		# 難民を軍に動員する
+		name = blkf.107.b
+		add_manpower = 20000
+		add_war_support = 0.02
+		ai_chance = { factor = 50 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.108 連邦構成国ギリシャ（方針 gre_blk_federal_republic）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.108
+	title = blkf.108.t
+	desc = blkf.108.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = blkf.108.a
+		add_stability = 0.05
+		add_political_power = 50
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.109 国境事件（警戒路線で反復）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.109
+	title = blkf.109.t
+	desc = blkf.109.d
+	picture = GFX_report_event_generic_army
+
+	trigger = {
+		tag = GRE
+		has_country_flag = gre_balkan_tree_loaded
+		has_completed_focus = gre_blk_northern_fortifications
+		country_exists = BLK
+		NOT = { has_war_with = BLK }
+		NOT = { is_in_faction_with = BLK }
+		NOT = { has_country_flag = gre_border_incident_cooldown }
+	}
+	mean_time_to_happen = { days = 300 }
+
+	immediate = {
+		hidden_effect = { set_country_flag = { flag = gre_border_incident_cooldown value = 1 days = 240 } }
+	}
+
+	option = {
+		# 抗議にとどめる
+		name = blkf.109.a
+		add_political_power = 10
+		add_opinion_modifier = { target = BLK modifier = BLK_border_incident }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 国境部隊を増強する
+		name = blkf.109.b
+		add_war_support = 0.03
+		add_political_power = -25
+		BLK = { add_opinion_modifier = { target = GRE modifier = BLK_border_incident } }
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.110 連邦の共産主義宣伝（連邦が共産主義の場合に反復）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.110
+	title = blkf.110.t
+	desc = blkf.110.d
+	picture = GFX_report_event_generic_rally
+
+	trigger = {
+		tag = GRE
+		has_country_flag = gre_balkan_tree_loaded
+		BLK = { has_government = communism }
+		NOT = { has_government = communism }
+		NOT = { has_country_flag = gre_red_propaganda_cooldown }
+	}
+	mean_time_to_happen = { days = 400 }
+
+	immediate = {
+		hidden_effect = { set_country_flag = { flag = gre_red_propaganda_cooldown value = 1 days = 365 } }
+	}
+
+	option = {
+		# 検閲を強化する
+		name = blkf.110.a
+		add_popularity = { ideology = communism popularity = -0.02 }
+		add_political_power = -25
+		ai_chance = { factor = 70 }
+	}
+	option = {
+		# 放置する
+		name = blkf.110.b
+		add_popularity = { ideology = communism popularity = 0.04 }
+		ai_chance = { factor = 30 }
+	}
+}
+
+# ---------------------------------------------------------------
+# ニュース
+# ---------------------------------------------------------------
+news_event = {
+	id = blknews.100
+	title = blknews.100.t
+	desc = blknews.100.d
+	picture = GFX_news_event_generic_army
+	major = yes
+	is_triggered_only = yes
+	option = { name = blknews.100.a }
+}
+news_event = {
+	id = blknews.102
+	title = blknews.102.t
+	desc = blknews.102.d
+	picture = GFX_news_event_generic_army
+	major = yes
+	is_triggered_only = yes
+	option = { name = blknews.102.a }
+}

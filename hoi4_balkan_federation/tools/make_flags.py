@@ -42,6 +42,16 @@ def design(variant):
             return BLACK if star(nx, ny) else base
         if variant == "communism":
             return GOLD if star(nx, ny, 0.3, 0.5, 0.3) else RED
+        if variant.startswith("kingdom"):
+            # 王国：三色＋金星＋金の王冠帯（上端）
+            base = tricolor(nx, ny, BLUE, WHITE, RED)
+            if ny < 0.08:
+                return GOLD
+            return GOLD if star(nx, ny) else base
+        if variant.startswith("republic"):
+            # 共和国：三色＋白星（青地に白縁）
+            base = tricolor(nx, ny, BLUE, WHITE, RED)
+            return BLUE if star(nx, ny, 0.5, 0.5, 0.26) and not star(nx, ny, 0.5, 0.5, 0.18) else (WHITE if star(nx, ny, 0.5, 0.5, 0.18) and ny >= 1/3 and ny < 2/3 else base)
         if variant.startswith("greater"):
             sub = variant[len("greater"):].lstrip("_")
             if sub == "communism":
@@ -69,7 +79,8 @@ def write_tga(path, w, h, fn):
         f.write(header + data)
 
 VARIANTS = ["", "neutrality", "democratic", "fascism", "communism",
-            "greater", "greater_neutrality", "greater_democratic", "greater_fascism", "greater_communism"]
+            "greater", "greater_neutrality", "greater_democratic", "greater_fascism", "greater_communism",
+            "kingdom", "kingdom_neutrality", "republic", "republic_democratic"]
 
 if __name__ == "__main__":
     for v in VARIANTS:

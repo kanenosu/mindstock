@@ -1,0 +1,104 @@
+# 列強・隣国チェーン用 AI 戦略
+ITA_albania_war_strategy = {
+	enable = {
+		original_tag = ITA
+		has_country_flag = ita_albania_war_chosen
+		country_exists = BLK
+	}
+	abort = {
+		OR = {
+			NOT = { country_exists = BLK }
+			has_non_aggression_pact_with = BLK
+			is_in_faction_with = BLK
+		}
+	}
+	ai_strategy = { type = conquer id = "BLK" value = 40 }
+	ai_strategy = { type = prepare_for_war id = "BLK" value = 40 }
+	ai_strategy = { type = antagonize id = "BLK" value = 30 }
+}
+ITA_adriatic_detente_strategy = {
+	enable = {
+		original_tag = ITA
+		has_idea = ITA_albanian_settlement
+	}
+	abort = { NOT = { has_idea = ITA_albanian_settlement } }
+	ai_strategy = { type = befriend id = "BLK" value = 20 }
+}
+HUN_axis_southern_strategy = {
+	enable = {
+		original_tag = HUN
+		has_idea = HUN_southern_policy_axis
+		country_exists = BLK
+	}
+	abort = {
+		OR = {
+			NOT = { has_idea = HUN_southern_policy_axis }
+			is_in_faction_with = BLK
+		}
+	}
+	ai_strategy = { type = antagonize id = "BLK" value = 30 }
+	ai_strategy = { type = befriend id = "GER" value = 20 }
+	ai_strategy = { type = conquer id = "BLK" value = 10 }
+}
+HUN_detente_strategy = {
+	enable = {
+		original_tag = HUN
+		has_idea = HUN_southern_policy_detente
+	}
+	abort = { NOT = { has_idea = HUN_southern_policy_detente } }
+	ai_strategy = { type = befriend id = "BLK" value = 20 }
+}
+GER_sphere_strategy = {
+	enable = {
+		original_tag = GER
+		has_idea = GER_southeast_economic_sphere
+		country_exists = BLK
+	}
+	abort = {
+		OR = {
+			NOT = { has_idea = GER_southeast_economic_sphere }
+			has_war_with = BLK
+		}
+	}
+	ai_strategy = { type = befriend id = "BLK" value = 15 }
+	ai_strategy = { type = influence id = "BLK" value = 30 }
+}
+CZE_renewed_entente_strategy = {
+	enable = {
+		original_tag = CZE
+		has_idea = CZE_little_entente_renewed
+		country_exists = BLK
+	}
+	abort = { NOT = { has_idea = CZE_little_entente_renewed } }
+	ai_strategy = { type = befriend id = "BLK" value = 40 }
+	ai_strategy = { type = alliance id = "BLK" value = 30 }
+}
+FRA_eastern_network_strategy = {
+	enable = {
+		original_tag = FRA
+		has_idea = FRA_eastern_alliance_network
+		country_exists = BLK
+	}
+	abort = { NOT = { has_idea = FRA_eastern_alliance_network } }
+	ai_strategy = { type = befriend id = "BLK" value = 30 }
+	ai_strategy = { type = protect id = "BLK" value = 20 }
+}
+ENG_mediterranean_watch_strategy = {
+	enable = {
+		original_tag = ENG
+		has_idea = ENG_mediterranean_watch
+		country_exists = BLK
+	}
+	abort = { NOT = { has_idea = ENG_mediterranean_watch } }
+	ai_strategy = { type = befriend id = "BLK" value = 20 }
+	ai_strategy = { type = protect id = "BLK" value = 15 }
+}
+TUR_montreux_strategy = {
+	enable = {
+		original_tag = TUR
+		has_idea = TUR_montreux_secured
+		country_exists = BLK
+	}
+	abort = { NOT = { has_idea = TUR_montreux_secured } }
+	ai_strategy = { type = befriend id = "BLK" value = 25 }
+}

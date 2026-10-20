@@ -74,6 +74,178 @@ ideas = {
 			}
 		}
 
+		# ---- 三王評議会の議長（毎年輪番、タイムド） ----
+		BLK_chair_pavle = {
+			picture = generic_pp_unity_bonus
+			modifier = {
+				political_power_factor = 0.10
+				democratic_drift = 0.01
+				neutrality_drift = 0.02
+			}
+		}
+		BLK_chair_boris = {
+			picture = generic_morale_bonus
+			modifier = {
+				stability_factor = 0.05
+				army_org_factor = 0.03
+				fascism_drift = 0.01
+			}
+		}
+		BLK_chair_zog = {
+			picture = generic_goods_red_bonus
+			modifier = {
+				trade_opinion_factor = 0.15
+				consumer_goods_factor = -0.02
+				political_power_factor = -0.05
+			}
+		}
+
+		# ---- 拡張版で追加された国民精神 ----
+		BLK_regency_reform = {
+			picture = generic_pp_unity_bonus
+			modifier = { political_power_factor = 0.10 drift_defence_factor = 0.20 stability_factor = 0.03 }
+		}
+		BLK_entente_general_staff = {
+			picture = generic_morale_bonus
+			modifier = { planning_speed = 0.10 army_org_factor = 0.03 }
+		}
+		BLK_entente_member = {
+			picture = generic_morale_bonus
+			modifier = { army_core_defence_factor = 0.05 planning_speed = 0.05 }
+		}
+		BLK_labour_code = {
+			picture = generic_goods_red_bonus
+			modifier = { stability_factor = 0.05 production_factory_efficiency_gain_factor = 0.05 consumer_goods_factor = 0.02 }
+		}
+		BLK_womens_suffrage = {
+			picture = generic_democratic_drift_2
+			modifier = { democratic_drift = 0.02 stability_factor = 0.02 political_power_factor = 0.05 }
+		}
+		BLK_cooperatives = {
+			picture = generic_agrarian_reform
+			modifier = { consumer_goods_factor = -0.03 stability_factor = 0.03 }
+		}
+		BLK_national_youth = {
+			picture = generic_manpower_bonus
+			modifier = { conscription = 0.01 fascism_drift = 0.02 training_time_factor = -0.05 }
+		}
+		BLK_labour_service = {
+			picture = generic_build_infrastructure
+			modifier = { production_speed_buildings_factor = 0.10 production_speed_infrastructure_factor = 0.15 }
+		}
+		BLK_corporatism = {
+			picture = generic_central_management
+			modifier = { industrial_capacity_factory = 0.05 consumer_goods_factor = -0.02 communism_drift = -0.02 }
+		}
+		BLK_serbian_officer_corps = {
+			picture = generic_morale_bonus
+			modifier = { army_defence_factor = 0.05 max_dig_in = 1 army_leader_cost_factor = -0.2 }
+		}
+		BLK_zveno_officer_corps = {
+			picture = generic_morale_bonus
+			modifier = { army_attack_factor = 0.05 planning_speed = 0.10 army_leader_cost_factor = -0.2 }
+		}
+		BLK_balkan_legion = {
+			picture = generic_volunteer_expedition_bonus
+			modifier = { special_forces_cap = 0.10 special_forces_attack_factor = 0.05 conscription = 0.005 }
+		}
+		BLK_balkan_imperium = {
+			picture = generic_fascism_drift_2
+			modifier = { war_support_factor = 0.15 justify_war_goal_time = -0.50 annex_cost_factor = -0.30 stability_factor = 0.05 political_power_factor = 0.10 }
+		}
+		BLK_spanish_veterans = {
+			picture = generic_volunteer_expedition_bonus
+			modifier = { army_org_factor = 0.03 experience_gain_army_factor = 0.10 }
+		}
+		BLK_five_year_plan = {
+			picture = generic_production_bonus
+			modifier = { production_speed_industrial_complex_factor = 0.15 production_speed_arms_factory_factor = 0.10 consumer_goods_factor = 0.05 }
+		}
+		BLK_party_discipline = {
+			picture = generic_purge
+			modifier = { political_power_factor = 0.10 drift_defence_factor = 0.50 stability_factor = -0.05 research_speed_factor = -0.03 }
+		}
+		BLK_collectivized_agriculture = {
+			picture = generic_agrarian_reform
+			modifier = { local_resources_factor = 0.05 conscription_factor = 0.05 stability_factor = -0.03 }
+		}
+		BLK_cooperative_farms = {
+			picture = generic_agrarian_reform
+			modifier = { stability_factor = 0.05 consumer_goods_factor = -0.03 }
+		}
+		BLK_socialist_balkans_complete = {
+			picture = generic_communism_drift_2
+			modifier = { stability_factor = 0.10 war_support_factor = 0.10 industrial_capacity_factory = 0.05 conscription_factor = 0.10 }
+		}
+		BLK_federal_gendarmerie = {
+			picture = generic_spy_political
+			modifier = { resistance_growth = -0.15 compliance_gain = 0.05 enemy_operative_detection_chance_factor = 0.10 }
+		}
+		BLK_federal_university = {
+			picture = generic_research_bonus
+			modifier = { research_speed_factor = 0.05 }
+		}
+		BLK_french_mission = {
+			picture = generic_morale_bonus
+			modifier = { army_org_factor = 0.03 training_time_factor = -0.05 planning_speed = 0.05 }
+		}
+		BLK_german_trade = {
+			picture = generic_exploit_mines
+			modifier = { trade_opinion_factor = 0.10 production_speed_buildings_factor = 0.05 }
+		}
+		BLK_danube_shipping = {
+			picture = generic_build_infrastructure
+			modifier = { supply_node_range = 0.05 trade_opinion_factor = 0.05 local_resources_factor = 0.03 }
+		}
+		BLK_women_in_industry = {
+			picture = generic_manpower_bonus
+			modifier = { industrial_capacity_factory = 0.05 conscription_factor = 0.05 }
+		}
+		BLK_agrarian_modernization = {
+			picture = generic_agrarian_reform
+			modifier = { consumer_goods_factor = -0.03 monthly_population = 0.10 }
+		}
+		BLK_arms_export = {
+			picture = generic_production_bonus
+			modifier = { consumer_goods_factor = -0.03 industrial_capacity_factory = 0.03 license_purchase_cost = -0.25 }
+		}
+		BLK_state_trading = {
+			picture = generic_central_management
+			modifier = { trade_opinion_factor = 0.15 consumer_goods_factor = -0.02 }
+		}
+		BLK_balkan_economic_union = {
+			picture = generic_production_bonus
+			modifier = { industrial_capacity_factory = 0.05 trade_opinion_factor = 0.20 local_resources_factor = 0.05 }
+		}
+		BLK_reserve_system = {
+			picture = generic_manpower_bonus
+			modifier = { conscription_factor = 0.10 mobilization_speed = 0.20 }
+		}
+		BLK_naval_academy = {
+			picture = generic_navy_bonus
+			modifier = { navy_leader_cost_factor = -0.3 experience_gain_navy_factor = 0.10 }
+		}
+		BLK_doctrine_defence = {
+			picture = generic_fortify_the_borders
+			modifier = { army_defence_factor = 0.10 max_dig_in = 2 dig_in_speed_factor = 0.10 }
+		}
+		BLK_doctrine_firepower = {
+			picture = generic_army_problems
+			modifier = { army_attack_factor = 0.05 army_artillery_attack_factor = 0.10 }
+		}
+		BLK_doctrine_mobile = {
+			picture = generic_morale_bonus
+			modifier = { army_speed_factor = 0.05 army_org_factor = 0.05 planning_speed = 0.10 }
+		}
+		BLK_total_defence = {
+			picture = generic_victors_of_ww1
+			modifier = { army_core_defence_factor = 0.10 conscription_factor = 0.10 resistance_target = -0.10 }
+		}
+		BLK_macedonian_uprising = {
+			picture = generic_spy_political
+			modifier = { stability_factor = -0.05 political_power_factor = -0.10 resistance_growth = 0.20 }
+		}
+
 		# ---- 政治枝で得られる国民精神 ----
 		BLK_royal_army_oath = {
 			picture = generic_morale_bonus

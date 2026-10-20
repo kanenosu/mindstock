@@ -1,0 +1,184 @@
+# 連邦評議会：民族満足度の管理
+BLK_federal_council = {
+
+	# ---- 現状表示（選択不可） ----
+	blk_council_status = {
+		icon = generic_political_discourse
+		allowed = { always = yes }
+		available = { always = no }
+		visible = { always = yes }
+		days_remove = 0
+		cost = 0
+		custom_cost_text = blk_council_status_cost
+		ai_will_do = { factor = 0 }
+	}
+
+	# ---- セルビア人 ----
+	blk_council_serb_officials = {
+		# セルビア人官僚の登用：セルビア+10、クロアチア-4、ブルガリア-4
+		icon = generic_political_discourse
+		cost = 40
+		days_remove = 60
+		days_re_enable = 180
+		remove_effect = {
+			set_variable = { blk_delta = 10 } blk_sat_serb_change = yes
+			set_variable = { blk_delta = -4 } blk_sat_croat_change = yes blk_sat_bulg_change = yes
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 1 modifier = { factor = 5 check_variable = { blk_sat_serb < 35 } } }
+	}
+	blk_council_serb_veterans = {
+		# バルカン戦争・大戦退役軍人への年金：セルビア+6、戦争支持+2%
+		icon = generic_army_support
+		cost = 50
+		days_remove = 90
+		fire_only_once = yes
+		remove_effect = {
+			set_variable = { blk_delta = 6 } blk_sat_serb_change = yes
+			add_war_support = 0.02
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 2 }
+	}
+
+	# ---- ブルガリア人 ----
+	blk_council_bulg_assembly_sofia = {
+		# 連邦議会のソフィア開会：ブルガリア+10、セルビア-4
+		icon = generic_political_discourse
+		cost = 40
+		days_remove = 60
+		days_re_enable = 180
+		remove_effect = {
+			set_variable = { blk_delta = 10 } blk_sat_bulg_change = yes
+			set_variable = { blk_delta = -4 } blk_sat_serb_change = yes
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 1 modifier = { factor = 5 check_variable = { blk_sat_bulg < 35 } } }
+	}
+	blk_council_bulg_exarchate = {
+		# ブルガリア総主教庁の地位保障：ブルガリア+6、安定+2%
+		icon = generic_civil_support
+		cost = 50
+		days_remove = 90
+		fire_only_once = yes
+		remove_effect = {
+			set_variable = { blk_delta = 6 } blk_sat_bulg_change = yes
+			add_stability = 0.02
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 2 }
+	}
+
+	# ---- クロアチア人・スロヴェニア人 ----
+	blk_council_croat_banovina = {
+		# ザグレブへの財政権移譲：クロアチア+10、セルビア-5、政治力-
+		icon = generic_political_discourse
+		cost = 50
+		days_remove = 60
+		days_re_enable = 180
+		remove_effect = {
+			set_variable = { blk_delta = 10 } blk_sat_croat_change = yes
+			set_variable = { blk_delta = -5 } blk_sat_serb_change = yes
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 1 modifier = { factor = 5 check_variable = { blk_sat_croat < 35 } } }
+	}
+	blk_council_croat_university = {
+		# ザグレブ・リュブリャナ大学への補助：クロアチア+6、研究
+		icon = generic_research
+		cost = 50
+		days_remove = 90
+		fire_only_once = yes
+		remove_effect = {
+			set_variable = { blk_delta = 6 } blk_sat_croat_change = yes
+			add_political_power = 25
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 2 }
+	}
+
+	# ---- マケドニア人 ----
+	blk_council_maced_language = {
+		# マケドニア語の公用語化：マケドニア+10、セルビア-3、ブルガリア-3
+		icon = generic_political_discourse
+		cost = 40
+		days_remove = 60
+		days_re_enable = 180
+		remove_effect = {
+			set_variable = { blk_delta = 10 } blk_sat_maced_change = yes
+			set_variable = { blk_delta = -3 } blk_sat_serb_change = yes blk_sat_bulg_change = yes
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 1 modifier = { factor = 5 check_variable = { blk_sat_maced < 30 } } }
+	}
+	blk_council_maced_amnesty = {
+		# IMRO穏健派への恩赦：マケドニア+8、安定-2%
+		icon = generic_civil_support
+		cost = 30
+		days_remove = 60
+		fire_only_once = yes
+		available = { NOT = { has_country_flag = blk_imro_crushed } }
+		remove_effect = {
+			set_variable = { blk_delta = 8 } blk_sat_maced_change = yes
+			add_stability = -0.02
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 2 }
+	}
+
+	# ---- アルバニア人 ----
+	blk_council_alb_investment = {
+		# アルバニア開発基金：アルバニア+10、政治力-
+		icon = generic_construction
+		cost = 60
+		days_remove = 90
+		days_re_enable = 180
+		remove_effect = {
+			set_variable = { blk_delta = 10 } blk_sat_alb_change = yes
+			if = { limit = { owns_state = 44 } 44 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 1 modifier = { factor = 5 check_variable = { blk_sat_alb < 30 } } }
+	}
+	blk_council_alb_gendarmerie = {
+		# アルバニア憲兵隊の自治：アルバニア+6、セルビア-2
+		icon = generic_army_support
+		cost = 40
+		days_remove = 60
+		fire_only_once = yes
+		remove_effect = {
+			set_variable = { blk_delta = 6 } blk_sat_alb_change = yes
+			set_variable = { blk_delta = -2 } blk_sat_serb_change = yes
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 2 }
+	}
+
+	# ---- 全体 ----
+	blk_council_federal_festival = {
+		# 連邦記念祭（1月1日）：全民族+3、安定+1%
+		icon = generic_civil_support
+		cost = 25
+		days_remove = 30
+		days_re_enable = 365
+		remove_effect = {
+			set_variable = { blk_delta = 3 } blk_sat_all_change = yes
+			add_stability = 0.01
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 2 }
+	}
+	blk_council_integration_drive = {
+		# 連邦統合推進運動：統合度+8、政治力-
+		icon = generic_nationalism
+		cost = 75
+		days_remove = 120
+		days_re_enable = 240
+		available = { check_variable = { blk_sat_avg > 40 } }
+		remove_effect = {
+			set_variable = { blk_delta = 8 } blk_integration_change = yes
+			blk_recalc_federal_balance = yes
+		}
+		ai_will_do = { factor = 3 }
+	}
+}

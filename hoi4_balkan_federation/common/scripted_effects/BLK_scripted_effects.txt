@@ -49,6 +49,9 @@ blk_establish_federation = {
 				15 = { set_country_flag = blk_ai_path_red }
 			}
 		}
+		blk_init_federal_balance = yes
+		set_variable = { blk_council_chair = 0 }
+		add_timed_idea = { idea = BLK_chair_pavle days = 365 }
 		country_event = { id = blk.1 days = 1 }
 	}
 
@@ -70,8 +73,11 @@ blk_admit_to_federation = {
 	add_opinion_modifier = { target = BLK modifier = BLK_joined_federation }
 	BLK = {
 		puppet = PREV
+		set_autonomy = { target = PREV autonomy_state = autonomy_blk_federal_member }
 		add_political_power = 50
 		add_stability = 0.03
+		set_variable = { blk_delta = 5 }
+		blk_integration_change = yes
 	}
 }
 
@@ -146,4 +152,252 @@ blk_check_integration_progress = {
 		add_political_power = 100
 		add_stability = 0.05
 	}
+}
+
+# =====================================================================
+#  連邦評議会の均衡（5民族の満足度）
+#  変数: blk_sat_serb / blk_sat_bulg / blk_sat_croat / blk_sat_maced / blk_sat_alb  (0-100)
+#        blk_integration (0-100)
+# =====================================================================
+blk_init_federal_balance = {
+	set_variable = { blk_sat_serb = 60 }
+	set_variable = { blk_sat_bulg = 55 }
+	set_variable = { blk_sat_croat = 35 }
+	set_variable = { blk_sat_maced = 25 }
+	set_variable = { blk_sat_alb = 40 }
+	set_variable = { blk_integration = 10 }
+	blk_recalc_federal_balance = yes
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = BLK_federal_balance } } }
+		add_dynamic_modifier = { modifier = BLK_federal_balance }
+	}
+}
+
+# 満足度を変化させる汎用エフェクト（呼び出し前に blk_sat_delta と blk_sat_target を設定）
+# 使い方は面倒なので、民族ごとの専用エフェクトを用意する
+blk_sat_serb_change = {
+	# 引数: 一時変数 blk_delta
+	add_to_variable = { blk_sat_serb = blk_delta }
+	clamp_variable = { var = blk_sat_serb min = 0 max = 100 }
+}
+blk_sat_bulg_change = {
+	add_to_variable = { blk_sat_bulg = blk_delta }
+	clamp_variable = { var = blk_sat_bulg min = 0 max = 100 }
+}
+blk_sat_croat_change = {
+	add_to_variable = { blk_sat_croat = blk_delta }
+	clamp_variable = { var = blk_sat_croat min = 0 max = 100 }
+}
+blk_sat_maced_change = {
+	add_to_variable = { blk_sat_maced = blk_delta }
+	clamp_variable = { var = blk_sat_maced min = 0 max = 100 }
+}
+blk_sat_alb_change = {
+	add_to_variable = { blk_sat_alb = blk_delta }
+	clamp_variable = { var = blk_sat_alb min = 0 max = 100 }
+}
+blk_sat_all_change = {
+	blk_sat_serb_change = yes
+	blk_sat_bulg_change = yes
+	blk_sat_croat_change = yes
+	blk_sat_maced_change = yes
+	blk_sat_alb_change = yes
+}
+blk_integration_change = {
+	add_to_variable = { blk_integration = blk_delta }
+	clamp_variable = { var = blk_integration min = 0 max = 100 }
+	blk_check_integration_level = yes
+}
+
+# 均衡の再計算（毎月）
+blk_recalc_federal_balance = {
+	set_variable = { blk_sat_avg = blk_sat_serb }
+	add_to_variable = { blk_sat_avg = blk_sat_bulg }
+	add_to_variable = { blk_sat_avg = blk_sat_croat }
+	add_to_variable = { blk_sat_avg = blk_sat_maced }
+	add_to_variable = { blk_sat_avg = blk_sat_alb }
+	divide_variable = { blk_sat_avg = 5 }
+	# 最低値
+	set_variable = { blk_sat_min = blk_sat_serb }
+	if = { limit = { check_variable = { blk_sat_bulg < blk_sat_min } } set_variable = { blk_sat_min = blk_sat_bulg } }
+	if = { limit = { check_variable = { blk_sat_croat < blk_sat_min } } set_variable = { blk_sat_min = blk_sat_croat } }
+	if = { limit = { check_variable = { blk_sat_maced < blk_sat_min } } set_variable = { blk_sat_min = blk_sat_maced } }
+	if = { limit = { check_variable = { blk_sat_alb < blk_sat_min } } set_variable = { blk_sat_min = blk_sat_alb } }
+
+	# 安定度：平均50で±0、100で+10%、0で-10%
+	set_variable = { blk_mod_stability = blk_sat_avg }
+	subtract_from_variable = { blk_mod_stability = 50 }
+	divide_variable = { blk_mod_stability = 500 }
+	# 政治力：平均50で±0、100で+20%
+	set_variable = { blk_mod_pp = blk_sat_avg }
+	subtract_from_variable = { blk_mod_pp = 50 }
+	divide_variable = { blk_mod_pp = 250 }
+	# 徴兵：最低値が低いと悪化（最低値30未満で-10%まで）
+	set_variable = { blk_mod_manpower = blk_sat_min }
+	subtract_from_variable = { blk_mod_manpower = 30 }
+	divide_variable = { blk_mod_manpower = 300 }
+	clamp_variable = { var = blk_mod_manpower min = -0.10 max = 0.10 }
+	# レジスタンス目標：最低値に連動
+	set_variable = { blk_mod_resistance = 30 }
+	subtract_from_variable = { blk_mod_resistance = blk_sat_min }
+	divide_variable = { blk_mod_resistance = 100 }
+	clamp_variable = { var = blk_mod_resistance min = -0.20 max = 0.30 }
+	# 戦争支持：統合度に連動（50で0、100で+10%）
+	set_variable = { blk_mod_war_support = blk_integration }
+	subtract_from_variable = { blk_mod_war_support = 50 }
+	divide_variable = { blk_mod_war_support = 500 }
+}
+
+# 毎月のドリフト（政策と国民精神に応じて満足度が上下する）
+blk_monthly_federal_drift = {
+	# ---- セルビア人 ----
+	set_variable = { blk_delta = 0 }
+	if = { limit = { has_completed_focus = blk_belgrade_general_staff } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { has_completed_focus = blk_federal_republic } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { has_government = communism NOT = { has_completed_focus = blk_balkan_road_to_socialism } } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { check_variable = { blk_sat_serb > 70 } } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { check_variable = { blk_sat_serb < 30 } } add_to_variable = { blk_delta = 1 } }
+	blk_sat_serb_change = yes
+	# ---- ブルガリア人 ----
+	set_variable = { blk_delta = 0 }
+	if = { limit = { has_completed_focus = blk_sofia_general_staff } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { has_completed_focus = blk_belgrade_general_staff } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { owns_state = 77 } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { check_variable = { blk_sat_bulg > 70 } } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { check_variable = { blk_sat_bulg < 30 } } add_to_variable = { blk_delta = 1 } }
+	blk_sat_bulg_change = yes
+	# ---- クロアチア人・スロヴェニア人 ----
+	set_variable = { blk_delta = 0 }
+	if = { limit = { has_country_flag = blk_croatian_sporazum_signed } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { has_country_flag = blk_croatian_demands_refused } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { has_completed_focus = blk_crackdown_on_parties } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { has_completed_focus = blk_concordat } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { check_variable = { blk_sat_croat > 70 } } add_to_variable = { blk_delta = -1 } }
+	blk_sat_croat_change = yes
+	# ---- マケドニア人 ----
+	set_variable = { blk_delta = 0 }
+	if = { limit = { has_idea = BLK_shadow_of_imro } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { has_country_flag = blk_macedonia_autonomous } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { has_country_flag = blk_imro_crushed } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { check_variable = { blk_sat_maced > 70 } } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { check_variable = { blk_sat_maced < 20 } } add_to_variable = { blk_delta = 1 } }
+	blk_sat_maced_change = yes
+	# ---- アルバニア人 ----
+	set_variable = { blk_delta = 0 }
+	if = { limit = { has_idea = BLK_italian_pressure } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { has_completed_focus = blk_albanian_settlement } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { has_completed_focus = blk_albanian_schools_in_kosovo } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { check_variable = { blk_sat_alb > 70 } } add_to_variable = { blk_delta = -1 } }
+	if = { limit = { check_variable = { blk_sat_alb < 20 } } add_to_variable = { blk_delta = 1 } }
+	blk_sat_alb_change = yes
+	# ---- 統合度：平均満足度が高ければ少しずつ進む ----
+	set_variable = { blk_delta = 0 }
+	if = { limit = { check_variable = { blk_sat_avg > 60 } } add_to_variable = { blk_delta = 1 } }
+	if = { limit = { check_variable = { blk_sat_avg < 35 } } add_to_variable = { blk_delta = -1 } }
+	blk_integration_change = yes
+
+	blk_recalc_federal_balance = yes
+	blk_check_federal_crises = yes
+}
+
+# 統合度に応じた「未完の連邦」の段階変化
+blk_check_integration_level = {
+	if = {
+		limit = {
+			check_variable = { blk_integration > 49 }
+			has_idea = BLK_unfinished_federation
+		}
+		swap_ideas = { remove_idea = BLK_unfinished_federation add_idea = BLK_unfinished_federation_2 }
+		country_event = { id = blk.205 days = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { blk_integration > 89 }
+			has_idea = BLK_unfinished_federation_2
+		}
+		remove_ideas = BLK_unfinished_federation_2
+		country_event = { id = blk.206 days = 1 }
+	}
+}
+
+# 危機判定（満足度が閾値を下回ると危機イベント。クールダウン付き）
+blk_check_federal_crises = {
+	if = {
+		limit = {
+			check_variable = { blk_sat_croat < 20 }
+			NOT = { has_country_flag = blk_crisis_croat_cooldown }
+			owns_state = 109
+		}
+		set_country_flag = { flag = blk_crisis_croat_cooldown value = 1 days = 540 }
+		country_event = { id = blk.250 days = 3 }
+	}
+	if = {
+		limit = {
+			check_variable = { blk_sat_bulg < 20 }
+			NOT = { has_country_flag = blk_crisis_bulg_cooldown }
+			owns_state = 48
+		}
+		set_country_flag = { flag = blk_crisis_bulg_cooldown value = 1 days = 540 }
+		country_event = { id = blk.251 days = 3 }
+	}
+	if = {
+		limit = {
+			check_variable = { blk_sat_alb < 15 }
+			NOT = { has_country_flag = blk_crisis_alb_cooldown }
+			owns_state = 44
+		}
+		set_country_flag = { flag = blk_crisis_alb_cooldown value = 1 days = 540 }
+		country_event = { id = blk.252 days = 3 }
+	}
+	if = {
+		limit = {
+			check_variable = { blk_sat_maced < 15 }
+			NOT = { has_country_flag = blk_crisis_maced_cooldown }
+			owns_state = 106
+		}
+		set_country_flag = { flag = blk_crisis_maced_cooldown value = 1 days = 540 }
+		country_event = { id = blk.253 days = 3 }
+	}
+	if = {
+		limit = {
+			check_variable = { blk_sat_serb < 20 }
+			NOT = { has_country_flag = blk_crisis_serb_cooldown }
+			owns_state = 107
+		}
+		set_country_flag = { flag = blk_crisis_serb_cooldown value = 1 days = 540 }
+		country_event = { id = blk.254 days = 3 }
+	}
+	# 警告（いずれかが30未満、クールダウン360日）
+	if = {
+		limit = {
+			check_variable = { blk_sat_min < 30 }
+			NOT = { has_country_flag = blk_crisis_warning_cooldown }
+		}
+		set_country_flag = { flag = blk_crisis_warning_cooldown value = 1 days = 360 }
+		country_event = { id = blk.260 days = 1 }
+	}
+}
+
+# 三王評議会の輪番（毎年1月）
+blk_council_rotation = {
+	if = {
+		limit = {
+			OR = { has_idea = BLK_council_of_crowns has_idea = BLK_council_of_crowns_2 }
+			NOT = { has_country_flag = blk_federal_crown_act_passed }
+			has_government = neutrality
+		}
+		add_to_variable = { blk_council_chair = 1 }
+		if = { limit = { check_variable = { blk_council_chair > 2 } } set_variable = { blk_council_chair = 0 } }
+		country_event = { id = blk.200 days = 2 }
+	}
+}
+
+# 議長のタイムド国民精神を付け替える
+blk_set_council_chair_idea = {
+	if = { limit = { has_idea = BLK_chair_pavle } remove_ideas = BLK_chair_pavle }
+	if = { limit = { has_idea = BLK_chair_boris } remove_ideas = BLK_chair_boris }
+	if = { limit = { has_idea = BLK_chair_zog } remove_ideas = BLK_chair_zog }
+	if = { limit = { check_variable = { blk_council_chair = 0 } } add_timed_idea = { idea = BLK_chair_pavle days = 365 } }
+	if = { limit = { check_variable = { blk_council_chair = 1 } } add_timed_idea = { idea = BLK_chair_boris days = 365 } }
+	if = { limit = { check_variable = { blk_council_chair = 2 } } add_timed_idea = { idea = BLK_chair_zog days = 365 } }
 }

@@ -1,0 +1,11 @@
+# バルカン連邦：連邦評議会の均衡（5民族の満足度から毎月計算）
+BLK_federal_balance = {
+	icon = GFX_idea_generic_pp_unity_bonus
+	enable = { always = yes }
+	remove_trigger = { NOT = { original_tag = BLK } }
+	stability_factor = blk_mod_stability
+	political_power_factor = blk_mod_pp
+	conscription_factor = blk_mod_manpower
+	resistance_target = blk_mod_resistance
+	war_support_factor = blk_mod_war_support
+}

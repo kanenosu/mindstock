@@ -42,3 +42,10 @@ BLK_balkan_question = {
 	}
 	priority = 50
 }
+BLK_federal_council = {
+	# 連邦評議会：5民族の満足度を管理する
+	icon = generic_political_actions
+	allowed = { original_tag = BLK }
+	visible = { original_tag = BLK has_dynamic_modifier = { modifier = BLK_federal_balance } }
+	priority = 110
+}

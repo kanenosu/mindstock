@@ -1,0 +1,368 @@
+# ルーマニア：バルカン路線のイベント
+add_namespace = blkf
+add_namespace = blknews
+
+# ---------------------------------------------------------------
+# blkf.150 ティトゥレスクの去就（1936年8月、専用ツリー読込時）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.150
+	title = blkf.150.t
+	desc = blkf.150.d
+	picture = GFX_report_event_generic_conference
+	fire_only_once = yes
+
+	trigger = {
+		tag = ROM
+		has_country_flag = rom_balkan_tree_loaded
+		date > 1936.8.28
+	}
+	mean_time_to_happen = { days = 5 }
+
+	option = {
+		# 留任させ、連邦との協調外交を続ける
+		name = blkf.150.a
+		add_political_power = 25
+		if = { limit = { country_exists = BLK } BLK = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } } }
+		if = { limit = { country_exists = FRA } FRA = { add_opinion_modifier = { target = ROM modifier = BLK_trade_mission } } }
+		ai_chance = { factor = 50 modifier = { factor = 3 has_completed_focus = rom_blk_rapprochement } }
+	}
+	option = {
+		# 更迭し、親西欧路線を修正する
+		name = blkf.150.b
+		add_political_power = 50
+		add_popularity = { ideology = fascism popularity = 0.03 }
+		if = { limit = { country_exists = BLK } BLK = { add_opinion_modifier = { target = ROM modifier = BLK_refused_proposal } } }
+		ai_chance = { factor = 50 modifier = { factor = 3 has_completed_focus = rom_blk_fortress_dobruja } }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.151 鉄衛団の台頭（方針 rom_blk_carol_personal_rule から遅延）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.151
+	title = blkf.151.t
+	desc = blkf.151.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 警察に監視させる
+		name = blkf.151.a
+		add_popularity = { ideology = fascism popularity = 0.03 }
+		add_political_power = 25
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 集会を禁止する
+		name = blkf.151.b
+		add_popularity = { ideology = fascism popularity = -0.03 }
+		add_stability = -0.03
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.152 カロル2世の親政（方針 rom_blk_royal_dictatorship）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.152
+	title = blkf.152.t
+	desc = blkf.152.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 新憲法を公布し、政党を解散させる
+		name = blkf.152.a
+		add_ideas = ROM_royal_dictatorship
+		add_popularity = { ideology = neutrality popularity = 0.10 }
+		add_popularity = { ideology = democratic popularity = -0.10 }
+		add_stability = -0.03
+		add_political_power = 100
+		every_country = { news_event = { id = blknews.110 hours = 6 } }
+		ai_chance = { factor = 80 }
+	}
+	option = {
+		# 国王の諮問会議にとどめる
+		name = blkf.152.b
+		add_political_power = 50
+		add_stability = 0.02
+		ai_chance = { factor = 20 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.153 コドレアヌの運命（方針 rom_blk_crush_iron_guard）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.153
+	title = blkf.153.t
+	desc = blkf.153.d
+	picture = GFX_report_event_generic_riot
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 「逃亡を図った」として射殺する
+		name = blkf.153.a
+		add_popularity = { ideology = fascism popularity = -0.05 }
+		add_stability = -0.05
+		add_political_power = 50
+		if = { limit = { country_exists = GER } GER = { add_opinion_modifier = { target = ROM modifier = BLK_refused_proposal } } }
+		ai_chance = { factor = 50 }
+	}
+	option = {
+		# 終身刑にとどめる
+		name = blkf.153.b
+		add_popularity = { ideology = fascism popularity = -0.02 }
+		add_stability = 0.02
+		ai_chance = { factor = 50 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.154 ドブロジャ協定（方針 rom_blk_dobruja_accord）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.154
+	title = blkf.154.t
+	desc = blkf.154.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 補償と引き換えに譲渡する
+		name = blkf.154.a
+		if = {
+			limit = { owns_state = 77 }
+			remove_state_core = 77
+			77 = { add_core_of = BLK }
+			BLK = { transfer_state = 77 }
+		}
+		add_political_power = 100
+		random_owned_controlled_state = {
+			prioritize = { 46 }
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
+		}
+		if = { limit = { NOT = { has_idea = ROM_balkan_partnership } } add_ideas = ROM_balkan_partnership }
+		if = { limit = { has_idea = ROM_dobruja_vigilance } remove_ideas = ROM_dobruja_vigilance }
+		BLK = {
+			add_opinion_modifier = { target = ROM modifier = BLK_sold_dobruja }
+			country_event = { id = blk.90 days = 1 }
+		}
+		ai_chance = { factor = 55 }
+	}
+	option = {
+		# 国際監視下の住民投票を提案する
+		name = blkf.154.b
+		add_stability = 0.02
+		country_event = { id = blkf.160 days = 45 }
+		ai_chance = { factor = 45 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.160 ドブロジャ住民投票の結果
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.160
+	title = blkf.160.t
+	desc = blkf.160.d
+	picture = GFX_report_event_generic_parliament
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = blkf.160.a
+		random_list = {
+			65 = {
+				# ブルガリア系多数：連邦へ
+				if = {
+					limit = { owns_state = 77 }
+					remove_state_core = 77
+					77 = { add_core_of = BLK }
+					BLK = { transfer_state = 77 }
+				}
+				add_political_power = 50
+				add_stability = 0.03
+				if = { limit = { NOT = { has_idea = ROM_balkan_partnership } } add_ideas = ROM_balkan_partnership }
+				if = { limit = { has_idea = ROM_dobruja_vigilance } remove_ideas = ROM_dobruja_vigilance }
+				BLK = {
+					add_opinion_modifier = { target = ROM modifier = BLK_plebiscite_respected }
+					country_event = { id = blk.90 days = 1 }
+				}
+				every_country = { news_event = { id = blknews.111 hours = 6 } }
+			}
+			35 = {
+				# ルーマニア残留
+				add_political_power = 50
+				add_war_support = 0.03
+				if = { limit = { has_idea = ROM_dobruja_vigilance } remove_ideas = ROM_dobruja_vigilance }
+				BLK = {
+					add_opinion_modifier = { target = ROM modifier = BLK_plebiscite_respected }
+					country_event = { id = blk.91 days = 1 }
+				}
+				every_country = { news_event = { id = blknews.111 hours = 6 } }
+			}
+		}
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.155 ベッサラビアへのソ連の圧力（方針 rom_blk_bessarabia_vigilance）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.155
+	title = blkf.155.t
+	desc = blkf.155.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# ドニエストル川の防備を固める
+		name = blkf.155.a
+		if = { limit = { owns_state = 766 } 766 = { add_building_construction = { type = bunker level = 1 instant_build = yes province = { all_provinces = yes limit_to_border = yes level < 2 } } } }
+		add_war_support = 0.03
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 連邦に共同防衛を打診する
+		name = blkf.155.b
+		if = { limit = { country_exists = BLK } BLK = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } } }
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		ai_chance = { factor = 40 modifier = { factor = 0 has_completed_focus = rom_blk_southern_ambition } }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.156 ドナウ委員会（方針 rom_blk_danube_commission）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.156
+	title = blkf.156.t
+	desc = blkf.156.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# ガラツィに本部を置く
+		name = blkf.156.a
+		if = { limit = { owns_state = 971 } 971 = { add_extra_state_shared_building_slots = 1 } }
+		add_political_power = 25
+		ai_chance = { factor = 50 }
+	}
+	option = {
+		# 航行税の分配で譲歩し、連邦の信頼を得る
+		name = blkf.156.b
+		if = { limit = { country_exists = BLK } BLK = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } add_political_power = 25 } }
+		add_political_power = -25
+		ai_chance = { factor = 50 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.157 トランシルヴァニアのハンガリー人（方針 rom_blk_minorities_statute）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.157
+	title = blkf.157.t
+	desc = blkf.157.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# ハンガリー語学校と教会を保障する
+		name = blkf.157.a
+		add_stability = 0.03
+		if = { limit = { country_exists = HUN } HUN = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } } }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 文書上の保障にとどめる
+		name = blkf.157.b
+		add_political_power = 25
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.158 ドナウ国境事件（方針 rom_blk_border_vigilance から遅延）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.158
+	title = blkf.158.t
+	desc = blkf.158.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		country_exists = BLK
+		NOT = { has_war_with = BLK }
+	}
+
+	option = {
+		# 抗議にとどめる
+		name = blkf.158.a
+		add_political_power = 10
+		add_opinion_modifier = { target = BLK modifier = BLK_border_incident }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 国境部隊を増強する
+		name = blkf.158.b
+		add_war_support = 0.03
+		add_political_power = -25
+		BLK = { add_opinion_modifier = { target = ROM modifier = BLK_border_incident } }
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.159 連邦構成国ルーマニア（方針 rom_blk_federal_republic）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.159
+	title = blkf.159.t
+	desc = blkf.159.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = blkf.159.a
+		add_stability = 0.05
+		add_political_power = 50
+	}
+}
+
+# ---------------------------------------------------------------
+# ニュース
+# ---------------------------------------------------------------
+news_event = {
+	id = blknews.110
+	title = blknews.110.t
+	desc = blknews.110.d
+	picture = GFX_news_event_generic_sign_treaty
+	major = yes
+	is_triggered_only = yes
+	option = { name = blknews.110.a }
+}
+news_event = {
+	id = blknews.111
+	title = blknews.111.t
+	desc = blknews.111.d
+	picture = GFX_news_event_generic_sign_treaty
+	major = yes
+	is_triggered_only = yes
+	option = { name = blknews.111.a }
+}
