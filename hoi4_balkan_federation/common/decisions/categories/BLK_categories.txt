@@ -1,0 +1,44 @@
+# バルカン連邦 決定カテゴリ
+BLK_federal_integration = {
+	icon = generic_political_actions
+	allowed = { original_tag = BLK }
+	visible = { original_tag = BLK }
+	priority = 100
+}
+BLK_greater_balkans = {
+	icon = generic_form_nation
+	allowed = { original_tag = BLK }
+	visible = {
+		original_tag = BLK
+		OR = {
+			has_completed_focus = blk_greater_balkan_federation
+			has_completed_focus = blk_balkan_socialist_federation
+			has_completed_focus = blk_all_balkans_united
+			has_completed_focus = blk_guardian_of_the_balkans
+			has_completed_focus = blk_federation_of_free_peoples
+			GRE = { is_subject_of = BLK }
+			ROM = { is_subject_of = BLK }
+		}
+	}
+	priority = 90
+}
+BLK_balkan_question = {
+	# 他国向け：バルカン問題
+	icon = generic_crisis
+	allowed = {
+		OR = {
+			original_tag = ITA
+			original_tag = HUN
+			original_tag = GER
+			original_tag = SOV
+			original_tag = GRE
+			original_tag = ROM
+			original_tag = TUR
+		}
+	}
+	visible = {
+		country_exists = BLK
+		NOT = { has_war_with = BLK }
+	}
+	priority = 50
+}

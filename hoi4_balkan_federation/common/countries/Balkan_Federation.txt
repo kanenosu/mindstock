@@ -1,0 +1,5 @@
+graphical_culture = eastern_european_gfx
+graphical_culture_2d = eastern_european_2d
+
+# 連邦色（深い葡萄色）
+color = { 128 36 64 }

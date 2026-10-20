@@ -1,0 +1,1562 @@
+# バルカン連邦 国家方針ツリー
+# 配置：外交枝 x0-7 / アドリア海枝 x8-10 / 政治枝 x12-26 / 連邦統合枝 x28-32 / 産業枝 x34-40 / 軍事枝 x43-55
+focus_tree = {
+	id = balkan_federation_focus
+
+	country = {
+		factor = 0
+		modifier = {
+			add = 10
+			tag = BLK
+		}
+	}
+
+	default = no
+	reset_on_civilwar = no
+
+	# =====================================================================
+	#  政治枝：連邦の進路
+	# =====================================================================
+	focus = {
+		id = blk_constituent_assembly
+		icon = GFX_goal_generic_national_unity
+		x = 18
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 20 }
+		completion_reward = {
+			add_political_power = 50
+			country_event = { id = blk.2 days = 10 }
+		}
+	}
+
+	# ---------------- A. 王冠の連邦（中道・摂政評議会） ----------------
+	focus = {
+		id = blk_crown_federation
+		icon = GFX_focus_generic_monarchy_1
+		prerequisite = { focus = blk_constituent_assembly }
+		mutually_exclusive = { focus = blk_peoples_federation focus = blk_officers_federation focus = blk_red_federation }
+		x = 12
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 10 has_country_flag = blk_ai_path_crown }
+			modifier = { factor = 0 NOT = { has_country_flag = blk_ai_path_crown } is_ai = yes }
+		}
+		completion_reward = {
+			add_popularity = { ideology = neutrality popularity = 0.10 }
+			add_stability = 0.05
+		}
+	}
+	focus = {
+		id = blk_council_of_three_crowns
+		icon = GFX_goal_generic_political_pressure
+		prerequisite = { focus = blk_crown_federation }
+		x = 11
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			swap_ideas = { remove_idea = BLK_council_of_crowns add_idea = BLK_council_of_crowns_2 }
+			add_political_power = 75
+		}
+	}
+	focus = {
+		id = blk_serbian_bulgarian_compromise
+		icon = GFX_goal_generic_dangerous_deal
+		prerequisite = { focus = blk_crown_federation }
+		x = 13
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_stability = 0.10
+			if = {
+				limit = { has_idea = BLK_unfinished_federation }
+				swap_ideas = { remove_idea = BLK_unfinished_federation add_idea = BLK_unfinished_federation_2 }
+			}
+		}
+	}
+	focus = {
+		id = blk_royal_army_oath
+		icon = GFX_goal_generic_allies_build_infantry
+		prerequisite = { focus = blk_council_of_three_crowns }
+		prerequisite = { focus = blk_serbian_bulgarian_compromise }
+		x = 12
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_war_support = 0.10
+			army_experience = 25
+			add_ideas = BLK_royal_army_oath
+		}
+	}
+	focus = {
+		id = blk_balkan_entente_leadership
+		icon = GFX_goal_generic_major_alliance
+		prerequisite = { focus = blk_royal_army_oath }
+		x = 12
+		y = 4
+		cost = 10
+		available = {
+			NOT = { is_in_faction = yes }
+		}
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			create_faction = BLK_balkan_entente
+			add_political_power = 50
+			if = { limit = { GRE = { blk_is_federation_candidate = yes is_in_faction = no } } GRE = { country_event = { id = blkf.13 days = 1 } } }
+			if = { limit = { ROM = { blk_is_federation_candidate = yes is_in_faction = no } } ROM = { country_event = { id = blkf.13 days = 1 } } }
+			if = { limit = { TUR = { blk_is_federation_candidate = yes is_in_faction = no } } TUR = { country_event = { id = blkf.13 days = 1 } } }
+		}
+	}
+	focus = {
+		id = blk_federal_crown_act
+		icon = GFX_focus_generic_monarchy_1
+		prerequisite = { focus = blk_balkan_entente_leadership }
+		x = 11
+		y = 5
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_stability = 0.05
+			add_political_power = 100
+			set_country_flag = blk_federal_crown_act_passed
+			if = {
+				limit = { date > 1941.9.6 }
+				country_event = { id = blk.24 days = 3 }
+			}
+		}
+	}
+	focus = {
+		id = blk_armed_neutrality
+		icon = GFX_goal_generic_neutrality_focus
+		prerequisite = { focus = blk_balkan_entente_leadership }
+		x = 13
+		y = 5
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_armed_neutrality
+			add_war_support = 0.05
+		}
+	}
+	focus = {
+		id = blk_guardian_of_the_balkans
+		icon = GFX_goal_generic_defence
+		prerequisite = { focus = blk_federal_crown_act }
+		prerequisite = { focus = blk_armed_neutrality }
+		x = 12
+		y = 6
+		cost = 15
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_guardian_of_the_balkans
+			if = {
+				limit = { has_idea = BLK_unfinished_federation_2 }
+				remove_ideas = BLK_unfinished_federation_2
+			}
+			if = {
+				limit = { has_idea = BLK_unfinished_federation }
+				remove_ideas = BLK_unfinished_federation
+			}
+		}
+	}
+
+	# ---------------- B. 民衆の連邦（民主主義） ----------------
+	focus = {
+		id = blk_peoples_federation
+		icon = GFX_goal_support_democracy
+		prerequisite = { focus = blk_constituent_assembly }
+		mutually_exclusive = { focus = blk_crown_federation focus = blk_officers_federation focus = blk_red_federation }
+		x = 16
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 10 has_country_flag = blk_ai_path_people }
+			modifier = { factor = 0 NOT = { has_country_flag = blk_ai_path_people } is_ai = yes }
+		}
+		completion_reward = {
+			add_popularity = { ideology = democratic popularity = 0.10 }
+			add_political_power = 25
+		}
+	}
+	focus = {
+		id = blk_croatian_sporazum
+		icon = GFX_goal_generic_dangerous_deal
+		prerequisite = { focus = blk_peoples_federation }
+		x = 15
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_stability = 0.05
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			set_country_flag = blk_croatian_sporazum_signed
+			if = {
+				limit = { has_idea = BLK_unfinished_federation }
+				swap_ideas = { remove_idea = BLK_unfinished_federation add_idea = BLK_unfinished_federation_2 }
+			}
+		}
+	}
+	focus = {
+		id = blk_agrarian_alliance
+		icon = GFX_goal_generic_political_pressure
+		prerequisite = { focus = blk_peoples_federation }
+		x = 17
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_political_power = 100
+			add_popularity = { ideology = democratic popularity = 0.10 }
+		}
+	}
+	focus = {
+		id = blk_federal_elections
+		icon = GFX_goal_generic_demand_territory
+		prerequisite = { focus = blk_croatian_sporazum }
+		prerequisite = { focus = blk_agrarian_alliance }
+		x = 16
+		y = 3
+		cost = 10
+		available = {
+			democratic > 0.30
+		}
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			country_event = { id = blk.23 days = 1 }
+		}
+	}
+	focus = {
+		id = blk_language_and_schools
+		icon = GFX_goal_generic_scientific_exchange
+		prerequisite = { focus = blk_federal_elections }
+		x = 15
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_federal_democracy
+			add_tech_bonus = { name = blk_education_bonus bonus = 0.50 uses = 1 category = electronics }
+		}
+	}
+	focus = {
+		id = blk_western_credit
+		icon = GFX_goal_generic_trade
+		prerequisite = { focus = blk_federal_elections }
+		x = 17
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_western_credit
+			add_opinion_modifier = { target = ENG modifier = BLK_balkan_rapprochement }
+			add_opinion_modifier = { target = FRA modifier = BLK_balkan_rapprochement }
+			ENG = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } }
+			FRA = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } }
+			random_owned_controlled_state = {
+				prioritize = { 107 }
+				add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_little_entente_bridge
+		icon = GFX_goal_generic_alliance
+		prerequisite = { focus = blk_language_and_schools }
+		prerequisite = { focus = blk_western_credit }
+		x = 16
+		y = 5
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_political_power = 50
+			if = { limit = { country_exists = CZE } CZE = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } } }
+			if = { limit = { country_exists = ROM } ROM = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } } }
+		}
+	}
+	focus = {
+		id = blk_join_allies
+		icon = GFX_goal_generic_major_alliance
+		prerequisite = { focus = blk_little_entente_bridge }
+		mutually_exclusive = { focus = blk_democratic_balkan_union }
+		x = 15
+		y = 6
+		cost = 10
+		available = {
+			has_government = democratic
+			ENG = { is_faction_leader = yes }
+			NOT = { is_in_faction = yes }
+		}
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 2 threat > 0.3 }
+		}
+		completion_reward = {
+			ENG = { country_event = { id = blkf.18 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_democratic_balkan_union
+		icon = GFX_goal_generic_alliance
+		prerequisite = { focus = blk_little_entente_bridge }
+		mutually_exclusive = { focus = blk_join_allies }
+		x = 17
+		y = 6
+		cost = 10
+		available = {
+			NOT = { is_in_faction = yes }
+		}
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			create_faction = BLK_democratic_balkan_union
+			if = { limit = { GRE = { blk_is_federation_candidate = yes is_in_faction = no } } GRE = { country_event = { id = blkf.13 days = 1 } } }
+			if = { limit = { ROM = { blk_is_federation_candidate = yes is_in_faction = no } } ROM = { country_event = { id = blkf.13 days = 1 } } }
+			if = { limit = { TUR = { blk_is_federation_candidate = yes is_in_faction = no } } TUR = { country_event = { id = blkf.13 days = 1 } } }
+		}
+	}
+	focus = {
+		id = blk_federation_of_free_peoples
+		icon = GFX_goal_generic_national_unity
+		prerequisite = { focus = blk_join_allies focus = blk_democratic_balkan_union }
+		x = 16
+		y = 7
+		cost = 15
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_federation_of_free_peoples
+			if = { limit = { has_idea = BLK_federal_democracy } remove_ideas = BLK_federal_democracy }
+			if = { limit = { has_idea = BLK_unfinished_federation_2 } remove_ideas = BLK_unfinished_federation_2 }
+			if = { limit = { has_idea = BLK_unfinished_federation } remove_ideas = BLK_unfinished_federation }
+		}
+	}
+
+	# ---------------- C. 将校団の連邦（軍事評議会） ----------------
+	focus = {
+		id = blk_officers_federation
+		icon = GFX_goal_generic_military_sphere
+		prerequisite = { focus = blk_constituent_assembly }
+		mutually_exclusive = { focus = blk_crown_federation focus = blk_peoples_federation focus = blk_red_federation }
+		x = 20
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 10 has_country_flag = blk_ai_path_officers }
+			modifier = { factor = 0 NOT = { has_country_flag = blk_ai_path_officers } is_ai = yes }
+		}
+		completion_reward = {
+			add_popularity = { ideology = fascism popularity = 0.10 }
+			add_war_support = 0.05
+		}
+	}
+	focus = {
+		id = blk_zveno_ascendancy
+		icon = GFX_goal_generic_political_pressure
+		prerequisite = { focus = blk_officers_federation }
+		x = 19
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_political_power = 75
+			add_popularity = { ideology = fascism popularity = 0.10 }
+			army_experience = 20
+		}
+	}
+	focus = {
+		id = blk_crackdown_on_parties
+		icon = GFX_focus_generic_strike_at_democracy1
+		prerequisite = { focus = blk_officers_federation }
+		x = 21
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_stability = -0.05
+			add_war_support = 0.10
+			add_popularity = { ideology = democratic popularity = -0.10 }
+			add_popularity = { ideology = communism popularity = -0.05 }
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			add_political_power = 50
+		}
+	}
+	focus = {
+		id = blk_military_council
+		icon = GFX_goal_generic_military_sphere
+		prerequisite = { focus = blk_zveno_ascendancy }
+		prerequisite = { focus = blk_crackdown_on_parties }
+		x = 20
+		y = 3
+		cost = 10
+		available = {
+			fascism > 0.25
+		}
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			country_event = { id = blk.22 days = 1 }
+		}
+	}
+	focus = {
+		id = blk_fortress_balkans
+		icon = GFX_goal_generic_fortify_city
+		prerequisite = { focus = blk_military_council }
+		x = 19
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_fortress_balkans
+			if = { limit = { owns_state = 103 } 103 = { add_building_construction = { type = coastal_bunker level = 2 instant_build = yes province = { all_provinces = yes limit_to_coastal = yes level < 3 } } } }
+			if = { limit = { owns_state = 44 } 44 = { add_building_construction = { type = coastal_bunker level = 2 instant_build = yes province = { all_provinces = yes limit_to_coastal = yes level < 3 } } } }
+		}
+	}
+	focus = {
+		id = blk_national_industrial_mobilization
+		icon = GFX_goal_generic_construct_mil_factory
+		prerequisite = { focus = blk_military_council }
+		x = 21
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_national_mobilization
+			random_owned_controlled_state = {
+				prioritize = { 107 }
+				add_building_construction = { type = arms_factory level = 2 instant_build = yes }
+			}
+			random_owned_controlled_state = {
+				prioritize = { 48 }
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_axis_alignment
+		icon = GFX_goal_generic_dangerous_deal
+		prerequisite = { focus = blk_fortress_balkans focus = blk_national_industrial_mobilization }
+		mutually_exclusive = { focus = blk_third_way }
+		x = 19
+		y = 5
+		cost = 10
+		available = {
+			GER = { has_government = fascism }
+			NOT = { has_war_with = GER }
+		}
+		ai_will_do = {
+			factor = 3
+			modifier = { factor = 2 GER = { is_faction_leader = yes } }
+		}
+		completion_reward = {
+			add_opinion_modifier = { target = GER modifier = BLK_balkan_rapprochement }
+			GER = {
+				add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+				country_event = { id = blkf.16 days = 1 }
+			}
+		}
+	}
+	focus = {
+		id = blk_third_way
+		icon = GFX_goal_generic_neutrality_focus
+		prerequisite = { focus = blk_fortress_balkans focus = blk_national_industrial_mobilization }
+		mutually_exclusive = { focus = blk_axis_alignment }
+		x = 21
+		y = 5
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_ideas = BLK_third_way
+			add_war_support = 0.05
+		}
+	}
+	focus = {
+		id = blk_greater_balkan_federation
+		icon = GFX_goal_generic_territory_or_war
+		prerequisite = { focus = blk_axis_alignment focus = blk_third_way }
+		x = 20
+		y = 6
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_greater_balkan_ambition
+			add_state_claim = 77
+			add_state_claim = 731
+			add_state_claim = 184
+			add_war_support = 0.05
+			every_country = { news_event = { id = blknews.7 hours = 6 } }
+		}
+	}
+	focus = {
+		id = blk_march_on_salonika
+		icon = GFX_goal_generic_occupy_states_ongoing_war
+		prerequisite = { focus = blk_greater_balkan_federation }
+		x = 19
+		y = 7
+		cost = 10
+		available = {
+			GRE = { exists = yes is_subject = no }
+			NOT = { is_in_faction_with = GRE }
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = GRE }
+				has_war_with = GRE
+				GRE = { is_subject_of = BLK }
+			}
+		}
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			create_wargoal = {
+				type = take_state_focus
+				target = GRE
+				generator = { 731 184 }
+			}
+		}
+	}
+	focus = {
+		id = blk_dobruja_ultimatum
+		icon = GFX_goal_generic_forceful_treaty
+		prerequisite = { focus = blk_greater_balkan_federation }
+		x = 21
+		y = 7
+		cost = 10
+		available = {
+			ROM = { exists = yes owns_state = 77 }
+			NOT = { is_in_faction_with = ROM }
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = ROM }
+				owns_state = 77
+				has_war_with = ROM
+			}
+		}
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			ROM = { country_event = { id = blkf.12 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_balkan_hegemony
+		icon = GFX_goal_generic_more_territorial_claims
+		prerequisite = { focus = blk_march_on_salonika focus = blk_dobruja_ultimatum }
+		x = 20
+		y = 8
+		cost = 15
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_political_power = 100
+			add_war_support = 0.10
+			if = { limit = { has_idea = BLK_unfinished_federation_2 } remove_ideas = BLK_unfinished_federation_2 }
+			if = { limit = { has_idea = BLK_unfinished_federation } remove_ideas = BLK_unfinished_federation }
+			if = {
+				limit = { ROM = { exists = yes } NOT = { has_war_with = ROM } NOT = { is_in_faction_with = ROM } }
+				create_wargoal = { type = puppet_wargoal_focus target = ROM }
+			}
+			if = {
+				limit = { GRE = { exists = yes } NOT = { has_war_with = GRE } NOT = { is_in_faction_with = GRE } }
+				create_wargoal = { type = puppet_wargoal_focus target = GRE }
+			}
+		}
+	}
+
+	# ---------------- D. 赤い連邦（共産主義） ----------------
+	focus = {
+		id = blk_red_federation
+		icon = GFX_goal_support_communism
+		prerequisite = { focus = blk_constituent_assembly }
+		mutually_exclusive = { focus = blk_crown_federation focus = blk_peoples_federation focus = blk_officers_federation }
+		x = 24
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 10 has_country_flag = blk_ai_path_red }
+			modifier = { factor = 0 NOT = { has_country_flag = blk_ai_path_red } is_ai = yes }
+		}
+		completion_reward = {
+			add_popularity = { ideology = communism popularity = 0.10 }
+			add_stability = -0.02
+		}
+	}
+	focus = {
+		id = blk_workers_councils
+		icon = GFX_goal_generic_production
+		prerequisite = { focus = blk_red_federation }
+		x = 23
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_workers_councils
+			add_popularity = { ideology = communism popularity = 0.10 }
+		}
+	}
+	focus = {
+		id = blk_dimitrov_returns
+		icon = GFX_goal_generic_political_pressure
+		prerequisite = { focus = blk_red_federation }
+		x = 25
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			set_country_flag = blk_dimitrov_returned
+			country_event = { id = blk.20 days = 1 }
+			add_popularity = { ideology = communism popularity = 0.10 }
+			add_opinion_modifier = { target = SOV modifier = BLK_balkan_rapprochement }
+			SOV = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } }
+		}
+	}
+	focus = {
+		id = blk_proclaim_socialist_federation
+		icon = GFX_goal_support_communism
+		prerequisite = { focus = blk_workers_councils }
+		prerequisite = { focus = blk_dimitrov_returns }
+		x = 24
+		y = 3
+		cost = 10
+		available = {
+			communism > 0.30
+		}
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			country_event = { id = blk.21 days = 1 }
+		}
+	}
+	focus = {
+		id = blk_land_reform
+		icon = GFX_goal_generic_consumer_goods
+		prerequisite = { focus = blk_proclaim_socialist_federation }
+		x = 23
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_stability = 0.05
+			add_manpower = 40000
+			add_popularity = { ideology = communism popularity = 0.05 }
+		}
+	}
+	focus = {
+		id = blk_partisan_army
+		icon = GFX_goal_generic_special_forces
+		prerequisite = { focus = blk_proclaim_socialist_federation }
+		x = 25
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_partisan_tradition
+			army_experience = 25
+			add_tech_bonus = { name = blk_partisan_bonus bonus = 0.50 uses = 1 technology = tech_mountaineers technology = tech_mountaineers2 }
+		}
+	}
+	focus = {
+		id = blk_comintern_alignment
+		icon = GFX_goal_generic_major_alliance
+		prerequisite = { focus = blk_land_reform focus = blk_partisan_army }
+		mutually_exclusive = { focus = blk_balkan_road_to_socialism }
+		x = 23
+		y = 5
+		cost = 10
+		available = {
+			has_government = communism
+			SOV = { has_government = communism }
+			NOT = { is_in_faction = yes }
+		}
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_ideas = BLK_comintern_discipline
+			SOV = { country_event = { id = blkf.17 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_balkan_road_to_socialism
+		icon = GFX_focus_generic_self_management
+		prerequisite = { focus = blk_land_reform focus = blk_partisan_army }
+		mutually_exclusive = { focus = blk_comintern_alignment }
+		x = 25
+		y = 5
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_ideas = BLK_self_management
+			add_political_power = 50
+		}
+	}
+	focus = {
+		id = blk_balkan_socialist_federation
+		icon = GFX_goal_generic_territory_or_war
+		prerequisite = { focus = blk_comintern_alignment focus = blk_balkan_road_to_socialism }
+		x = 24
+		y = 6
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_balkan_socialist_federation
+			if = { limit = { has_idea = BLK_workers_councils } remove_ideas = BLK_workers_councils }
+			if = { limit = { has_idea = BLK_unfinished_federation_2 } remove_ideas = BLK_unfinished_federation_2 }
+			if = { limit = { has_idea = BLK_unfinished_federation } remove_ideas = BLK_unfinished_federation }
+			add_state_claim = 731
+			add_state_claim = 184
+			add_state_claim = 77
+			every_country = { news_event = { id = blknews.8 hours = 6 } }
+		}
+	}
+	focus = {
+		id = blk_export_revolution
+		icon = GFX_goal_generic_propaganda
+		prerequisite = { focus = blk_balkan_socialist_federation }
+		x = 23
+		y = 7
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			if = { limit = { country_exists = GRE } GRE = { add_popularity = { ideology = communism popularity = 0.15 } country_event = { id = blkf.19 days = 2 } } }
+			if = { limit = { country_exists = ROM } ROM = { add_popularity = { ideology = communism popularity = 0.10 } country_event = { id = blkf.19 days = 2 } } }
+			if = { limit = { country_exists = HUN } HUN = { add_popularity = { ideology = communism popularity = 0.05 } } }
+		}
+	}
+	focus = {
+		id = blk_liberate_the_balkans
+		icon = GFX_goal_generic_occupy_states_ongoing_war
+		prerequisite = { focus = blk_balkan_socialist_federation }
+		x = 25
+		y = 7
+		cost = 10
+		available = {
+			OR = {
+				GRE = { exists = yes NOT = { has_government = communism } }
+				ROM = { exists = yes NOT = { has_government = communism } }
+			}
+		}
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			if = {
+				limit = { GRE = { exists = yes NOT = { has_government = communism } } NOT = { is_in_faction_with = GRE } }
+				create_wargoal = { type = puppet_wargoal_focus target = GRE }
+			}
+			if = {
+				limit = { ROM = { exists = yes NOT = { has_government = communism } } NOT = { is_in_faction_with = ROM } }
+				create_wargoal = { type = puppet_wargoal_focus target = ROM }
+			}
+		}
+	}
+
+	# =====================================================================
+	#  連邦統合枝（どの路線でも進められる）
+	# =====================================================================
+	focus = {
+		id = blk_internal_security
+		icon = GFX_goal_generic_intelligence_exchange
+		x = 30
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_political_power = 50
+			add_stability = 0.02
+		}
+	}
+	focus = {
+		id = blk_crush_imro
+		icon = GFX_focus_generic_military_mission
+		prerequisite = { focus = blk_internal_security }
+		mutually_exclusive = { focus = blk_macedonian_autonomy }
+		x = 29
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 2 blk_is_officers_path = yes }
+		}
+		completion_reward = {
+			remove_ideas = BLK_shadow_of_imro
+			add_war_support = 0.05
+			add_stability = -0.03
+			set_country_flag = blk_imro_crushed
+		}
+	}
+	focus = {
+		id = blk_macedonian_autonomy
+		icon = GFX_goal_generic_national_unity
+		prerequisite = { focus = blk_internal_security }
+		mutually_exclusive = { focus = blk_crush_imro }
+		x = 31
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 2 OR = { has_government = democratic has_government = communism } }
+		}
+		completion_reward = {
+			remove_ideas = BLK_shadow_of_imro
+			add_stability = 0.05
+			add_political_power = -50
+			set_country_flag = blk_macedonia_autonomous
+		}
+	}
+	focus = {
+		id = blk_albanian_settlement
+		icon = GFX_goal_generic_dangerous_deal
+		prerequisite = { focus = blk_crush_imro focus = blk_macedonian_autonomy }
+		x = 30
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_stability = 0.03
+			add_political_power = 50
+			if = { limit = { owns_state = 44 } 44 = { add_extra_state_shared_building_slots = 1 add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+		}
+	}
+	focus = {
+		id = blk_federal_citizenship
+		icon = GFX_goal_generic_consumer_goods
+		prerequisite = { focus = blk_albanian_settlement }
+		x = 30
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			if = {
+				limit = { has_idea = BLK_unfinished_federation }
+				swap_ideas = { remove_idea = BLK_unfinished_federation add_idea = BLK_unfinished_federation_2 }
+			}
+			add_manpower = 25000
+			add_stability = 0.03
+		}
+	}
+	focus = {
+		id = blk_one_federation_many_peoples
+		icon = GFX_goal_generic_national_unity
+		prerequisite = { focus = blk_federal_citizenship }
+		x = 30
+		y = 4
+		cost = 15
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			if = { limit = { has_idea = BLK_unfinished_federation_2 } remove_ideas = BLK_unfinished_federation_2 }
+			if = { limit = { has_idea = BLK_unfinished_federation } remove_ideas = BLK_unfinished_federation }
+			add_ideas = BLK_one_federation_many_peoples
+		}
+	}
+
+	# =====================================================================
+	#  外交枝
+	# =====================================================================
+	focus = {
+		id = blk_balkan_diplomacy
+		icon = GFX_goal_generic_improve_relations
+		x = 4
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_political_power = 50
+		}
+	}
+	focus = {
+		id = blk_approach_greece
+		icon = GFX_goal_generic_improve_relations
+		prerequisite = { focus = blk_balkan_diplomacy }
+		x = 1
+		y = 1
+		cost = 10
+		available = { country_exists = GRE }
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement }
+			GRE = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } }
+			GRE = { country_event = { id = blkf.10 days = 2 } }
+		}
+	}
+	focus = {
+		id = blk_approach_romania
+		icon = GFX_goal_generic_improve_relations
+		prerequisite = { focus = blk_balkan_diplomacy }
+		x = 4
+		y = 1
+		cost = 10
+		available = { country_exists = ROM }
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement }
+			ROM = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } }
+			ROM = { country_event = { id = blkf.10 days = 2 } }
+		}
+	}
+	focus = {
+		id = blk_approach_turkey
+		icon = GFX_goal_generic_improve_relations
+		prerequisite = { focus = blk_balkan_diplomacy }
+		x = 7
+		y = 1
+		cost = 10
+		available = { country_exists = TUR }
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_opinion_modifier = { target = TUR modifier = BLK_balkan_rapprochement }
+			TUR = { add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement } }
+			TUR = { country_event = { id = blkf.10 days = 2 } }
+		}
+	}
+	focus = {
+		id = blk_salonika_free_port
+		icon = GFX_goal_generic_construct_naval_dockyard
+		prerequisite = { focus = blk_approach_greece }
+		x = 1
+		y = 2
+		cost = 10
+		available = {
+			GRE = { has_opinion = { target = BLK value > 20 } }
+		}
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_ideas = BLK_salonika_free_port
+			GRE = {
+				add_ideas = GRE_balkan_partnership
+				if = { limit = { owns_state = 731 } 731 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			}
+		}
+	}
+	focus = {
+		id = blk_dobruja_settlement
+		icon = GFX_goal_generic_dangerous_deal
+		prerequisite = { focus = blk_approach_romania }
+		x = 4
+		y = 2
+		cost = 10
+		available = {
+			ROM = { owns_state = 77 has_opinion = { target = BLK value > 20 } }
+		}
+		bypass = { owns_state = 77 }
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			ROM = { country_event = { id = blkf.11 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_straits_accord
+		icon = GFX_goal_generic_build_navy
+		prerequisite = { focus = blk_approach_turkey }
+		x = 7
+		y = 2
+		cost = 10
+		available = {
+			TUR = { has_opinion = { target = BLK value > 20 } }
+		}
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			TUR = { add_ideas = TUR_western_federation }
+			add_political_power = 50
+			navy_experience = 15
+			if = { limit = { owns_state = 211 } 211 = { add_building_construction = { type = naval_base level = 2 instant_build = yes province = { all_provinces = yes limit_to_naval_base = yes } } } }
+		}
+	}
+	focus = {
+		id = blk_invite_greece
+		icon = GFX_goal_generic_alliance
+		prerequisite = { focus = blk_salonika_free_port }
+		x = 1
+		y = 3
+		cost = 10
+		available = {
+			GRE = {
+				blk_is_federation_candidate = yes
+				has_opinion = { target = BLK value > 60 }
+			}
+		}
+		bypass = { GRE = { is_subject_of = BLK } }
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			GRE = { country_event = { id = blkf.14 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_invite_romania
+		icon = GFX_goal_generic_alliance
+		prerequisite = { focus = blk_dobruja_settlement }
+		x = 4
+		y = 3
+		cost = 10
+		available = {
+			ROM = {
+				blk_is_federation_candidate = yes
+				has_opinion = { target = BLK value > 60 }
+			}
+		}
+		bypass = { ROM = { is_subject_of = BLK } }
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			ROM = { country_event = { id = blkf.14 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_black_sea_pact
+		icon = GFX_goal_generic_military_sphere
+		prerequisite = { focus = blk_straits_accord }
+		x = 7
+		y = 3
+		cost = 10
+		available = {
+			TUR = { blk_is_federation_candidate = yes has_opinion = { target = BLK value > 40 } }
+			is_faction_leader = yes
+		}
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			TUR = { country_event = { id = blkf.13 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_all_balkans_united
+		icon = GFX_goal_generic_major_alliance
+		prerequisite = { focus = blk_invite_greece focus = blk_invite_romania }
+		x = 4
+		y = 4
+		cost = 15
+		available = {
+			OR = {
+				GRE = { is_subject_of = BLK }
+				ROM = { is_subject_of = BLK }
+			}
+		}
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_political_power = 100
+			add_stability = 0.05
+			country_event = { id = blk.31 days = 1 }
+		}
+	}
+
+	# ---------------- アドリア海問題（イタリア） ----------------
+	focus = {
+		id = blk_adriatic_question
+		icon = GFX_goal_generic_navy_cruiser
+		x = 9
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_political_power = 25
+			navy_experience = 10
+		}
+	}
+	focus = {
+		id = blk_adriatic_detente
+		icon = GFX_goal_generic_improve_relations
+		prerequisite = { focus = blk_adriatic_question }
+		mutually_exclusive = { focus = blk_defend_the_adriatic }
+		x = 8
+		y = 1
+		cost = 10
+		available = {
+			country_exists = ITA
+			NOT = { has_war_with = ITA }
+		}
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 0 blk_is_officers_path = yes }
+		}
+		completion_reward = {
+			ITA = { country_event = { id = blkf.15 days = 1 } }
+		}
+	}
+	focus = {
+		id = blk_defend_the_adriatic
+		icon = GFX_goal_generic_fortify_city
+		prerequisite = { focus = blk_adriatic_question }
+		mutually_exclusive = { focus = blk_adriatic_detente }
+		x = 10
+		y = 1
+		cost = 10
+		ai_will_do = {
+			factor = 5
+			modifier = { factor = 3 blk_is_officers_path = yes }
+			modifier = { factor = 2 ITA = { has_idea = ITA_adriatic_rivalry } }
+		}
+		completion_reward = {
+			remove_ideas = BLK_italian_pressure
+			if = { limit = { owns_state = 44 } 44 = { add_building_construction = { type = coastal_bunker level = 1 instant_build = yes province = { all_provinces = yes limit_to_coastal = yes level < 2 } } } }
+			if = { limit = { owns_state = 103 } 103 = { add_building_construction = { type = coastal_bunker level = 1 instant_build = yes province = { all_provinces = yes limit_to_coastal = yes level < 2 } } } }
+			add_war_support = 0.05
+		}
+	}
+	focus = {
+		id = blk_zara_and_istria
+		icon = GFX_goal_generic_more_territorial_claims
+		prerequisite = { focus = blk_defend_the_adriatic }
+		x = 10
+		y = 2
+		cost = 10
+		available = {
+			country_exists = ITA
+		}
+		ai_will_do = {
+			factor = 3
+			modifier = { factor = 3 blk_is_officers_path = yes }
+		}
+		completion_reward = {
+			blk_claim_adriatic_lost_lands = yes
+			add_war_support = 0.05
+			ITA = { add_opinion_modifier = { target = BLK modifier = BLK_federation_threat } }
+		}
+	}
+	focus = {
+		id = blk_adriatic_trade_pact
+		icon = GFX_goal_generic_trade
+		prerequisite = { focus = blk_adriatic_detente }
+		x = 8
+		y = 2
+		cost = 10
+		available = {
+			ITA = { has_opinion = { target = BLK value > 0 } }
+		}
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			remove_ideas = BLK_italian_pressure
+			add_opinion_modifier = { target = ITA modifier = BLK_trade_mission }
+			ITA = { add_opinion_modifier = { target = BLK modifier = BLK_trade_mission } }
+			add_political_power = 50
+		}
+	}
+
+	# =====================================================================
+	#  産業枝
+	# =====================================================================
+	focus = {
+		id = blk_federal_development_plan
+		icon = GFX_goal_generic_construct_civ_factory
+		x = 37
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 15 }
+		completion_reward = {
+			random_owned_controlled_state = {
+				prioritize = { 107 }
+				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+			}
+			add_political_power = 25
+		}
+	}
+	focus = {
+		id = blk_sofia_belgrade_railway
+		icon = GFX_goal_generic_construct_infrastructure
+		prerequisite = { focus = blk_federal_development_plan }
+		x = 35
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			if = { limit = { owns_state = 107 } 107 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			if = { limit = { owns_state = 48 } 48 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			if = { limit = { owns_state = 106 } 106 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+		}
+	}
+	focus = {
+		id = blk_adriatic_ports
+		icon = GFX_goal_generic_construct_naval_dockyard
+		prerequisite = { focus = blk_federal_development_plan }
+		x = 39
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			if = { limit = { owns_state = 103 } 103 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } add_building_construction = { type = dockyard level = 1 instant_build = yes } } }
+			if = { limit = { owns_state = 44 } 44 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+		}
+	}
+	focus = {
+		id = blk_bor_and_trepca
+		icon = GFX_goal_generic_oil_refinery
+		prerequisite = { focus = blk_sofia_belgrade_railway }
+		x = 35
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			if = { limit = { owns_state = 107 } add_resource = { type = chromium amount = 12 state = 107 } }
+			if = { limit = { owns_state = 108 } add_resource = { type = aluminium amount = 10 state = 108 } }
+			if = { limit = { owns_state = 104 } add_resource = { type = steel amount = 8 state = 104 } }
+		}
+	}
+	focus = {
+		id = blk_zenica_steelworks
+		icon = GFX_focus_generic_industry_1
+		prerequisite = { focus = blk_sofia_belgrade_railway focus = blk_adriatic_ports }
+		x = 37
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			random_owned_controlled_state = {
+				prioritize = { 104 }
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_pernik_coal_and_power
+		icon = GFX_goal_generic_construct_civ_factory
+		prerequisite = { focus = blk_adriatic_ports }
+		x = 39
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			random_owned_controlled_state = {
+				prioritize = { 48 }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_kragujevac_arsenal
+		icon = GFX_goal_generic_construct_mil_factory
+		prerequisite = { focus = blk_bor_and_trepca }
+		x = 35
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			random_owned_controlled_state = {
+				prioritize = { 107 }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = arms_factory level = 2 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_federal_bank
+		icon = GFX_goal_generic_consumer_goods
+		prerequisite = { focus = blk_zenica_steelworks }
+		x = 37
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_federal_bank
+			add_political_power = 50
+		}
+	}
+	focus = {
+		id = blk_albanian_oil
+		icon = GFX_goal_generic_oil_refinery
+		prerequisite = { focus = blk_pernik_coal_and_power }
+		x = 39
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			if = { limit = { owns_state = 44 } add_resource = { type = oil amount = 6 state = 44 } 44 = { add_building_construction = { type = fuel_silo level = 1 instant_build = yes } } }
+			add_tech_bonus = { name = blk_oil_bonus bonus = 0.50 uses = 1 category = synth_resources }
+		}
+	}
+	focus = {
+		id = blk_industrial_federation
+		icon = GFX_goal_generic_production
+		prerequisite = { focus = blk_kragujevac_arsenal }
+		prerequisite = { focus = blk_federal_bank }
+		x = 36
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_industrial_federation
+			random_owned_controlled_state = {
+				prioritize = { 109 }
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+			}
+			random_owned_controlled_state = {
+				prioritize = { 212 }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_military_industrial_complex
+		icon = GFX_goal_generic_construct_mil_factory
+		prerequisite = { focus = blk_federal_bank }
+		prerequisite = { focus = blk_albanian_oil }
+		x = 38
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_military_industrial_complex
+			random_owned_controlled_state = {
+				prioritize = { 48 }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = arms_factory level = 2 instant_build = yes }
+			}
+			random_owned_controlled_state = {
+				prioritize = { 109 }
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+		}
+	}
+	focus = {
+		id = blk_federal_research_institutes
+		icon = GFX_focus_research
+		prerequisite = { focus = blk_industrial_federation focus = blk_military_industrial_complex }
+		x = 37
+		y = 5
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_research_slot = 1
+		}
+	}
+	focus = {
+		id = blk_electrification
+		icon = GFX_goal_generic_construct_infrastructure
+		prerequisite = { focus = blk_federal_research_institutes }
+		x = 37
+		y = 6
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_industry_bonus bonus = 0.50 uses = 2 category = industry }
+			if = { limit = { owns_state = 109 } 109 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+			if = { limit = { owns_state = 102 } 102 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
+		}
+	}
+
+	# =====================================================================
+	#  軍事枝
+	# =====================================================================
+	focus = {
+		id = blk_federal_army_act
+		icon = GFX_goal_generic_allies_build_infantry
+		x = 49
+		y = 0
+		cost = 5
+		ai_will_do = { factor = 15 }
+		completion_reward = {
+			swap_ideas = { remove_idea = BLK_polyglot_army add_idea = BLK_polyglot_army_2 }
+			army_experience = 15
+		}
+	}
+	focus = {
+		id = blk_unified_general_staff
+		icon = GFX_goal_generic_army_doctrines
+		prerequisite = { focus = blk_federal_army_act }
+		x = 46
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			remove_ideas = BLK_polyglot_army_2
+			add_ideas = BLK_unified_general_staff
+			add_tech_bonus = { name = blk_doctrine_bonus bonus = 0.50 uses = 1 category = land_doctrine }
+		}
+	}
+	focus = {
+		id = blk_mountain_corps
+		icon = GFX_goal_generic_special_forces
+		prerequisite = { focus = blk_federal_army_act }
+		x = 49
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_ideas = BLK_mountain_warfare
+			add_tech_bonus = { name = blk_mountain_bonus bonus = 0.50 uses = 1 technology = tech_mountaineers technology = tech_mountaineers2 }
+		}
+	}
+	focus = {
+		id = blk_federal_air_force
+		icon = GFX_goal_generic_build_airforce
+		prerequisite = { focus = blk_federal_army_act }
+		x = 53
+		y = 1
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			air_experience = 25
+			if = { limit = { owns_state = 107 } 107 = { add_building_construction = { type = air_base level = 2 instant_build = yes } } }
+			if = { limit = { owns_state = 48 } 48 = { add_building_construction = { type = air_base level = 1 instant_build = yes } } }
+		}
+	}
+	focus = {
+		id = blk_infantry_modernization
+		icon = GFX_goal_generic_small_arms
+		prerequisite = { focus = blk_unified_general_staff }
+		x = 45
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_infantry_bonus bonus = 0.50 uses = 2 category = infantry_weapons }
+		}
+	}
+	focus = {
+		id = blk_artillery_program
+		icon = GFX_goal_generic_army_artillery
+		prerequisite = { focus = blk_unified_general_staff }
+		x = 47
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_artillery_bonus bonus = 0.50 uses = 2 category = artillery }
+		}
+	}
+	focus = {
+		id = blk_guerrilla_tradition
+		icon = GFX_goal_generic_special_forces
+		prerequisite = { focus = blk_mountain_corps }
+		x = 49
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_sf_bonus bonus = 0.50 uses = 1 category = land_doctrine }
+			army_experience = 25
+			add_ideas = BLK_general_mobilization_drive
+		}
+	}
+	focus = {
+		id = blk_fighter_procurement
+		icon = GFX_goal_generic_air_fighter
+		prerequisite = { focus = blk_federal_air_force }
+		x = 52
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_fighter_bonus bonus = 0.50 uses = 2 category = light_air }
+		}
+	}
+	focus = {
+		id = blk_adriatic_fleet
+		icon = GFX_goal_generic_build_navy
+		prerequisite = { focus = blk_federal_air_force }
+		x = 54
+		y = 2
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_ideas = BLK_adriatic_fleet
+			navy_experience = 25
+			if = { limit = { owns_state = 103 } 103 = { add_building_construction = { type = dockyard level = 1 instant_build = yes } } }
+		}
+	}
+	focus = {
+		id = blk_motorization
+		icon = GFX_goal_generic_army_motorized
+		prerequisite = { focus = blk_infantry_modernization focus = blk_artillery_program }
+		x = 46
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_motor_bonus bonus = 0.50 uses = 1 category = motorized_equipment }
+		}
+	}
+	focus = {
+		id = blk_fortify_frontiers
+		icon = GFX_goal_generic_fortify_city
+		prerequisite = { focus = blk_guerrilla_tradition }
+		x = 49
+		y = 3
+		cost = 10
+		ai_will_do = {
+			factor = 8
+			modifier = { factor = 2 threat > 0.4 }
+		}
+		completion_reward = {
+			add_ideas = BLK_frontier_fortifications
+			if = { limit = { owns_state = 102 } 102 = { add_building_construction = { type = bunker level = 2 instant_build = yes province = { all_provinces = yes limit_to_border = yes level < 3 } } } }
+			if = { limit = { owns_state = 45 } 45 = { add_building_construction = { type = bunker level = 1 instant_build = yes province = { all_provinces = yes limit_to_border = yes level < 2 } } } }
+		}
+	}
+	focus = {
+		id = blk_bomber_wing
+		icon = GFX_goal_generic_air_bomber
+		prerequisite = { focus = blk_fighter_procurement }
+		x = 52
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_bomber_bonus bonus = 0.50 uses = 1 category = medium_air }
+			add_tech_bonus = { name = blk_cas_bonus bonus = 0.50 uses = 1 category = cas_bomber }
+		}
+	}
+	focus = {
+		id = blk_submarine_flotilla
+		icon = GFX_goal_generic_navy_submarine
+		prerequisite = { focus = blk_adriatic_fleet }
+		x = 54
+		y = 3
+		cost = 10
+		ai_will_do = { factor = 5 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_sub_bonus bonus = 0.50 uses = 1 category = ss_tech }
+			add_tech_bonus = { name = blk_naval_doctrine_bonus bonus = 0.50 uses = 1 category = naval_doctrine }
+		}
+	}
+	focus = {
+		id = blk_armored_experiment
+		icon = GFX_goal_generic_army_tanks
+		prerequisite = { focus = blk_motorization }
+		x = 46
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_tech_bonus = { name = blk_armor_bonus bonus = 0.50 uses = 1 category = armor }
+		}
+	}
+	focus = {
+		id = blk_mass_mobilization
+		icon = GFX_goal_generic_allies_build_infantry
+		prerequisite = { focus = blk_fortify_frontiers }
+		x = 49
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 8 }
+		completion_reward = {
+			add_manpower = 50000
+			add_war_support = 0.05
+			add_tech_bonus = { name = blk_mass_bonus bonus = 0.50 uses = 1 technology = mass_assault technology = grand_battle_plan technology = superior_firepower }
+		}
+	}
+	focus = {
+		id = blk_air_defence_network
+		icon = GFX_goal_generic_build_airforce
+		prerequisite = { focus = blk_bomber_wing focus = blk_submarine_flotilla }
+		x = 53
+		y = 4
+		cost = 10
+		ai_will_do = { factor = 6 }
+		completion_reward = {
+			add_ideas = BLK_air_defence_network
+			add_tech_bonus = { name = blk_radar_bonus bonus = 0.50 uses = 1 category = radar_tech }
+		}
+	}
+	focus = {
+		id = blk_balkan_shield
+		icon = GFX_goal_generic_defence
+		prerequisite = { focus = blk_armored_experiment focus = blk_mass_mobilization focus = blk_air_defence_network }
+		x = 49
+		y = 5
+		cost = 15
+		ai_will_do = { factor = 10 }
+		completion_reward = {
+			if = { limit = { has_idea = BLK_frontier_fortifications } remove_ideas = BLK_frontier_fortifications }
+			add_ideas = BLK_balkan_shield
+			army_experience = 50
+		}
+	}
+}

@@ -1,0 +1,137 @@
+# バルカン連邦 AI 戦略プラン（on_startup で抽選したフラグに従う）
+BLK_crown_plan = {
+	name = "BLK_crown_plan"
+	desc = "王冠の連邦：武装中立とバルカン協商"
+	enable = {
+		original_tag = BLK
+		has_country_flag = blk_ai_path_crown
+	}
+	abort = { NOT = { has_country_flag = blk_ai_path_crown } }
+	ai_national_focuses = {
+		blk_constituent_assembly
+		blk_crown_federation
+		blk_federal_development_plan
+		blk_federal_army_act
+		blk_council_of_three_crowns
+		blk_serbian_bulgarian_compromise
+		blk_balkan_diplomacy
+		blk_approach_greece
+		blk_royal_army_oath
+		blk_sofia_belgrade_railway
+		blk_internal_security
+		blk_crush_imro
+		blk_balkan_entente_leadership
+		blk_mountain_corps
+		blk_approach_romania
+		blk_approach_turkey
+		blk_federal_crown_act
+		blk_armed_neutrality
+		blk_guardian_of_the_balkans
+	}
+	focus_factors = {
+		blk_peoples_federation = 0
+		blk_officers_federation = 0
+		blk_red_federation = 0
+	}
+	weight = { base = 1 }
+	ai_strategy = { type = befriend id = "GRE" value = 40 }
+	ai_strategy = { type = befriend id = "ROM" value = 30 }
+}
+BLK_people_plan = {
+	name = "BLK_people_plan"
+	desc = "民衆の連邦：民主化と連合国"
+	enable = {
+		original_tag = BLK
+		has_country_flag = blk_ai_path_people
+	}
+	abort = { NOT = { has_country_flag = blk_ai_path_people } }
+	ai_national_focuses = {
+		blk_constituent_assembly
+		blk_peoples_federation
+		blk_croatian_sporazum
+		blk_federal_development_plan
+		blk_agrarian_alliance
+		blk_federal_elections
+		blk_federal_army_act
+		blk_balkan_diplomacy
+		blk_western_credit
+		blk_language_and_schools
+		blk_little_entente_bridge
+		blk_join_allies
+		blk_federation_of_free_peoples
+	}
+	focus_factors = {
+		blk_crown_federation = 0
+		blk_officers_federation = 0
+		blk_red_federation = 0
+	}
+	weight = { base = 1 }
+	ai_strategy = { type = befriend id = "ENG" value = 40 }
+	ai_strategy = { type = befriend id = "FRA" value = 40 }
+	ai_strategy = { type = alliance id = "ENG" value = 40 }
+}
+BLK_officers_plan = {
+	name = "BLK_officers_plan"
+	desc = "将校団の連邦：軍事評議会と大バルカン"
+	enable = {
+		original_tag = BLK
+		has_country_flag = blk_ai_path_officers
+	}
+	abort = { NOT = { has_country_flag = blk_ai_path_officers } }
+	ai_national_focuses = {
+		blk_constituent_assembly
+		blk_officers_federation
+		blk_zveno_ascendancy
+		blk_federal_army_act
+		blk_crackdown_on_parties
+		blk_military_council
+		blk_federal_development_plan
+		blk_national_industrial_mobilization
+		blk_fortress_balkans
+		blk_kragujevac_arsenal
+		blk_third_way
+		blk_mountain_corps
+		blk_greater_balkan_federation
+		blk_dobruja_ultimatum
+		blk_march_on_salonika
+	}
+	focus_factors = {
+		blk_crown_federation = 0
+		blk_peoples_federation = 0
+		blk_red_federation = 0
+	}
+	weight = { base = 1 }
+	ai_strategy = { type = antagonize id = "GRE" value = 30 }
+	ai_strategy = { type = antagonize id = "ROM" value = 30 }
+	ai_strategy = { type = conquer id = "GRE" value = 30 }
+}
+BLK_red_plan = {
+	name = "BLK_red_plan"
+	desc = "赤い連邦：社会主義連邦"
+	enable = {
+		original_tag = BLK
+		has_country_flag = blk_ai_path_red
+	}
+	abort = { NOT = { has_country_flag = blk_ai_path_red } }
+	ai_national_focuses = {
+		blk_constituent_assembly
+		blk_red_federation
+		blk_workers_councils
+		blk_dimitrov_returns
+		blk_federal_development_plan
+		blk_proclaim_socialist_federation
+		blk_federal_army_act
+		blk_land_reform
+		blk_partisan_army
+		blk_balkan_road_to_socialism
+		blk_balkan_socialist_federation
+		blk_export_revolution
+	}
+	focus_factors = {
+		blk_crown_federation = 0
+		blk_peoples_federation = 0
+		blk_officers_federation = 0
+	}
+	weight = { base = 1 }
+	ai_strategy = { type = befriend id = "SOV" value = 30 }
+}

@@ -1,0 +1,64 @@
+on_actions = {
+	# ゲーム開始時：連邦の成立処理（セーブ再ロード時はフラグで抑止）
+	on_startup = {
+		effect = {
+			if = {
+				limit = { NOT = { has_global_flag = blk_federation_established } }
+				blk_establish_federation = yes
+			}
+		}
+	}
+
+	# 連邦が隣国を併合した場合は中核化（大バルカン路線）
+	on_annex = {
+		effect = {
+			# ROOT = 併合した国, FROM = 併合された国
+			if = {
+				limit = {
+					ROOT = { original_tag = BLK }
+					FROM = {
+						OR = {
+							original_tag = GRE
+							original_tag = ROM
+						}
+					}
+				}
+				ROOT = { country_event = { id = blk.32 days = 2 } }
+			}
+		}
+	}
+
+	# 連邦が宣戦された時の反応（ニュース）
+	on_war_relation_added = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = BLK }
+					ROOT = { OR = { original_tag = ITA original_tag = HUN original_tag = GER } }
+				}
+				every_country = { news_event = { id = blknews.6 hours = 6 } }
+			}
+		}
+	}
+
+	# 連邦の政府が変わった時：ニュース
+	on_government_change = {
+		effect = {
+			if = {
+				limit = { original_tag = BLK }
+				if = {
+					limit = { has_government = communism }
+					every_country = { news_event = { id = blknews.3 hours = 6 } }
+				}
+				else_if = {
+					limit = { has_government = fascism }
+					every_country = { news_event = { id = blknews.2 hours = 6 } }
+				}
+				else_if = {
+					limit = { has_government = democratic }
+					every_country = { news_event = { id = blknews.4 hours = 6 } }
+				}
+			}
+		}
+	}
+}

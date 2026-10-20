@@ -1,0 +1,64 @@
+# バルカン連邦に関する AI 戦略
+ITA_rivalry_with_balkans = {
+	enable = {
+		original_tag = ITA
+		country_exists = BLK
+		NOT = { is_in_faction_with = BLK }
+	}
+	abort = {
+		OR = {
+			NOT = { country_exists = BLK }
+			is_in_faction_with = BLK
+			has_non_aggression_pact_with = BLK
+		}
+	}
+	ai_strategy = { type = antagonize id = "BLK" value = 30 }
+	ai_strategy = { type = conquer id = "BLK" value = 15 }
+	ai_strategy = { type = prepare_for_war id = "BLK" value = 20 }
+}
+HUN_rivalry_with_balkans = {
+	enable = {
+		original_tag = HUN
+		country_exists = BLK
+		has_idea = HUN_southern_threat
+	}
+	abort = {
+		OR = {
+			NOT = { country_exists = BLK }
+			is_in_faction_with = BLK
+		}
+	}
+	ai_strategy = { type = antagonize id = "BLK" value = 20 }
+	ai_strategy = { type = contain id = "BLK" value = 20 }
+}
+GRE_ROM_friendship_with_balkans = {
+	enable = {
+		OR = { original_tag = GRE original_tag = ROM original_tag = TUR }
+		country_exists = BLK
+		has_opinion = { target = BLK value > 20 }
+	}
+	abort = {
+		OR = {
+			NOT = { country_exists = BLK }
+			has_war_with = BLK
+			has_opinion = { target = BLK value < 0 }
+		}
+	}
+	ai_strategy = { type = befriend id = "BLK" value = 30 }
+	ai_strategy = { type = alliance id = "BLK" value = 20 }
+}
+BLK_balkan_priorities = {
+	enable = {
+		original_tag = BLK
+	}
+	abort = { NOT = { original_tag = BLK } }
+	ai_strategy = { type = befriend id = "GRE" value = 30 }
+	ai_strategy = { type = befriend id = "ROM" value = 20 }
+	ai_strategy = { type = befriend id = "TUR" value = 20 }
+	ai_strategy = { type = antagonize id = "ITA" value = 20 }
+	ai_strategy = { type = contain id = "ITA" value = 20 }
+	ai_strategy = { type = protect id = "GRE" value = 20 }
+	ai_strategy = { type = area_priority id = balkans value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_equipment value = 50 }
+	ai_strategy = { type = unit_ratio id = mountaineers value = 20 }
+}

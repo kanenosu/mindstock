@@ -1,0 +1,674 @@
+# バルカン連邦に関する他国イベント
+add_namespace = blkf
+
+# ---------------------------------------------------------------
+# blkf.1 ギリシャ：北の巨人
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.1
+	title = blkf.1.t
+	desc = blkf.1.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 協調路線（通常の国家方針を維持）
+		name = blkf.1.a
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement } }
+		ai_chance = { factor = 45 }
+	}
+	option = {
+		# 警戒路線（通常の国家方針を維持）
+		name = blkf.1.b
+		add_ideas = GRE_northern_colossus
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		ai_chance = { factor = 40 }
+	}
+	option = {
+		# バルカン路線専用の国家方針ツリーに切り替える（既存の方針は失われる）
+		name = blkf.1.c
+		load_focus_tree = GRE_balkan_focus
+		set_country_flag = gre_balkan_tree_loaded
+		ai_chance = { factor = 15 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.2 ルーマニア：南の連邦
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.2
+	title = blkf.2.t
+	desc = blkf.2.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 小協商の精神で協調する
+		name = blkf.2.a
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { add_opinion_modifier = { target = ROM modifier = BLK_balkan_rapprochement } }
+		ai_chance = { factor = 45 }
+	}
+	option = {
+		# ドブロジャの防備を固める
+		name = blkf.2.b
+		add_ideas = ROM_dobruja_vigilance
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		ai_chance = { factor = 40 }
+	}
+	option = {
+		# バルカン路線専用の国家方針ツリーに切り替える（既存の方針は失われる）
+		name = blkf.2.c
+		load_focus_tree = ROM_balkan_focus
+		set_country_flag = rom_balkan_tree_loaded
+		ai_chance = { factor = 15 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.3 ハンガリー：南方の脅威
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.3
+	title = blkf.3.t
+	desc = blkf.3.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 南部国境の防備を固める
+		name = blkf.3.a
+		add_ideas = HUN_southern_threat
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 静観する
+		name = blkf.3.b
+		add_political_power = 25
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.4 イタリア：アドリア海の新たな隣人
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.4
+	title = blkf.4.t
+	desc = blkf.4.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 連邦を敵視する：アルバニア沿岸への要求
+		name = blkf.4.a
+		add_ideas = ITA_adriatic_rivalry
+		add_state_claim = 44
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		BLK = { add_opinion_modifier = { target = ITA modifier = BLK_federation_threat } }
+		ai_chance = { factor = 65 }
+	}
+	option = {
+		# 懐柔する：通商と投資
+		name = blkf.4.b
+		add_opinion_modifier = { target = BLK modifier = BLK_trade_mission }
+		BLK = { add_opinion_modifier = { target = ITA modifier = BLK_trade_mission } }
+		ai_chance = { factor = 35 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.5 ドイツ：バルカンの資源
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.5
+	title = blkf.5.t
+	desc = blkf.5.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 通商使節団を派遣する
+		name = blkf.5.a
+		add_ideas = GER_balkan_resources
+		add_opinion_modifier = { target = BLK modifier = BLK_trade_mission }
+		BLK = { add_opinion_modifier = { target = GER modifier = BLK_trade_mission } }
+		ai_chance = { factor = 70 }
+	}
+	option = {
+		# 連邦を潜在的敵と見なす
+		name = blkf.5.b
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		ai_chance = { factor = 30 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.6 ソ連：バルカンの同志たち
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.6
+	title = blkf.6.t
+	desc = blkf.6.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# コミンテルンを通じて支援する
+		name = blkf.6.a
+		BLK = { add_popularity = { ideology = communism popularity = 0.05 } }
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		ai_chance = { factor = 50 }
+	}
+	option = {
+		# 静観する
+		name = blkf.6.b
+		add_political_power = 25
+		ai_chance = { factor = 50 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.7 イギリス：バルカンの安定装置
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.7
+	title = blkf.7.t
+	desc = blkf.7.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 連邦との関係を深める
+		name = blkf.7.a
+		add_opinion_modifier = { target = BLK modifier = BLK_guarantee_offered }
+		BLK = { add_opinion_modifier = { target = ENG modifier = BLK_balkan_rapprochement } }
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		# 距離を置く
+		name = blkf.7.b
+		add_political_power = 10
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.8 フランス：東方同盟網の再編
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.8
+	title = blkf.8.t
+	desc = blkf.8.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# 連邦を東方同盟網に組み込む
+		name = blkf.8.a
+		add_opinion_modifier = { target = BLK modifier = BLK_guarantee_offered }
+		BLK = { add_opinion_modifier = { target = FRA modifier = BLK_balkan_rapprochement } }
+		ai_chance = { factor = 65 }
+	}
+	option = {
+		# 小協商を優先する
+		name = blkf.8.b
+		add_political_power = 10
+		ai_chance = { factor = 35 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.9 トルコ：西の連邦
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.9
+	title = blkf.9.t
+	desc = blkf.9.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		# バルカン協商の精神で協調する
+		name = blkf.9.a
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { add_opinion_modifier = { target = TUR modifier = BLK_balkan_rapprochement } }
+		ai_chance = { factor = 55 }
+	}
+	option = {
+		# トラキア国境を警戒する
+		name = blkf.9.b
+		add_ideas = TUR_western_federation
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		ai_chance = { factor = 45 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.10 接近への反応（GRE/ROM/TUR 共通）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.10
+	title = blkf.10.t
+	desc = blkf.10.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	option = {
+		# 歓迎する
+		name = blkf.10.a
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = {
+			factor = 60
+			modifier = { factor = 0.3 has_opinion = { target = BLK value < 0 } }
+			modifier = { factor = 2 has_opinion = { target = BLK value > 30 } }
+		}
+	}
+	option = {
+		# 距離を置く
+		name = blkf.10.b
+		add_political_power = 25
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.11 ルーマニア：ドブロジャ協定の提案
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.11
+	title = blkf.11.t
+	desc = blkf.11.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	option = {
+		# 補償と引き換えに南ドブロジャを譲渡する
+		name = blkf.11.a
+		add_political_power = 100
+		add_stability = -0.05
+		random_owned_controlled_state = {
+			prioritize = { 46 }
+			add_building_construction = { type = industrial_complex level = 2 instant_build = yes }
+		}
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { country_event = { id = blk.92 days = 1 } }
+		ai_chance = {
+			factor = 35
+			modifier = { factor = 2 has_opinion = { target = BLK value > 50 } }
+			modifier = { factor = 0.5 has_idea = ROM_dobruja_vigilance }
+			modifier = { factor = 2 BLK = { strength_ratio = { tag = ROM ratio > 1.5 } } }
+		}
+	}
+	option = {
+		# 拒否する
+		name = blkf.11.b
+		add_war_support = 0.03
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 65 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.12 ルーマニア：ドブロジャ最後通牒
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.12
+	title = blkf.12.t
+	desc = blkf.12.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	option = {
+		# 屈服して譲渡する
+		name = blkf.12.a
+		add_stability = -0.10
+		add_war_support = 0.05
+		if = {
+			limit = { owns_state = 77 }
+			remove_state_core = 77
+			77 = { add_core_of = BLK }
+			BLK = { transfer_state = 77 }
+		}
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = {
+			factor = 25
+			modifier = { factor = 3 BLK = { strength_ratio = { tag = ROM ratio > 2 } } }
+			modifier = { factor = 0 is_in_faction = yes }
+		}
+	}
+	option = {
+		# 拒否する：戦争も辞さない
+		name = blkf.12.b
+		add_war_support = 0.10
+		add_opinion_modifier = { target = BLK modifier = BLK_ultimatum }
+		BLK = {
+			add_opinion_modifier = { target = ROM modifier = BLK_ultimatum }
+			create_wargoal = { type = take_state_focus target = ROM generator = { 77 } }
+			country_event = { id = blk.91 days = 1 }
+		}
+		ai_chance = { factor = 75 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.13 陣営への招請（GRE/ROM/TUR 共通）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.13
+	title = blkf.13.t
+	desc = blkf.13.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+
+	trigger = {
+		is_in_faction = no
+		BLK = { is_faction_leader = yes }
+	}
+
+	option = {
+		# 加盟する
+		name = blkf.13.a
+		BLK = { add_to_faction = PREV }
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = {
+			factor = 40
+			modifier = { factor = 2 has_opinion = { target = BLK value > 50 } }
+			modifier = { factor = 0.3 has_opinion = { target = BLK value < 10 } }
+			modifier = { factor = 2 threat > 0.3 }
+			modifier = { factor = 0.5 has_idea = GRE_northern_colossus }
+			modifier = { factor = 0.5 has_idea = ROM_dobruja_vigilance }
+			modifier = { factor = 1.5 blk_shares_ideology_with_blk = yes }
+		}
+	}
+	option = {
+		# 辞退する
+		name = blkf.13.b
+		add_political_power = 25
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 60 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.14 連邦への加盟提案（GRE/ROM 共通）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.14
+	title = blkf.14.t
+	desc = blkf.14.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+
+	option = {
+		# 連邦構成国として加盟する
+		name = blkf.14.a
+		blk_admit_to_federation = yes
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		every_country = { news_event = { id = blknews.9 hours = 6 } }
+		ai_chance = {
+			factor = 30
+			modifier = { factor = 2 has_opinion = { target = BLK value > 80 } }
+			modifier = { factor = 2 threat > 0.5 }
+			modifier = { factor = 1.5 blk_shares_ideology_with_blk = yes }
+			modifier = { factor = 0.2 has_idea = GRE_northern_colossus }
+			modifier = { factor = 0.2 has_idea = ROM_dobruja_vigilance }
+			modifier = { factor = 0 is_in_faction = yes NOT = { is_in_faction_with = BLK } }
+		}
+	}
+	option = {
+		# 独立を守る
+		name = blkf.14.b
+		add_political_power = 50
+		add_opinion_modifier = { target = BLK modifier = BLK_refused_proposal }
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 70 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.15 イタリア：アドリア海デタント
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.15
+	title = blkf.15.t
+	desc = blkf.15.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	option = {
+		# 不可侵条約を結ぶ
+		name = blkf.15.a
+		diplomatic_relation = { country = BLK relation = non_aggression_pact active = yes }
+		add_opinion_modifier = { target = BLK modifier = BLK_adriatic_detente }
+		BLK = { add_opinion_modifier = { target = ITA modifier = BLK_adriatic_detente } }
+		if = { limit = { has_idea = ITA_adriatic_rivalry } remove_ideas = ITA_adriatic_rivalry }
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = {
+			factor = 40
+			modifier = { factor = 0.5 has_idea = ITA_adriatic_rivalry }
+			modifier = { factor = 2 has_war = yes }
+			modifier = { factor = 0.5 BLK = { has_government = communism } }
+		}
+	}
+	option = {
+		# 拒否する
+		name = blkf.15.b
+		add_political_power = 25
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 60 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.16 ドイツ：連邦の枢軸接近
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.16
+	title = blkf.16.t
+	desc = blkf.16.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+
+	option = {
+		# 陣営に迎え入れる
+		name = blkf.16.a
+		if = {
+			limit = { is_faction_leader = yes BLK = { is_in_faction = no } }
+			add_to_faction = BLK
+		}
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = {
+			factor = 60
+			modifier = { factor = 0 is_faction_leader = no }
+			modifier = { factor = 0.5 has_opinion = { target = BLK value < 20 } }
+		}
+	}
+	option = {
+		# 通商関係にとどめる
+		name = blkf.16.b
+		add_ideas = GER_balkan_resources
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.17 ソ連：コミンテルン加盟
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.17
+	title = blkf.17.t
+	desc = blkf.17.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+
+	option = {
+		# 迎え入れる
+		name = blkf.17.a
+		if = {
+			limit = { is_faction_leader = yes BLK = { is_in_faction = no } }
+			add_to_faction = BLK
+		}
+		add_opinion_modifier = { target = BLK modifier = BLK_balkan_rapprochement }
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = { factor = 80 modifier = { factor = 0 is_faction_leader = no } }
+	}
+	option = {
+		# 時期尚早とする
+		name = blkf.17.b
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 20 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.18 イギリス：連合国加盟申請
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.18
+	title = blkf.18.t
+	desc = blkf.18.d
+	picture = GFX_report_event_generic_sign_treaty2
+	is_triggered_only = yes
+
+	option = {
+		# 受け入れる
+		name = blkf.18.a
+		if = {
+			limit = { is_faction_leader = yes BLK = { is_in_faction = no } }
+			add_to_faction = BLK
+		}
+		BLK = { country_event = { id = blk.90 days = 1 } }
+		ai_chance = {
+			factor = 60
+			modifier = { factor = 0 is_faction_leader = no }
+			modifier = { factor = 2 has_war = yes }
+			modifier = { factor = 0.5 has_opinion = { target = BLK value < 20 } }
+		}
+	}
+	option = {
+		# 保証にとどめる
+		name = blkf.18.b
+		give_guarantee = BLK
+		BLK = { country_event = { id = blk.91 days = 1 } }
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.19 革命の輸出（GRE/ROM）
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.19
+	title = blkf.19.t
+	desc = blkf.19.d
+	picture = GFX_report_event_generic_riot
+	is_triggered_only = yes
+
+	option = {
+		# 共産党を弾圧する
+		name = blkf.19.a
+		add_popularity = { ideology = communism popularity = -0.05 }
+		add_stability = -0.05
+		add_opinion_modifier = { target = BLK modifier = BLK_federation_threat }
+		ai_chance = { factor = 70 modifier = { factor = 0 has_government = communism } }
+	}
+	option = {
+		# 容認する
+		name = blkf.19.b
+		add_popularity = { ideology = communism popularity = 0.05 }
+		add_political_power = -25
+		ai_chance = { factor = 30 modifier = { factor = 5 has_government = communism } }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.21 / blkf.22 イタリア：港湾要求への回答
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.21
+	title = blkf.21.t
+	desc = blkf.21.d
+	picture = GFX_report_event_generic_sign_treaty1
+	is_triggered_only = yes
+
+	option = {
+		name = blkf.21.a
+		add_political_power = 50
+		add_opinion_modifier = { target = BLK modifier = BLK_trade_mission }
+		if = { limit = { has_idea = ITA_adriatic_rivalry } remove_ideas = ITA_adriatic_rivalry }
+	}
+}
+country_event = {
+	id = blkf.22
+	title = blkf.22.t
+	desc = blkf.22.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+
+	option = {
+		# 戦争の口実とする
+		name = blkf.22.a
+		add_war_support = 0.05
+		if = { limit = { NOT = { has_idea = ITA_adriatic_rivalry } } add_ideas = ITA_adriatic_rivalry }
+		add_opinion_modifier = { target = BLK modifier = BLK_ultimatum }
+		create_wargoal = { type = take_state_focus target = BLK generator = { 44 } }
+		ai_chance = {
+			factor = 40
+			modifier = { factor = 2 has_government = fascism }
+			modifier = { factor = 0 has_war = yes }
+		}
+	}
+	option = {
+		# 引き下がる
+		name = blkf.22.b
+		add_political_power = -50
+		ai_chance = { factor = 60 }
+	}
+}
+
+# ---------------------------------------------------------------
+# blkf.24 / blkf.25 ハンガリー：ヴォイヴォディナ要求への回答
+# ---------------------------------------------------------------
+country_event = {
+	id = blkf.24
+	title = blkf.24.t
+	desc = blkf.24.d
+	picture = GFX_report_event_generic_army
+	is_triggered_only = yes
+
+	option = {
+		name = blkf.24.a
+		add_war_support = 0.05
+		add_opinion_modifier = { target = BLK modifier = BLK_ultimatum }
+	}
+}
+country_event = {
+	id = blkf.25
+	title = blkf.25.t
+	desc = blkf.25.d
+	picture = GFX_report_event_generic_conference
+	is_triggered_only = yes
+
+	option = {
+		name = blkf.25.a
+		add_political_power = 50
+		if = { limit = { has_idea = HUN_southern_threat } remove_ideas = HUN_southern_threat }
+	}
+}

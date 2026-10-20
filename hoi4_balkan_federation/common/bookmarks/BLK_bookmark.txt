@@ -1,0 +1,68 @@
+bookmarks = {
+	bookmark = {
+		name = "BLK_BOOKMARK_NAME"
+		desc = "BLK_BOOKMARK_DESC"
+		date = 1936.1.1.12
+		picture = "GFX_select_date_1936"
+		default_country = "BLK"
+
+		"BLK" = {
+			history = "BLK_BOOKMARK_HISTORY"
+			ideology = neutrality
+			ideas = {
+				BLK_unfinished_federation
+				BLK_polyglot_army
+				BLK_council_of_crowns
+			}
+			focuses = {
+				blk_crown_federation
+				blk_peoples_federation
+				blk_officers_federation
+				blk_red_federation
+			}
+		}
+		"GER" = {
+			history = "BLK_BOOKMARK_GER"
+			ideology = fascism
+		}
+		"ITA" = {
+			history = "BLK_BOOKMARK_ITA"
+			ideology = fascism
+		}
+		"SOV" = {
+			history = "BLK_BOOKMARK_SOV"
+			ideology = communism
+		}
+		"ENG" = {
+			history = "BLK_BOOKMARK_ENG"
+			ideology = democratic
+		}
+		"FRA" = {
+			history = "BLK_BOOKMARK_FRA"
+			ideology = democratic
+		}
+		"GRE" = {
+			history = "BLK_BOOKMARK_GRE"
+			ideology = neutrality
+			minor = yes
+		}
+		"ROM" = {
+			history = "BLK_BOOKMARK_ROM"
+			ideology = neutrality
+			minor = yes
+		}
+		"HUN" = {
+			history = "BLK_BOOKMARK_HUN"
+			ideology = neutrality
+			minor = yes
+		}
+		"TUR" = {
+			history = "BLK_BOOKMARK_TUR"
+			ideology = neutrality
+			minor = yes
+		}
+		effect = {
+			randomize_weather = 22345
+		}
+	}
+}

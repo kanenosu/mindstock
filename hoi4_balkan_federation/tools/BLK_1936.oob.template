@@ -1,0 +1,92 @@
+# バルカン連邦 1936年 編成（tools/generate_from_game.py が @PLACEHOLDER を実在のプロヴィンスIDに置換して history/units/BLK_1936.txt を生成する）
+division_template = {
+	name = "Federalna Pešadijska Divizija"		# 連邦歩兵師団
+	regiments = {
+		infantry = { x = 0 y = 0 }
+		infantry = { x = 0 y = 1 }
+		infantry = { x = 0 y = 2 }
+		infantry = { x = 1 y = 0 }
+		infantry = { x = 1 y = 1 }
+		infantry = { x = 1 y = 2 }
+		artillery_brigade = { x = 2 y = 0 }
+	}
+	support = {
+		engineer = { x = 0 y = 0 }
+	}
+}
+division_template = {
+	name = "Planinska Divizija"		# 山岳師団
+	regiments = {
+		mountaineers = { x = 0 y = 0 }
+		mountaineers = { x = 0 y = 1 }
+		mountaineers = { x = 0 y = 2 }
+		mountaineers = { x = 1 y = 0 }
+		mountaineers = { x = 1 y = 1 }
+		mountaineers = { x = 1 y = 2 }
+	}
+	support = {
+		recon = { x = 0 y = 0 }
+	}
+}
+division_template = {
+	name = "Konjička Divizija"		# 騎兵師団
+	regiments = {
+		cavalry = { x = 0 y = 0 }
+		cavalry = { x = 0 y = 1 }
+		cavalry = { x = 1 y = 0 }
+		cavalry = { x = 1 y = 1 }
+	}
+}
+division_template = {
+	name = "Rezervna Divizija"		# 予備師団
+	regiments = {
+		infantry = { x = 0 y = 0 }
+		infantry = { x = 0 y = 1 }
+		infantry = { x = 1 y = 0 }
+		infantry = { x = 1 y = 1 }
+	}
+}
+
+units = {
+	##### 第1軍（セルビア）#####
+	division = { name = "1. Pešadijska Divizija 'Beograd'" location = @BELGRADE division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.9 }
+	division = { name = "2. Pešadijska Divizija 'Šumadija'" location = @KRAGUJEVAC division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.9 }
+	division = { name = "3. Pešadijska Divizija 'Morava'" location = @NIS division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "4. Pešadijska Divizija 'Vojvodina'" location = @NOVI_SAD division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "1. Konjička Divizija" location = @NOVI_SAD division_template = "Konjička Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.8 }
+	##### 第2軍（ブルガリア）#####
+	division = { name = "1. Pehotna Divizija 'Sofia'" location = @SOFIA division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.9 }
+	division = { name = "2. Pehotna Divizija 'Trakia'" location = @PLOVDIV division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.8 }
+	division = { name = "3. Pehotna Divizija 'Balkan'" location = @PLEVEN division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "4. Pehotna Divizija 'Chernomorska'" location = @VARNA division_template = "Rezervna Divizija" start_experience_factor = 0.1 start_equipment_factor = 0.7 }
+	division = { name = "2. Konna Divizija" location = @SOFIA division_template = "Konjička Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.8 }
+	##### 第3軍（クロアチア・スロヴェニア・ボスニア）#####
+	division = { name = "5. Pešadijska Divizija 'Zagreb'" location = @ZAGREB division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "6. Pešadijska Divizija 'Sava'" location = @ZAGREB division_template = "Rezervna Divizija" start_experience_factor = 0.1 start_equipment_factor = 0.7 }
+	division = { name = "7. Pešadijska Divizija 'Ljubljana'" location = @LJUBLJANA division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "8. Pešadijska Divizija 'Bosna'" location = @SARAJEVO division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "1. Planinska Divizija 'Dinara'" location = @SARAJEVO division_template = "Planinska Divizija" start_experience_factor = 0.4 start_equipment_factor = 0.9 }
+	##### 第4軍（南部：マケドニア・モンテネグロ・アルバニア）#####
+	division = { name = "9. Pešadijska Divizija 'Vardar'" location = @SKOPJE division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.8 }
+	division = { name = "2. Planinska Divizija 'Šar'" location = @SKOPJE division_template = "Planinska Divizija" start_experience_factor = 0.4 start_equipment_factor = 0.9 }
+	division = { name = "3. Planinska Divizija 'Lovćen'" location = @CETINJE division_template = "Planinska Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.8 }
+	division = { name = "10. Pešadijska Divizija 'Tiranë'" location = @TIRANA division_template = "Federalna Pešadijska Divizija" start_experience_factor = 0.2 start_equipment_factor = 0.7 }
+	division = { name = "4. Planinska Divizija 'Shkodër'" location = @TIRANA division_template = "Planinska Divizija" start_experience_factor = 0.3 start_equipment_factor = 0.7 }
+	##### 沿岸守備 #####
+	division = { name = "11. Pešadijska Divizija 'Jadran'" location = @SPLIT division_template = "Rezervna Divizija" start_experience_factor = 0.1 start_equipment_factor = 0.7 }
+}
+
+instant_effect = {
+	add_equipment_production = {
+		equipment = { type = infantry_equipment_0 creator = "BLK" }
+		requested_factories = 3
+		progress = 0.4
+		efficiency = 100
+	}
+	add_equipment_production = {
+		equipment = { type = artillery_equipment_1 creator = "BLK" }
+		requested_factories = 1
+		progress = 0.3
+		efficiency = 100
+	}
+}

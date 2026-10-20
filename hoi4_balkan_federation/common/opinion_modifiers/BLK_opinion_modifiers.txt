@@ -1,0 +1,31 @@
+opinion_modifiers = {
+	BLK_balkan_rapprochement = {
+		value = 25
+	}
+	BLK_federation_threat = {
+		value = -30
+	}
+	BLK_adriatic_detente = {
+		value = 30
+	}
+	BLK_ultimatum = {
+		value = -50
+		decay = 0.5
+	}
+	BLK_sold_dobruja = {
+		value = 20
+	}
+	BLK_refused_proposal = {
+		value = -15
+		decay = 0.2
+	}
+	BLK_joined_federation = {
+		value = 50
+	}
+	BLK_guarantee_offered = {
+		value = 15
+	}
+	BLK_trade_mission = {
+		value = 10
+	}
+}
