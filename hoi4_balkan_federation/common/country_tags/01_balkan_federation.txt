@@ -1,2 +1,0 @@
-# バルカン連邦
-BLK = "countries/Balkan_Federation.txt"
