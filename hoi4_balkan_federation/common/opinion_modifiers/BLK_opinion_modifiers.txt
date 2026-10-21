@@ -28,48 +28,4 @@ opinion_modifiers = {
 	BLK_trade_mission = {
 		value = 10
 	}
-
-	# ---- 列強・隣国チェーン用（BLK_powers） ----
-	BLK_naval_demonstration = {
-		value = -25
-		decay = 0.3
-	}
-	BLK_ustasa_patronage = {
-		value = -30
-	}
-	BLK_exiles_patronage = {
-		value = -20
-	}
-	BLK_montreux_support = {
-		value = 15
-	}
-	BLK_nyon_cooperation = {
-		value = 15
-	}
-	BLK_loan_conditions = {
-		value = 10
-	}
-	BLK_plebiscite_dispute = {
-		value = -20
-		decay = 0.2
-	}
-	BLK_economic_sphere = {
-		value = 20
-	}
-	BLK_little_entente_renewed = {
-		value = 25
-	}
-	BLK_abandoned_ally = {
-		value = -25
-		decay = 0.1
-	}
-
-	# ギリシャ・ルーマニア拡張で追加
-	BLK_border_incident = {
-		value = -20
-		decay = 0.3
-	}
-	BLK_plebiscite_respected = {
-		value = 20
-	}
 }

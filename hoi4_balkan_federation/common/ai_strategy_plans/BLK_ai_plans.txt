@@ -24,16 +24,9 @@ BLK_crown_plan = {
 		blk_mountain_corps
 		blk_approach_romania
 		blk_approach_turkey
-		blk_three_capitals
-		blk_regency_council_reform
-		blk_royal_marriage_diplomacy
-		blk_orthodox_concord
 		blk_federal_crown_act
 		blk_armed_neutrality
-		blk_great_power_relations
-		blk_french_military_mission
 		blk_guardian_of_the_balkans
-		blk_crown_of_the_balkans
 	}
 	focus_factors = {
 		blk_peoples_federation = 0
@@ -63,13 +56,9 @@ BLK_people_plan = {
 		blk_balkan_diplomacy
 		blk_western_credit
 		blk_language_and_schools
-		blk_free_press
-		blk_labour_code
 		blk_little_entente_bridge
 		blk_join_allies
-		blk_constitutional_court
 		blk_federation_of_free_peoples
-		blk_keep_the_crowns
 	}
 	focus_factors = {
 		blk_crown_federation = 0
@@ -102,14 +91,9 @@ BLK_officers_plan = {
 		blk_kragujevac_arsenal
 		blk_third_way
 		blk_mountain_corps
-		blk_national_youth_organization
-		blk_labour_service
-		blk_sofia_general_staff
 		blk_greater_balkan_federation
 		blk_dobruja_ultimatum
 		blk_march_on_salonika
-		blk_balkan_hegemony
-		blk_balkan_empire
 	}
 	focus_factors = {
 		blk_crown_federation = 0
@@ -139,14 +123,9 @@ BLK_red_plan = {
 		blk_federal_army_act
 		blk_land_reform
 		blk_partisan_army
-		blk_five_year_plan
-		blk_popular_front
-		blk_socialist_pluralism
 		blk_balkan_road_to_socialism
-		blk_cooperative_farms
 		blk_balkan_socialist_federation
 		blk_export_revolution
-		blk_socialist_balkans
 	}
 	focus_factors = {
 		blk_crown_federation = 0

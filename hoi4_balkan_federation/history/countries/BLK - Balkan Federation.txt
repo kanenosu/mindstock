@@ -63,8 +63,6 @@ add_ideas = {
 	BLK_shadow_of_imro
 	BLK_italian_pressure
 	BLK_kimon_georgiev
-	BLK_ikarus
-	BLK_vojnotehnicki_zavod
 }
 
 # 人物
@@ -86,21 +84,6 @@ recruit_character = BLK_konstantin_lukash
 recruit_character = BLK_petar_kosic
 recruit_character = BLK_prenk_pervizi
 recruit_character = BLK_marijan_polic
-recruit_character = BLK_petar_zivkovic
-recruit_character = BLK_dobri_bozhilov
-recruit_character = BLK_mehdi_frasheri
-recruit_character = BLK_dimitar_gichev
-recruit_character = BLK_dimitrije_ljotic
-recruit_character = BLK_milovan_djilas
-recruit_character = BLK_ivan_mihailov
-recruit_character = BLK_petar_pesic
-recruit_character = BLK_nikola_mihov
-recruit_character = BLK_borivoje_mirkovic
-recruit_character = BLK_dragutin_pric
-recruit_character = BLK_konstantin_lukash_staff
-recruit_character = BLK_danilo_kalafatovic
-recruit_character = BLK_teodosi_daskalov
-recruit_character = BLK_ljubomir_maric
 
 # 周辺国との関係
 add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement }

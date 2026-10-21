@@ -1,23 +1,4 @@
 on_actions = {
-	# 毎月：連邦評議会の均衡を更新
-	on_monthly_BLK = {
-		effect = {
-			if = {
-				limit = { original_tag = BLK has_dynamic_modifier = { modifier = BLK_federal_balance } }
-				blk_monthly_federal_drift = yes
-			}
-		}
-	}
-	# 毎年：三王評議会の議長輪番
-	on_yearly_BLK = {
-		effect = {
-			if = {
-				limit = { original_tag = BLK }
-				blk_council_rotation = yes
-			}
-		}
-	}
-
 	# ゲーム開始時：連邦の成立処理（セーブ再ロード時はフラグで抑止）
 	on_startup = {
 		effect = {

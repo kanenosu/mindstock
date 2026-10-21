@@ -1,5 +1,4 @@
 # ギリシャ：バルカン路線（イベント blkf.1 で選択した場合のみ読み込まれる）
-# 配置：協調 x0-4 / 警戒 x6-10 / 王政と政治 x12-16 / 産業 x18-22 / 軍事 x24-31
 focus_tree = {
 	id = GRE_balkan_focus
 
@@ -10,9 +9,7 @@ focus_tree = {
 	default = no
 	reset_on_civilwar = no
 
-	# =====================================================================
-	#  協調路線
-	# =====================================================================
+	# ---- 協調路線 ----
 	focus = {
 		id = gre_blk_rapprochement
 		icon = GFX_goal_generic_improve_relations
@@ -38,7 +35,6 @@ focus_tree = {
 		completion_reward = {
 			if = { limit = { NOT = { has_idea = GRE_balkan_partnership } } add_ideas = GRE_balkan_partnership }
 			if = { limit = { owns_state = 731 } 731 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } add_building_construction = { type = industrial_complex level = 1 instant_build = yes } } }
-			country_event = { id = blkf.103 days = 5 }
 		}
 	}
 	focus = {
@@ -74,46 +70,11 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = gre_blk_macedonian_minority
-		icon = GFX_goal_generic_national_unity
-		prerequisite = { focus = gre_blk_join_entente }
-		x = 1
-		y = 3
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_stability = 0.03
-			add_political_power = 50
-			BLK = {
-				add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement }
-				add_stability = 0.02
-			}
-			if = { limit = { owns_state = 731 } 731 = { add_extra_state_shared_building_slots = 1 } }
-		}
-	}
-	focus = {
-		id = gre_blk_aegean_trade
-		icon = GFX_goal_generic_trade
-		prerequisite = { focus = gre_blk_join_entente }
-		x = 3
-		y = 3
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_ideas = GRE_aegean_trade_route
-			random_owned_controlled_state = {
-				prioritize = { 47 }
-				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-			}
-		}
-	}
-	focus = {
 		id = gre_blk_federal_republic
 		icon = GFX_goal_generic_major_alliance
-		prerequisite = { focus = gre_blk_macedonian_minority focus = gre_blk_aegean_trade }
-		mutually_exclusive = { focus = gre_blk_independent_partner }
-		x = 1
-		y = 4
+		prerequisite = { focus = gre_blk_join_entente }
+		x = 2
+		y = 3
 		cost = 15
 		available = {
 			NOT = { has_war = yes }
@@ -121,34 +82,16 @@ focus_tree = {
 		}
 		ai_will_do = { factor = 2 modifier = { factor = 3 threat > 0.5 } }
 		completion_reward = {
-			country_event = { id = blkf.108 days = 1 }
 			blk_admit_to_federation = yes
 			every_country = { news_event = { id = blknews.9 hours = 6 } }
 		}
 	}
-	focus = {
-		id = gre_blk_independent_partner
-		icon = GFX_goal_generic_military_sphere
-		prerequisite = { focus = gre_blk_macedonian_minority focus = gre_blk_aegean_trade }
-		mutually_exclusive = { focus = gre_blk_federal_republic }
-		x = 3
-		y = 4
-		cost = 15
-		ai_will_do = { factor = 4 }
-		completion_reward = {
-			add_ideas = GRE_independent_partner
-			add_political_power = 100
-			BLK = { add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement } }
-		}
-	}
 
-	# =====================================================================
-	#  警戒路線
-	# =====================================================================
+	# ---- 警戒路線（メタクサス） ----
 	focus = {
 		id = gre_blk_metaxas_line
 		icon = GFX_goal_generic_fortify_city
-		x = 8
+		x = 7
 		y = 0
 		cost = 5
 		mutually_exclusive = { focus = gre_blk_rapprochement }
@@ -162,44 +105,23 @@ focus_tree = {
 		id = gre_blk_british_guarantee
 		icon = GFX_goal_generic_improve_relations
 		prerequisite = { focus = gre_blk_metaxas_line }
-		mutually_exclusive = { focus = gre_blk_italian_understanding }
 		x = 6
 		y = 1
 		cost = 10
 		available = { country_exists = ENG }
-		ai_will_do = { factor = 5 modifier = { factor = 0.3 ITA = { has_opinion = { target = GRE value > 30 } } } }
+		ai_will_do = { factor = 5 }
 		completion_reward = {
 			ENG = {
 				add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement }
 				give_guarantee = GRE
 			}
-			add_opinion_modifier = { target = ENG modifier = BLK_balkan_rapprochement }
-		}
-	}
-	focus = {
-		id = gre_blk_italian_understanding
-		icon = GFX_goal_generic_dangerous_deal
-		prerequisite = { focus = gre_blk_metaxas_line }
-		mutually_exclusive = { focus = gre_blk_british_guarantee }
-		x = 8
-		y = 1
-		cost = 10
-		available = {
-			country_exists = ITA
-			NOT = { has_war_with = ITA }
-		}
-		ai_will_do = { factor = 3 modifier = { factor = 2 ITA = { has_idea = ITA_adriatic_rivalry } } }
-		completion_reward = {
-			add_opinion_modifier = { target = ITA modifier = BLK_balkan_rapprochement }
-			ITA = { add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement } }
-			country_event = { id = blkf.104 days = 3 }
 		}
 	}
 	focus = {
 		id = gre_blk_northern_fortifications
 		icon = GFX_goal_generic_fortify_city
 		prerequisite = { focus = gre_blk_metaxas_line }
-		x = 10
+		x = 8
 		y = 1
 		cost = 10
 		ai_will_do = { factor = 5 }
@@ -209,26 +131,10 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = gre_blk_anti_communist_pact
-		icon = GFX_goal_generic_intelligence_exchange
-		prerequisite = { focus = gre_blk_northern_fortifications }
-		x = 10
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 4 modifier = { factor = 3 BLK = { has_government = communism } } }
-		completion_reward = {
-			add_ideas = GRE_anti_communist_pact
-			if = { limit = { country_exists = ROM } ROM = { add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement } } }
-			if = { limit = { country_exists = TUR } TUR = { add_opinion_modifier = { target = GRE modifier = BLK_balkan_rapprochement } } }
-			add_popularity = { ideology = communism popularity = -0.05 }
-		}
-	}
-	focus = {
 		id = gre_blk_northern_ambition
 		icon = GFX_goal_generic_more_territorial_claims
-		prerequisite = { focus = gre_blk_british_guarantee focus = gre_blk_italian_understanding }
-		prerequisite = { focus = gre_blk_northern_fortifications }
-		x = 8
+		prerequisite = { focus = gre_blk_british_guarantee focus = gre_blk_northern_fortifications }
+		x = 7
 		y = 2
 		cost = 10
 		ai_will_do = { factor = 3 }
@@ -259,171 +165,12 @@ focus_tree = {
 			create_wargoal = { type = take_state_focus target = BLK generator = { 106 44 } }
 		}
 	}
-	focus = {
-		id = gre_blk_northern_epirus
-		icon = GFX_goal_generic_demand_territory
-		prerequisite = { focus = gre_blk_northern_ambition }
-		x = 9
-		y = 3
-		cost = 10
-		available = {
-			country_exists = BLK
-			NOT = { has_war_with = BLK }
-		}
-		ai_will_do = { factor = 3 }
-		completion_reward = {
-			add_war_support = 0.03
-			BLK = { country_event = { id = blkf.105 days = 2 } }
-		}
-	}
-	focus = {
-		id = gre_blk_greater_greece
-		icon = GFX_goal_generic_occupy_states_ongoing_war
-		prerequisite = { focus = gre_blk_war_for_macedonia focus = gre_blk_northern_epirus }
-		x = 8
-		y = 4
-		cost = 15
-		ai_will_do = { factor = 3 }
-		completion_reward = {
-			add_ideas = GRE_greater_greece
-			every_owned_state = {
-				limit = { OR = { state = 106 state = 44 state = 184 } NOT = { is_core_of = GRE } }
-				add_core_of = GRE
-			}
-			every_country = { news_event = { id = blknews.102 hours = 6 } }
-		}
-	}
 
-	# =====================================================================
-	#  王政と政治
-	# =====================================================================
-	focus = {
-		id = gre_blk_restoration_of_george
-		icon = GFX_focus_generic_monarchy_1
-		x = 14
-		y = 0
-		cost = 5
-		ai_will_do = { factor = 8 }
-		completion_reward = {
-			add_political_power = 50
-			add_stability = 0.03
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-		}
-	}
-	focus = {
-		id = gre_blk_fourth_of_august
-		icon = GFX_goal_generic_military_sphere
-		prerequisite = { focus = gre_blk_restoration_of_george }
-		mutually_exclusive = { focus = gre_blk_venizelist_reconciliation }
-		x = 13
-		y = 1
-		cost = 10
-		available = { date > 1936.8.3 }
-		ai_will_do = { factor = 5 modifier = { factor = 2 has_completed_focus = gre_blk_metaxas_line } }
-		completion_reward = {
-			country_event = { id = blkf.100 days = 1 }
-		}
-	}
-	focus = {
-		id = gre_blk_venizelist_reconciliation
-		icon = GFX_goal_support_democracy
-		prerequisite = { focus = gre_blk_restoration_of_george }
-		mutually_exclusive = { focus = gre_blk_fourth_of_august }
-		x = 15
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 5 modifier = { factor = 2 has_completed_focus = gre_blk_rapprochement } }
-		completion_reward = {
-			add_ideas = GRE_venizelist_reconciliation
-			add_popularity = { ideology = democratic popularity = 0.10 }
-			country_event = { id = blkf.102 days = 30 random_days = 60 }
-		}
-	}
-	focus = {
-		id = gre_blk_eon_youth
-		icon = GFX_goal_generic_propaganda
-		prerequisite = { focus = gre_blk_fourth_of_august }
-		x = 12
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_ideas = GRE_eon_youth
-			add_war_support = 0.05
-			add_manpower = 15000
-		}
-	}
-	focus = {
-		id = gre_blk_suppress_kke
-		icon = GFX_focus_generic_strike_at_democracy1
-		prerequisite = { focus = gre_blk_fourth_of_august }
-		mutually_exclusive = { focus = gre_blk_labour_settlement }
-		x = 14
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_popularity = { ideology = communism popularity = -0.08 }
-			add_stability = -0.03
-			add_political_power = 50
-			country_event = { id = blkf.101 days = 2 }
-		}
-	}
-	focus = {
-		id = gre_blk_labour_settlement
-		icon = GFX_goal_generic_consumer_goods
-		prerequisite = { focus = gre_blk_venizelist_reconciliation }
-		mutually_exclusive = { focus = gre_blk_suppress_kke }
-		x = 16
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_stability = 0.05
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			add_popularity = { ideology = communism popularity = 0.02 }
-			random_owned_controlled_state = {
-				prioritize = { 47 }
-				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-			}
-		}
-	}
-	focus = {
-		id = gre_blk_refugee_integration
-		icon = GFX_goal_generic_consumer_goods
-		prerequisite = { focus = gre_blk_suppress_kke focus = gre_blk_labour_settlement }
-		x = 14
-		y = 3
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			add_ideas = GRE_refugee_integration
-			add_manpower = 30000
-			country_event = { id = blkf.107 days = 3 }
-		}
-	}
-	focus = {
-		id = gre_blk_constitutional_settlement
-		icon = GFX_goal_generic_national_unity
-		prerequisite = { focus = gre_blk_refugee_integration }
-		x = 14
-		y = 4
-		cost = 15
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			add_ideas = GRE_national_unity
-			add_stability = 0.05
-			add_political_power = 100
-		}
-	}
-
-	# =====================================================================
-	#  産業
-	# =====================================================================
+	# ---- 共通：産業と軍 ----
 	focus = {
 		id = gre_blk_industry
 		icon = GFX_goal_generic_construct_civ_factory
-		x = 20
+		x = 12
 		y = 0
 		cost = 10
 		ai_will_do = { factor = 8 }
@@ -436,99 +183,11 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = gre_blk_piraeus_port
-		icon = GFX_goal_generic_construct_naval_dockyard
-		prerequisite = { focus = gre_blk_industry }
-		x = 19
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			if = { limit = { owns_state = 47 } 47 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } add_building_construction = { type = naval_base level = 2 instant_build = yes province = { all_provinces = yes limit_to_naval_base = yes } } } }
-		}
-	}
-	focus = {
-		id = gre_blk_thessaloniki_industry
-		icon = GFX_focus_generic_industry_1
-		prerequisite = { focus = gre_blk_industry }
-		x = 21
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			random_owned_controlled_state = {
-				prioritize = { 731 }
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
-			}
-		}
-	}
-	focus = {
-		id = gre_blk_ptolemais_lignite
-		icon = GFX_goal_generic_construct_infrastructure
-		prerequisite = { focus = gre_blk_piraeus_port }
-		x = 19
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			if = { limit = { owns_state = 731 } 731 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } }
-			random_owned_controlled_state = {
-				prioritize = { 731 }
-				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-			}
-			add_tech_bonus = { name = gre_blk_industry_bonus bonus = 0.50 uses = 1 category = industry }
-		}
-	}
-	focus = {
-		id = gre_blk_bauxite
-		icon = GFX_goal_generic_oil_refinery
-		prerequisite = { focus = gre_blk_thessaloniki_industry }
-		x = 21
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			if = { limit = { owns_state = 47 } add_resource = { type = aluminium amount = 10 state = 47 } }
-			if = { limit = { owns_state = 731 } add_resource = { type = chromium amount = 6 state = 731 } }
-		}
-	}
-	focus = {
-		id = gre_blk_research
-		icon = GFX_focus_research
-		prerequisite = { focus = gre_blk_ptolemais_lignite focus = gre_blk_bauxite }
-		x = 20
-		y = 3
-		cost = 10
-		ai_will_do = { factor = 8 }
-		completion_reward = {
-			add_research_slot = 1
-		}
-	}
-	focus = {
-		id = gre_blk_agricultural_reform
-		icon = GFX_goal_generic_consumer_goods
-		prerequisite = { focus = gre_blk_research }
-		x = 20
-		y = 4
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_stability = 0.05
-			add_manpower = 20000
-			add_ideas = GRE_agricultural_reform
-		}
-	}
-
-	# =====================================================================
-	#  軍事
-	# =====================================================================
-	focus = {
 		id = gre_blk_army
 		icon = GFX_goal_generic_allies_build_infantry
-		x = 26
-		y = 0
+		prerequisite = { focus = gre_blk_industry }
+		x = 11
+		y = 1
 		cost = 10
 		ai_will_do = { factor = 8 }
 		completion_reward = {
@@ -537,62 +196,11 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = gre_blk_mountain_divisions
-		icon = GFX_goal_generic_special_forces
-		prerequisite = { focus = gre_blk_army }
-		x = 25
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			add_tech_bonus = { name = gre_blk_mountain_bonus bonus = 0.50 uses = 1 technology = tech_mountaineers technology = tech_mountaineers2 }
-			add_ideas = GRE_evzones
-		}
-	}
-	focus = {
-		id = gre_blk_artillery
-		icon = GFX_goal_generic_army_artillery
-		prerequisite = { focus = gre_blk_army }
-		x = 27
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			add_tech_bonus = { name = gre_blk_artillery_bonus bonus = 0.50 uses = 2 category = artillery }
-		}
-	}
-	focus = {
-		id = gre_blk_defensive_doctrine
-		icon = GFX_goal_generic_army_doctrines
-		prerequisite = { focus = gre_blk_mountain_divisions focus = gre_blk_artillery }
-		x = 26
-		y = 2
-		cost = 10
-		ai_will_do = { factor = 6 }
-		completion_reward = {
-			add_tech_bonus = { name = gre_blk_doctrine_bonus bonus = 0.50 uses = 1 category = land_doctrine }
-			add_ideas = GRE_defensive_doctrine
-		}
-	}
-	focus = {
-		id = gre_blk_air_force
-		icon = GFX_goal_generic_build_airforce
-		prerequisite = { focus = gre_blk_defensive_doctrine }
-		x = 26
-		y = 3
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_tech_bonus = { name = gre_blk_fighter_bonus bonus = 0.50 uses = 1 category = light_air }
-			air_experience = 20
-			if = { limit = { owns_state = 47 } 47 = { add_building_construction = { type = air_base level = 2 instant_build = yes } } }
-		}
-	}
-	focus = {
 		id = gre_blk_navy
 		icon = GFX_goal_generic_build_navy
-		x = 30
-		y = 0
+		prerequisite = { focus = gre_blk_industry }
+		x = 13
+		y = 1
 		cost = 10
 		ai_will_do = { factor = 6 }
 		completion_reward = {
@@ -605,45 +213,15 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = gre_blk_destroyer_flotilla
-		icon = GFX_goal_generic_navy_cruiser
-		prerequisite = { focus = gre_blk_navy }
-		x = 29
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 5 }
-		completion_reward = {
-			add_tech_bonus = { name = gre_blk_destroyer_bonus bonus = 0.50 uses = 1 category = dd_tech }
-			navy_experience = 10
-		}
-	}
-	focus = {
-		id = gre_blk_averof_modernization
-		icon = GFX_goal_generic_navy_battleship
-		prerequisite = { focus = gre_blk_navy }
-		x = 31
-		y = 1
-		cost = 10
-		ai_will_do = { factor = 4 }
-		completion_reward = {
-			add_tech_bonus = { name = gre_blk_cruiser_bonus bonus = 0.50 uses = 1 category = ca_tech }
-			navy_experience = 15
-		}
-	}
-	focus = {
-		id = gre_blk_aegean_command
-		icon = GFX_goal_generic_navy_submarine
-		prerequisite = { focus = gre_blk_destroyer_flotilla focus = gre_blk_averof_modernization }
-		x = 30
+		id = gre_blk_research
+		icon = GFX_focus_research
+		prerequisite = { focus = gre_blk_army focus = gre_blk_navy }
+		x = 12
 		y = 2
 		cost = 10
-		ai_will_do = { factor = 5 }
+		ai_will_do = { factor = 8 }
 		completion_reward = {
-			add_ideas = GRE_aegean_command
-			random_owned_controlled_state = {
-				prioritize = { 187 }
-				add_building_construction = { type = naval_base level = 1 instant_build = yes province = { all_provinces = yes limit_to_naval_base = yes } }
-			}
+			add_research_slot = 1
 		}
 	}
 }
